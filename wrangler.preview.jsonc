@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pianobossbattles-preview",
+  "account_id": "c5fd2cb61b7bd05dac120e8f23d303a6",
+  "main": "public-app/worker.ts",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "previews": {
+    "vars": {
+      "APP_ORIGIN": "https://v1-pianobossbattles-preview.pianobossbattles-preview.workers.dev",
+      "SUPABASE_URL": "https://huxmltjtovpxxxupuxdg.supabase.co",
+      "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_oPdO9q8zNLzqJqWKld5XIQ_3bQNZcpx"
+    },
+    "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "f4dddfd90fcf4d7c9ac1d748fd77eeef" }]
+  }
+}

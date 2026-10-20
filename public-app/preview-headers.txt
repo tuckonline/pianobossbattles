@@ -1,0 +1,5 @@
+/*
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: midi=(self)
+  Referrer-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow

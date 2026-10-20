@@ -20,7 +20,9 @@
     "build:legacy": "node hosted/build.mjs",
     "dev:api": "tsx public-app/server.ts",
     "pretest": "node public-app/prepare-tests.mjs",
-    "test:public-browser": "playwright test --config playwright.public.config.ts"
+    "test:public-browser": "playwright test --config playwright.public.config.ts",
+    "build:preview": "npm run build && node -e \"require('node:fs').copyFileSync('public-app/preview-headers.txt','dist/client/_headers')\"",
+    "deploy:preview": "wrangler preview --config wrangler.preview.jsonc --name v1 --ignore-base-config"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.5",
