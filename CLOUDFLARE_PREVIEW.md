@@ -74,7 +74,8 @@ The deployed application at commit `a494af8` passed HTTPS checks for the homepag
 `/obs/recording`, `/obs/shorts`, and `/api/health`. An unsigned player API request
 returned 401; a cross-origin session write returned 403. Cloudflare reports a
 successful **preview** deployment with no production deployment or Git integration.
-The owner confirmed successful real-account login on the preview.
+The owner confirmed successful real-account login on the preview and that saved
+player progress remained visible after refreshing the signed-in preview page.
 
 Automated checks:
 
@@ -99,10 +100,11 @@ Automated checks:
 
 Still requires real-device verification: physical MIDI on the preview origin,
 live OBS session/recording synchronization and audio routing, and sustained load.
-The prior local saved-progress tests passed; preview refresh recovery is being
-checked separately with the owner because the available inspection tabs do not
-currently share the owner's signed-in session. Do not infer a successful live
-save or recovery from the fixture tests.
+The prior local saved-progress tests passed; real preview login and saved-progress
+refresh recovery were confirmed by the owner. The available inspection tabs did
+not share that signed-in session, so this is explicitly owner-confirmed evidence,
+separate from the fixture tests. A new physical-MIDI performance saved through
+the preview has not yet been verified.
 
 **Password recovery remains UNVERIFIED.** No further recovery email was sent
 during this deployment. Dedicated transactional email and an end-to-end password
