@@ -161,8 +161,8 @@ test("Victory holds over the mounted score and a deliberate new attempt dismisse
   await expect(page.locator(".battle-cinematic")).toHaveCount(0);
   await expect(page.getByRole("status",{name:"Battle start countdown"})).toBeVisible();
 });
-test("real API rejects unsigned requests and cross-origin session writes",async({request})=>{
-  expect((await request.post("/api/platform",{data:{action:"gameState"},headers:{Origin:"http://localhost:5173"}})).status()).toBe(401);
+test("real API rejects unsigned requests and cross-origin session writes",async({request,baseURL})=>{
+  expect((await request.post("/api/platform",{data:{action:"gameState"},headers:{Origin:new URL(baseURL!).origin}})).status()).toBe(401);
   expect((await request.post("/api/auth/session",{data:{},headers:{Origin:"https://untrusted.example"}})).status()).toBe(403);
 });
 

@@ -65,3 +65,45 @@ auth callback destinations. Use the stable preview URL for sign-in and testing.
 
 See SUPABASE_SETUP.md for the completed local registration, saved-progress and
 database/RLS checks. Preview verification results are recorded separately below.
+
+## Preview verification — 2026-10-20
+
+Stable URL: https://feature-end-user-website-v1.pianobossbattles-preview.pages.dev/
+
+The deployed application at commit `a494af8` passed HTTPS checks for the homepage,
+`/obs/recording`, `/obs/shorts`, and `/api/health`. An unsigned player API request
+returned 401; a cross-origin session write returned 403. Cloudflare reports a
+successful **preview** deployment with no production deployment or Git integration.
+The owner confirmed successful real-account login on the preview.
+
+Automated checks:
+
+- 459 tests passed in 63 files, including four Worker-adapter tests covering
+  request cleanup, SSE connection lifetime, static assets and body-size limits.
+- All eight public browser tests passed against the deployed preview. These use
+  explicit Supabase/game-state fixtures for UI scenarios and simulated MIDI;
+  they do not prove live email delivery, physical piano input or database writes.
+  Coverage includes boss selection, queue reorder, continuous loops, immediate
+  scoring, pause/resume, Theatre Mode, held Victory and deliberate dismissal,
+  both OBS layouts, and zero MIDI access requests from OBS presentation routes.
+- The unsigned API and cross-origin rejection assertions exercise the real
+  deployed backend. Their same-origin header now follows the configured test
+  base URL rather than assuming localhost; the security assertions are unchanged.
+- TypeScript, changed-file ESLint, production build and preview Worker bundling
+  passed. A scan of 223 generated files found no local DATABASE_URL or database
+  password in the output; privileged credentials are held by Hyperdrive.
+- Inspected horizontal 1920x750 and vertical 1080x1920 screenshots from the
+  deployed UI fixture run: fighters, branding and complete grand staff render.
+  Evidence remains in ignored `test-results/public-obs-recording.png` and
+  `test-results/public-obs-shorts.png`.
+
+Still requires real-device verification: physical MIDI on the preview origin,
+live OBS session/recording synchronization and audio routing, and sustained load.
+The prior local saved-progress tests passed; preview refresh recovery is being
+checked separately with the owner because the available inspection tabs do not
+currently share the owner's signed-in session. Do not infer a successful live
+save or recovery from the fixture tests.
+
+**Password recovery remains UNVERIFIED.** No further recovery email was sent
+during this deployment. Dedicated transactional email and an end-to-end password
+reset remain mandatory prelaunch gates.
