@@ -1,0 +1,97 @@
+body:has(.public-app){background:#080f1b;color:#e7effa}
+.public-app{--panel:#111d2e;--line:#25394e;--cyan:#67e4f3;min-height:100vh;font-family:Inter,system-ui,sans-serif;background:radial-gradient(ellipse at 20% 0%,#142d43 0,transparent 45%),#080f1b;color:#e7effa}
+.public-app *{box-sizing:border-box}
+.public-app main{max-width:1440px;margin:auto;padding:32px}
+.public-header{height:86px;max-width:1504px;margin:auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:14px;font-size:22px;font-weight:800;text-decoration:none;color:#fff}
+.brand-mark{display:grid;place-items:center;width:40px;height:40px;border:1px solid #67e4f377;background:#67e4f311;transform:skew(-8deg);color:var(--cyan);border-radius:9px}
+.header-caption,.eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;color:#87b5cf}
+.public-app h1{font-size:clamp(40px,4.8vw,70px);line-height:1.06;letter-spacing:-2px;margin:22px 0}
+.public-app h1 em{font-style:normal;color:var(--cyan)}
+.public-app h2{font-size:24px;line-height:1.2;margin:12px 0 20px}
+.public-app p,.public-app small{color:#9eb0c4;line-height:1.6}
+.public-app small{display:block;font-size:12px}
+.welcome{display:grid;grid-template-columns:1.2fr .8fr;gap:70px;align-items:center;min-height:680px}
+.welcome>div>p{max-width:500px;font-size:17px}
+.welcome-fighters{display:flex;align-items:center;height:270px;justify-content:center;background:radial-gradient(ellipse,#28445244,transparent 65%)}
+.welcome-fighters img{max-width:44%;width:250px;height:280px;object-fit:contain}
+.welcome-fighters span{color:#5e829a;font-weight:800;font-style:italic}
+.account-card,.setup-section{background:linear-gradient(135deg,#142235,#0e1928);border:1px solid var(--line);border-radius:18px;padding:28px}
+.account-card{box-shadow:0 24px 70px #0005}
+.public-app label{display:flex;flex-direction:column;gap:8px;font-size:13px;color:#bfd0e4;font-weight:500;margin-bottom:14px}
+.public-app input,.public-app select{background:#091422;border:1px solid #30465f;border-radius:8px;color:#e7effa;padding:12px;min-width:0;width:100%}
+.public-app button{border:1px solid #2b445d;border-radius:8px;background:#182b40;color:#dfedfa;padding:10px 15px;cursor:pointer;font:inherit;font-size:13px}
+.public-app button:hover:not(:disabled){border-color:#67e4f3;background:#203d52}
+.public-app button:disabled{opacity:.45;cursor:not-allowed}
+.public-app button.primary{background:#68e4ef;color:#061924;border-color:#68e4ef;font-weight:800;min-height:46px;padding:12px 28px}
+.account-card .primary{width:100%;margin-top:8px}
+.account-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px}
+.account-links button,.public-app .quiet{background:none;padding:2px 0;border:0;color:var(--cyan)}
+.public-app :focus-visible{outline:2px solid #a0efff;outline-offset:4px}
+.public-steps{display:flex;justify-content:space-between;border-top:1px solid var(--line);gap:24px}
+.public-steps b{color:var(--cyan);margin-right:10px}
+.public-app footer{text-align:center;padding:28px;color:#627c96;font-size:12px}
+.player-strip{display:flex;align-items:center;gap:28px;padding:20px 0 32px}
+.player-strip h2{margin:6px 0}
+.player-strip h2 small{display:inline;font-weight:400;margin-left:10px}
+.player-xp{flex:1}
+.player-xp>span{display:flex;justify-content:space-between}
+.public-app progress{width:100%;height:7px;border:none;border-radius:8px;overflow:hidden;background:#26394b;accent-color:var(--cyan)}
+.public-app progress::-webkit-progress-value{background:linear-gradient(90deg,#288bc6,#68e4ef)}
+.player-strip>div>b{font-size:26px}
+.midi-card{display:flex;justify-content:space-between;gap:30px;align-items:center;margin-bottom:24px}
+.midi-card h2{margin-bottom:6px}
+.midi-card p{margin:0}
+.public-app .midi-status{background:transparent;border:none;padding:0;width:420px;max-width:100%;color:#c3d6e9}
+.setup-columns{display:grid;grid-template-columns:1fr 1.15fr;gap:24px}
+.public-app [hidden]{display:none!important}
+.public-app fieldset{padding:0;border:0;min-width:0;margin:0}
+.public-app legend{font-size:13px;color:#a9c0d4;margin-bottom:12px}
+.mode-grid,.boss-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+.mode-grid button{text-align:left;min-height:80px}
+.mode-grid small{margin-top:6px}
+.public-app button[aria-pressed=true]{border-color:var(--cyan);background:#16425555;box-shadow:inset 0 0 0 1px #67e4f322}
+.boss-grid button{display:flex;flex-direction:column;align-items:center}
+.boss-grid img{height:165px;width:100%;object-fit:contain;filter:drop-shadow(0 8px 16px #0008)}
+.compact-fields{display:flex;gap:12px}
+.compact-fields>label{flex:1;min-width:0}
+.music-list{height:245px;overflow:auto;border:1px solid var(--line);border-radius:9px}
+.music-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.music-list strong{font-size:13px}
+.music-list small{font-size:10px}
+.music-list button{padding:6px 10px}
+.queue-heading{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.queue-heading h3{font-size:16px}
+.queue-heading span{font-size:11px;color:#8db9cb}
+.battle-queue{list-style:none;padding:0;max-height:260px;overflow:auto}
+.battle-queue li{display:flex;align-items:center;gap:5px;padding:9px 0;border-bottom:1px solid var(--line)}
+.battle-queue li>span{flex:1;font-size:12px}
+.battle-queue label{font-size:9px;margin:0;width:52px;gap:3px}
+.battle-queue input{padding:5px;width:52px}
+.battle-queue button{padding:6px}
+.theatre{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0b1624;margin-top:24px}
+.theatre-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px}
+.theatre-heading h2{margin:6px 0}
+.theatre-controls{display:flex;flex-wrap:wrap;gap:10px}
+.theatre-stage{display:grid;grid-template-columns:minmax(250px,30%) minmax(0,1fr);height:540px;min-height:0}
+.theatre-stage[data-battle=false]{grid-template-columns:1fr}
+.theatre-stage>.boss-battle-panel{position:relative;inset:auto;width:100%;height:100%;min-height:0}
+.public-app .battle-brand{display:none}
+.public-app .battle-health small{display:inline}
+.theatre-stage>.sight-score{border:0;border-radius:0;margin:0;min-width:0;min-height:0;height:100%;padding:16px;background:white;color:#101a28;overflow:auto}
+.in-theatre .theatre-stage{height:calc(100vh - 400px);min-height:430px}
+.in-theatre .player-strip{padding-bottom:5px}
+.start-hint{padding:0 22px}
+.audio-settings,.history{margin-top:24px}
+.audio-settings summary{cursor:pointer}
+.audio-settings label{margin-top:18px;max-width:350px}
+.public-app label.check{flex-direction:row;align-items:center}
+.public-app input[type=checkbox]{width:auto}
+.history li{display:flex;gap:24px;margin:12px 0;color:#a6c0d4;font-size:13px}
+.public-app .error{color:#ff9ca9}
+@media(max-width:950px){.setup-columns{grid-template-columns:1fr}.welcome{gap:28px}.player-strip{flex-wrap:wrap}.player-xp{min-width:250px}.header-caption{display:none}.theatre-stage{grid-template-columns:30% 70%}.midi-card{align-items:stretch;flex-direction:column}}
+@media(max-width:650px){.public-app main{padding:20px 14px}.public-header{padding:0 16px}.brand{font-size:18px}.welcome{grid-template-columns:1fr;gap:20px}.welcome-fighters{height:200px}.welcome-fighters img{height:210px}.account-card,.setup-section{padding:20px}.public-steps{flex-direction:column;gap:0;margin-top:24px}.theatre-heading{align-items:flex-start;flex-direction:column}.theatre-stage{grid-template-columns:1fr;height:auto}.theatre-stage>.boss-battle-panel{height:360px}.theatre-stage>.sight-score{height:380px}.in-theatre .theatre-stage{height:auto}.compact-fields{flex-wrap:wrap}.compact-fields>label{flex-basis:140px}.history li{flex-direction:column;gap:4px}}
+.theatre .notation-broadcast > svg{max-width:none;width:auto}
+.theatre .notation-broadcast svg{overflow:visible;max-width:none}
+.theatre .notation-broadcast:not([data-broadcast-ready]){visibility:hidden}
+.theatre-stage>.sight-score{overflow:hidden}

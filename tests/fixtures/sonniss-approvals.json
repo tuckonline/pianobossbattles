@@ -1,0 +1,182 @@
+[
+  {
+    "id": "hero-swing-c74c8b4f19e8",
+    "status": "approved",
+    "source_sha256": "5af061af596532feef49c83274c98f26e4994aa2f4f47f573e59e075065df70b"
+  },
+  {
+    "id": "hero-swing-43fd323e4d32",
+    "status": "rejected",
+    "source_sha256": "81bc00b7592a0bc7cf34023cead68586e5a924743c294477820418590d4b1d6d"
+  },
+  {
+    "id": "hero-swing-4653dc3140dd",
+    "status": "rejected",
+    "source_sha256": "951f88dbd29e0ae00588469c83e68b0940a9fc887f59678a366decdac665198e"
+  },
+  {
+    "id": "hero-swing-613ba3b802f4",
+    "status": "approved",
+    "source_sha256": "21de605e1b3154980e32ebd312d4b4a2cbdb199470f6f64fe0ef3403acf15244"
+  },
+  {
+    "id": "hero-impact-7bf7d86bd14a",
+    "status": "approved",
+    "source_sha256": "ec264e08985af53e1ec0a8e232fc93848c451a961a16c5630c2250afd375c1c4"
+  },
+  {
+    "id": "hero-impact-9144ce08aa3c",
+    "status": "approved",
+    "source_sha256": "adbe3d9d5da0a987de3d4d845b62a4231862febf9ca673f8d1067fc1787eee00"
+  },
+  {
+    "id": "hero-impact-1967ee0fc861",
+    "status": "approved",
+    "source_sha256": "c60d03117c3e00aa38a121941c5f1beefd4bc195eba8b887af1bdbadbac00124"
+  },
+  {
+    "id": "hero-impact-227abd5b5c38",
+    "status": "approved",
+    "source_sha256": "d75988b9eab8e10dfbef9dc8f6297eec5c57b91e50fb09bc8b72273356a2e681"
+  },
+  {
+    "id": "boss-heavy-52ac12b9476a",
+    "status": "approved",
+    "source_sha256": "acbc8d2d58b21562556f6379bfbab92042fe01247cff6cf55beed6f59d5a1b32"
+  },
+  {
+    "id": "boss-heavy-2cbf2226df5b",
+    "status": "approved",
+    "source_sha256": "68d32787871840cb889d5c1f46d1687152757be4ed67acb1c5b495cb0c17479c"
+  },
+  {
+    "id": "boss-heavy-6e395828e7bd",
+    "status": "approved",
+    "source_sha256": "344c8a9a31205fd5842feea827a491d89528f7db1ee5b1ffd4a3a018e23395ef"
+  },
+  {
+    "id": "boss-heavy-a6340090f5ff",
+    "status": "rejected",
+    "source_sha256": "9ae80f5d33c8b717fd3e530473387fc49ad6009725ea4d98fec4654874ae9f5c"
+  },
+  {
+    "id": "boss-claw-d9e81941c29b",
+    "status": "rejected",
+    "source_sha256": "d9cf822943c9d92ff5df5722eae3f9548c40bf2e4daec0ad49e932a970572b8f"
+  },
+  {
+    "id": "boss-claw-85ca249c532a",
+    "status": "rejected",
+    "source_sha256": "a426ab7f7ec00b5f58283b04c884e8492f16b2029fd102666899dbd40e039e6c"
+  },
+  {
+    "id": "boss-claw-4da1c98cfad0",
+    "status": "rejected",
+    "source_sha256": "abfd2e3c5e1834ce613dbe9c9853b81eff0e41718b1924d397b84c9a97d0bf7e"
+  },
+  {
+    "id": "boss-claw-76eecf91897b",
+    "status": "approved",
+    "source_sha256": "6f6d12cf051d597e34f58b65bcceb454a4673a4b230065d90f93636b49ec9f48"
+  },
+  {
+    "id": "armour-1967ee0fc861",
+    "status": "approved",
+    "source_sha256": "c60d03117c3e00aa38a121941c5f1beefd4bc195eba8b887af1bdbadbac00124"
+  },
+  {
+    "id": "armour-7bf7d86bd14a",
+    "status": "approved",
+    "source_sha256": "ec264e08985af53e1ec0a8e232fc93848c451a961a16c5630c2250afd375c1c4"
+  },
+  {
+    "id": "armour-cb2891869fd3",
+    "status": "rejected",
+    "source_sha256": "b2d1b6aa9d4eafb1b1bb0f50530b129b5d14e9e54961d8077fc9fad70f6fbf2f"
+  },
+  {
+    "id": "armour-a6340090f5ff",
+    "status": "approved",
+    "source_sha256": "9ae80f5d33c8b717fd3e530473387fc49ad6009725ea4d98fec4654874ae9f5c"
+  },
+  {
+    "id": "hero-damage-b738b2a98143",
+    "status": "approved",
+    "source_sha256": "55cb8102db4d8728c2607279b4e381f27336db35bb966e5f4993c9ace2cd9ecd"
+  },
+  {
+    "id": "hero-damage-0669236062ac",
+    "status": "rejected",
+    "source_sha256": "606f7d8bdca261f6fee6a30e19fc8a760c469e599dc0747ecb272a24d4821a31"
+  },
+  {
+    "id": "hero-damage-34755dc8970d",
+    "status": "approved",
+    "source_sha256": "6a8dd187f0541b1c2433a5992278cdc1b6b2157e4937a0a94ee53c2203afeacd"
+  },
+  {
+    "id": "hero-damage-8b45485ad763",
+    "status": "approved",
+    "source_sha256": "2b2909e3002f3150f59d0187f2768fb8c5ee8c8419137a18f0a845c281465cb2"
+  },
+  {
+    "id": "boss-damage-ffffa19cc439",
+    "status": "approved",
+    "source_sha256": "e966d82597284abb798b01e9d4965d226d19d5beb7d68cda36be0ad6ef414488"
+  },
+  {
+    "id": "boss-damage-32f64afe2a75",
+    "status": "rejected",
+    "source_sha256": "63e6c8de4ba3b7231197158bc4b9e0f96cf9e50cb019f7bb6d05debea6281841"
+  },
+  {
+    "id": "boss-damage-3afb8ea6295e",
+    "status": "approved",
+    "source_sha256": "5cbfa96b0b5702b3898b543354a07bc3874126c5ac30625e400af1d8c71210d0"
+  },
+  {
+    "id": "boss-damage-1550583f46f6",
+    "status": "approved",
+    "source_sha256": "c2d573bb8880e8de6ff18160a59283e2e99ebe8bd74669458d83319a6c142639"
+  },
+  {
+    "id": "hero-finisher-613ba3b802f4",
+    "status": "approved",
+    "source_sha256": "21de605e1b3154980e32ebd312d4b4a2cbdb199470f6f64fe0ef3403acf15244"
+  },
+  {
+    "id": "hero-finisher-7fb97bf77501",
+    "status": "approved",
+    "source_sha256": "ce74c26069a84d55ba7c5fa7a01369ec3b38f88fc787b02ced9d7d1e02ffcc55"
+  },
+  {
+    "id": "hero-finisher-6edbe536e5fb",
+    "status": "approved",
+    "source_sha256": "3bf090678bb55da7d38f2bf76ac6a8d826f5245452a36d54666d2597c0be0299"
+  },
+  {
+    "id": "hero-finisher-24ee67afd0bb",
+    "status": "rejected",
+    "source_sha256": "db849b5c92d4bfa714d05b4a59b8d68ee395904f7a38a31f584cf8f877721976"
+  },
+  {
+    "id": "boss-finisher-6e395828e7bd",
+    "status": "approved",
+    "source_sha256": "344c8a9a31205fd5842feea827a491d89528f7db1ee5b1ffd4a3a018e23395ef"
+  },
+  {
+    "id": "boss-finisher-3e966b8e6064",
+    "status": "rejected",
+    "source_sha256": "c25fe59d7b6cec9c8b14d9ccd774ef11ff43d80a48c07624e5d3e33437fd0850"
+  },
+  {
+    "id": "boss-finisher-9ccf26b37de4",
+    "status": "rejected",
+    "source_sha256": "894f247e3a4a83e8f9763513502854dbe648951dbbfb588c03d9bef2c2de91c3"
+  },
+  {
+    "id": "boss-finisher-54c0b298c1c3",
+    "status": "approved",
+    "source_sha256": "3b87490901e201eaa2d57b65f304d69f00fc33584d7e6d6e5b827c7fbdb2818c"
+  }
+]

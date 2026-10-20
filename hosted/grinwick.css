@@ -1,0 +1,15 @@
+/* Boss-specific presentation. The original Colossus/TIME OUT CSS is untouched. */
+.battle-cinematic[data-boss="grinwick"] .cinematic-boss{width:34%;height:45%;top:10%;bottom:auto;right:18%;opacity:1}
+.battle-cinematic[data-boss="grinwick"] .cinematic-boss .battle-character{position:absolute;right:0;bottom:0;width:auto;height:100%;animation:none}
+.battle-cinematic[data-boss="grinwick"] .cinematic-boss canvas{animation:none}
+.battle-cinematic[data-boss="grinwick"].cinematic-defeat{--accent:#b4ec53;background:#152016}
+.battle-cinematic[data-boss="grinwick"].cinematic-defeat .cinematic-atmosphere{background:radial-gradient(ellipse at 70% 40%,#41632670,transparent 64%),linear-gradient(112deg,#170d22,transparent 70%,#0b160d)}
+.battle-cinematic[data-boss="grinwick"].cinematic-defeat .cinematic-slash{color:#c6f95b}
+.shorts-ending .battle-cinematic[data-boss="grinwick"] .cinematic-boss{width:44%;height:32%;top:12%;right:8%;bottom:auto}
+.shorts-ending .battle-cinematic[data-boss="grinwick"].cinematic-victory .cinematic-boss{height:23%;top:42%;right:18%;z-index:4}
+.battle-cinematic[data-boss="grinwick"] .cinematic-boss:after{content:"";position:absolute;bottom:-2%;right:0;width:90%;height:3%;border-radius:50%;background:radial-gradient(ellipse,#0008,transparent 70%);z-index:-1}
+.shorts-ending .battle-cinematic[data-boss="grinwick"].cinematic-victory .cinematic-hero{width:58%;left:0;height:55%;bottom:38%}
+.boss-battle-panel:has([data-boss="grinwick"]) .battle-health-boss{--actor-accent:#9fef49}
+.boss-battle-panel:has([data-boss="grinwick"]) .battle-health-boss .battle-hp-track span{background:linear-gradient(90deg,#4c8e30,#b6e969)}
+.boss-battle-panel:has([data-boss="grinwick"]) .battle-health-boss>div:first-child>span{color:#b6e969}
+.battle-stage[data-boss="grinwick"] .battle-fighter-boss[data-pressure="3"]:after{border-color:#9fef4950}

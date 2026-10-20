@@ -1,0 +1,27 @@
+import {describe,it,expect} from 'vitest';
+import {challengeHook,eventEvidence,rankHighlights,mappedInterval,shortsSessionSchema,type ShortsEvent,type ShortsSession} from '../hosted/shorts-core';
+import {createBattle} from '../hosted/boss-battle';
+import {defaultBossBattleConfig} from '../hosted/boss-config';
+const segment='99999999-9999-4999-8999-999999999999';
+const event=(kind:ShortsEvent['kind'],atMs=20000,extra:Partial<ShortsEvent>={}):ShortsEvent=>({id:kind,kind,atMs,segment,exercise:2001,title:'Schmitt 1',attempt:'attempt-1',combo:50,
+  hp:4,maxHp:30,bossHp:0,bossMax:100,nextDamage:4,shields:0,health:true,mode:'survival',bpm:80,loops:3,timeMs:null,progress:1,...extra});
+export const fixture=(events:ShortsEvent[]):ShortsSession=>({version:1,id:'11111111-1111-4111-8111-111111111111',revision:1,title:'Test recording',startedAt:'2026-10-19T00:00:00.000Z',status:'stopped',profile:'vertical-1080x1920',events:[event('marker',0,{id:'start',detail:'SYNC 1'}),...events,event('marker',40000,{id:'end',detail:'SYNC 2'})],segments:[{id:segment,startMs:0,endMs:42000,reason:'Test'}],anchors:[{markerId:'start',videoSeconds:8},{markerId:'end',videoSeconds:48}],edits:[],targetSeconds:30,maxSeconds:180,file:{name:'test.mp4',size:200,lastModified:1,duration:60,width:1080,height:1920}});
+describe('Shorts evidence and alignment',()=>{
+  it('uses actual fatal damage, shields and game mode for hooks',()=>{const b=createBattle({...defaultBossBattleConfig,enabled:true},100);b.playerHp=5;expect(challengeHook(b)).toBe('EVERY WRONG NOTE HURTS ME');b.playerHp=4;expect(challengeHook(b)).toContain('ONE MORE');b.shields=1;expect(challengeHook(b)).not.toContain('ONE MORE');b.config.gameMode='timeAttack';expect(challengeHook(b)).toBe('CAN I BEAT THE CLOCK?');});
+  it('uses actual enrage damage',()=>{const b=createBattle({...defaultBossBattleConfig,enabled:true,gameMode:'ultimateBoss'},100);b.phase='enraged';expect(eventEvidence(b).nextDamage).toBe(6);});
+  it('never frames disabled combat as a health challenge',()=>{expect(challengeHook(createBattle())).toContain('STREAK');});
+  it('ranks a clutch and last-second victory from real evidence',()=>{const h=rankHighlights(fixture([event('victory',20000,{timeMs:3200})]))[0];expect(h.reasons).toContain('low-remaining-hp');expect(h.reasons).toContain('actual-timer-under-five-seconds');expect(h.endMs).toBe(26500);});
+  it('does not label nonfatal HP as one hit from defeat',()=>{const h=rankHighlights(fixture([event('damage',20000,{hp:7,nextDamage:4})]))[0];expect(h.hook).not.toContain('ONE MORE');});
+  it('does not invent low-health highlights for time attack',()=>{expect(rankHighlights(fixture([event('damage',20000,{health:false})]))).toHaveLength(0);});
+  it.each(['victory','defeat','timeout'] as const)('keeps %s payoff and outcome',kind=>{const s=fixture([event(kind)]),h=rankHighlights(s)[0],m=mappedInterval(s,h);expect(h.event.kind).toBe(kind);expect(m.error).toBeUndefined();expect(m.end!-m.climax!).toBe(h.payoffMs/1000);});
+  it('deduplicates delivered events and near-identical moments deterministically',()=>{const e=event('victory');const a=rankHighlights(fixture([event('combo',19000),e,e]));expect(a).toHaveLength(1);expect(a).toEqual(rankHighlights(fixture([e,event('combo',19000),e])));});
+  it('does not merge outcomes of different attempts',()=>{expect(rankHighlights(fixture([event('defeat',19000,{attempt:'old'}),event('victory')]))).toHaveLength(2);});
+  it('detects improvement only against a prior failed equivalent exercise',()=>{const h=rankHighlights(fixture([event('defeat',10000,{attempt:'old',progress:.5}),event('victory')]))[0];expect(h.reasons).toContain('improved-after-failed-attempt');});
+  it('does not call an easier configuration a comeback',()=>{const h=rankHighlights(fixture([event('defeat',10000,{attempt:'old',progress:.5,conditions:'hard'}),event('victory',20000,{conditions:'easy'})]))[0];expect(h.reasons).not.toContain('improved-after-failed-attempt');});
+  it('maps monotonic time to video with a nonzero start offset',()=>{const s=fixture([event('victory')]),h=rankHighlights(s)[0];expect(mappedInterval(s,h).climax).toBe(28);});
+  it('requires two measured anchors',()=>{const s=fixture([event('victory')]);s.anchors.pop();expect(mappedInterval(s,rankHighlights(s)[0]).error).toContain('two sync');});
+  it('rejects mismatched clock rates and unrecorded payoff',()=>{const s=fixture([event('victory')]);s.anchors[1].videoSeconds=60;expect(mappedInterval(s,rankHighlights(s)[0]).error).toContain('disagree');s.anchors[1].videoSeconds=48;s.segments[0].endMs=21000;expect(mappedInterval(s,rankHighlights(s)[0]).error).toContain('payoff');});
+  it('rejects recordings with a pause between matched markers',()=>{const s=fixture([event('victory')]);s.events.splice(1,0,event('marker',10000,{id:'middle'}));s.anchors.push({markerId:'middle',videoSeconds:20});expect(mappedInterval(s,rankHighlights(s)[0]).error).toContain('discontinuity');});
+  it('does not align clips through a reconnect segment',()=>{const s=fixture([event('victory')]);s.events[1].segment=crypto.randomUUID();s.segments.push({id:s.events[1].segment,startMs:19000,endMs:42000,reason:'Reconnect'});expect(mappedInterval(s,rankHighlights(s)[0]).error).toContain('two sync');});
+  it('bounds persisted data and rejects corrupt timestamps',()=>{expect(shortsSessionSchema.safeParse(fixture([event('combo',NaN)])).success).toBe(false);});
+});

@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.env
+.local/
+test-results/
+playwright-report/
+*.tsbuildinfo
+dist/
+.wrangler/
+.sites-runtime/
+
+.env.*
+!.env.example
+.dev.vars*
+.public-data/
+

@@ -1,0 +1,6 @@
+.battle-anxiety{position:absolute;left:64%;top:-7%;width:20%;height:auto;overflow:visible;pointer-events:none;z-index:6}
+.battle-fighter[data-pressure="2"] .battle-anxiety,.battle-fighter[data-pressure="3"] .battle-anxiety{animation:pressure-symbol .25s ease-out both;animation-delay:var(--pressure-age,0ms)}
+.battle-fighter-boss[data-pressure="3"]:after{content:"";position:absolute;inset:10% 5% 5%;border:1px solid #b53e6550;border-radius:50%;pointer-events:none;animation:pressure-crimson 1.4s ease-out both;animation-delay:var(--pressure-age,0ms)}
+@keyframes pressure-symbol{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pressure-crimson{0%{opacity:0;transform:scale(.8)}30%{opacity:.7}100%{opacity:0;transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.battle-anxiety{animation:none!important}.battle-fighter-boss[data-pressure]:after{display:none}}

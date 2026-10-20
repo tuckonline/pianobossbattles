@@ -1,0 +1,169 @@
+html.obs-mode, .obs-mode body, .obs-mode #root {
+  margin: 0; width: 100%; height: 100%; background: transparent !important; overflow: hidden;
+}
+.obs-mode .skip { display: none; }
+.obs-canvas {
+  position: fixed; inset: 0; margin: 0; padding: 0; max-width: none;
+  color: #f3f7ff; font-family: Inter, "Segoe UI", sans-serif; background: transparent;
+}
+/* Half-height banner; retain the established width and camera boundary. */
+.obs-panel {
+  position: absolute; top: 12px; left: 24px; right: 24px;
+  height: 100px; box-sizing: border-box;
+  display: grid; grid-template-columns: minmax(0, 1fr) 170px 250px;
+  grid-template-rows: 18px 1fr; gap: 3px 20px; padding: 9px 20px 20px;
+  align-items: start; background: rgba(12, 23, 42, 0.96);
+  border: 1px solid #314766; border-top: 2px solid #579bff; border-radius: 10px;
+}
+.obs-panel > * { min-width: 0; }
+.obs-brand {
+  grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 7px;
+  color: #e2ecfa; font-size: 14px; line-height: 18px; font-weight: 600;
+}
+.obs-youtube { width: 24px; height: 18px; flex-shrink: 0; }
+.obs-label { color: #96abc7; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; line-height: 13px; font-weight: 600; }
+.obs-piece { grid-column: 1; grid-row: 2; }
+.obs-piece > .obs-label { display: none; }
+.obs-piece h1 {
+  font-size: 24px; line-height: 27px; letter-spacing: -.02em; margin: 0 0 2px;
+  font-weight: 650; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.obs-hands { display: flex; align-items: center; gap: 7px; line-height: 14px; }
+.obs-hands strong { color: #b8d6ff; font-size: 12px; font-weight: 500; }
+.obs-best, .obs-attempt { grid-row: 1 / 3; border-left: 1px solid #2a3b54; padding-left: 20px; }
+.obs-best { grid-column: 2; }
+.obs-attempt { grid-column: 3; }
+.obs-score { display: block; color: #8bbdff; font-size: 28px; line-height: 30px; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.obs-best p { margin: 1px 0 0; color: #a9bad2; font-size: 11px; line-height: 14px; }
+.obs-best br { display: none; }
+.obs-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2px; }
+.obs-metrics strong { display: block; font-size: 28px; line-height: 30px; font-variant-numeric: tabular-nums; }
+.obs-metrics span { display: block; margin-top: 1px; color: #a9bad2; font-size: 11px; line-height: 14px; }
+.obs-metrics .obs-errors { color: #ffb19e; }
+.obs-progress {
+  position: absolute; left: 20px; right: 480px; bottom: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.obs-progress > div:first-child { display: flex; gap: 7px; flex-shrink: 0; }
+.obs-progress .obs-label { display: none; }
+.obs-progress strong { font-size: 11px; line-height: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.obs-track { flex: 1; height: 3px; border-radius: 4px; background: #283b55; overflow: hidden; }
+.obs-track > div { height: 100%; background: #6caaff; transition: width .25s ease; }
+.obs-status {
+  position: absolute; right: 20px; bottom: 6px; max-width: 420px;
+  display: flex; align-items: center; gap: 6px; color: #8ca4c2; font-size: 10px; line-height: 14px;
+}
+.obs-live-dot, .obs-idle-dot { width: 5px; height: 5px; border-radius: 50%; background: #72afff; flex-shrink: 0; }
+.obs-idle-dot { background: #637992; }
+.obs-sync-error { color: #a44322; font-size: 14px; }
+@media (min-width: 1600px) {
+  .obs-panel { right: auto; width: min(1620px, calc(100% - 48px)); }
+}
+@media (max-width: 900px) {
+  .obs-panel { left: 12px; right: 12px; padding-inline: 12px; grid-template-columns: minmax(0, 1fr) 115px 175px; column-gap: 12px; }
+  .obs-best, .obs-attempt { padding-left: 12px; }
+  .obs-piece h1 { font-size: 20px; }
+  .obs-progress { left: 12px; right: 338px; }
+  .obs-status { right: 12px; max-width: 295px; }
+}
+@media (max-width: 560px) {
+  .obs-panel { height: auto; min-height: 180px; grid-template-columns: 1fr 1fr; grid-template-rows: 18px auto auto; padding-bottom: 27px; }
+  .obs-brand, .obs-piece { grid-column: 1 / -1; }
+  .obs-best { grid-column: 1; grid-row: 3; border: 0; padding: 0; }
+  .obs-attempt { grid-column: 2; grid-row: 3; }
+  .obs-progress { right: 12px; bottom: 22px; }
+  .obs-status { bottom: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { .obs-track > div { transition: none; } }
+
+/* This dedicated fixed viewport contains music only. Following translates the
+   notation inside it; browser scroll restoration cannot displace the score. */
+html.obs-score-mode {height:auto;min-height:100%;overflow-x:hidden;overflow-y:hidden;background:#fff!important;scrollbar-width:none;}
+.obs-score-mode body, .obs-score-mode #root {height:auto;min-height:100vh;overflow:visible;background:#fff!important;}
+.obs-score-canvas {position:fixed;inset:0;overflow:hidden;margin:0;padding:0;max-width:none;box-sizing:border-box;background:#fff;color:#18232b;min-height:100vh;}
+.obs-score-canvas .sight-score {margin:0;padding:0;border:0;overflow:visible;}
+.obs-score-canvas .schmitt-score-title {margin:0 0 10px;font-size:20px;}
+
+/* Broadcast fitting owns paper scale and positioning; all collections use the
+   same viewport, independent of the player's saved practice-page zoom. */
+.obs-score-canvas .notation-broadcast > svg {max-width:none;width:auto;}
+/* Verovio's nested SVG is a coordinate system, not the recording viewport.
+   Adaptive row placement can move ink outside its original paper dimensions.
+   Clip only at the fitted white score region, never inside the grand staff. */
+.obs-score-canvas .notation-broadcast svg {overflow:visible;max-width:none;}
+.obs-score-canvas .notation-broadcast:not([data-broadcast-ready]) {visibility:hidden;}
+
+/* One recording viewport; OBS owns its height. No camera-sized spacer, fixed
+   750px canvas, or page scrolling. Keep the legacy routes' geometry intact. */
+.obs-recording {
+  --recording-banner-height:112px;
+  display:grid;grid-template-rows:var(--recording-banner-height) minmax(0,1fr);
+  width:100%;height:100%;min-height:0;overflow:hidden;background:#fff;
+}
+.obs-recording .obs-panel {
+  position:relative;inset:auto;width:100%;max-width:none;height:100%;min-height:0;
+  margin:0;border-radius:0;padding:7px 16px 12px;grid-template-rows:20px minmax(0,1fr);
+  grid-template-columns:minmax(0,76fr) minmax(0,10.4fr) minmax(0,13.6fr);column-gap:12px;
+}
+.obs-recording .obs-panel:has(.game-hud) {
+  grid-template-columns:minmax(0,34fr) minmax(0,42fr) minmax(0,10.4fr) minmax(0,13.6fr);
+}
+.obs-recording .obs-panel .obs-piece h1 {font-size:30px;line-height:36px;margin-bottom:3px;}
+.obs-recording .obs-panel .obs-progress {left:16px;right:67%;bottom:5px;}
+.obs-recording .obs-panel > .game-hud {position:relative;display:block;grid-row:1/3;grid-column:2;}
+.obs-recording .obs-panel .game-level strong {font-size:22px;line-height:25px;}
+.obs-recording .obs-panel .game-level strong span {font-size:12px;}
+.obs-recording .obs-panel .game-level small,
+.obs-recording .obs-panel > .game-hud.game-expanded .game-level small {font-size:12px;line-height:16px;}
+.obs-recording .obs-panel .game-xp-track {box-sizing:border-box;height:8px;margin-top:3px;}
+.obs-recording .obs-panel .game-combo {display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:baseline;gap:8px;margin-top:3px;transform-origin:left center;}
+.obs-recording .obs-panel .game-combo strong {font-size:32px;line-height:34px;}
+.obs-recording .obs-panel .game-combo > span {font-size:13px;align-self:baseline;}
+.obs-recording .obs-panel .game-combo small {display:block;grid-column:auto;font-size:11px;line-height:14px;}
+.obs-recording .obs-panel .game-record-detail {position:absolute;top:5px;right:0;font-size:10px;}
+.obs-recording .obs-panel .obs-best,.obs-recording .obs-panel .obs-attempt {padding-left:12px;padding-top:5px;}
+.obs-recording .obs-panel .obs-metrics {gap:8px;}
+.obs-recording .obs-panel .obs-score,.obs-recording .obs-panel .obs-metrics strong {font-size:32px;line-height:37px;}
+.obs-recording .battle-hud,.obs-recording .battle-status {padding-block:5px;gap:3px;}
+.obs-recording-content {position:relative;min-width:0;min-height:0;overflow:hidden;background:#fff;}
+.obs-recording .obs-score-embedded {position:relative;inset:auto;width:100%;height:100%;min-height:0;}
+.obs-recording .obs-score-embedded .sight-score {position:absolute;inset:0;height:100%;min-height:0;overflow:hidden;}
+.obs-recording .obs-score-embedded.boss-mode .sight-score {left:var(--battle-width);}
+.obs-recording-waiting {display:grid;place-items:center;height:100%;color:#627085;font-size:16px;}
+.obs-recording-celebrations {position:absolute;top:0;right:0;width:min(460px,44%);height:var(--recording-banner-height);z-index:60;pointer-events:none;}
+.obs-recording-celebrations .game-celebration {
+  inset:5px 8px;width:auto;height:calc(100% - 10px);min-width:0;min-height:0;
+  margin:0;padding:8px 14px;gap:12px;animation-name:game-fade-in,game-fade-out;
+}
+.obs-recording-celebrations .game-emblem {flex:0 0 54px;width:54px;height:54px;}
+.obs-recording-celebrations .game-celebration strong {font-size:20px;}
+.obs-recording-celebrations .game-celebration p {margin:2px 0;font-size:11px;}
+.obs-recording-celebrations .game-milestone .game-emblem,
+.obs-recording-celebrations .game-milestone small {display:none;}
+.obs-recording > .game-summary {top:var(--recording-banner-height);bottom:12px;max-height:calc(100% - var(--recording-banner-height) - 12px);overflow:auto;z-index:50;}
+@media (max-width:1400px) {
+  .obs-recording .obs-panel {padding-inline:12px;column-gap:10px;}
+  .obs-recording .obs-panel:has(.game-hud) {grid-template-columns:minmax(0,31fr) minmax(0,39fr) minmax(0,13fr) minmax(0,17fr);}
+  .obs-recording .obs-panel .obs-piece h1 {font-size:25px;line-height:32px;}
+  .obs-recording .obs-panel .obs-progress {left:12px;right:70%;}
+  .obs-recording .obs-panel .obs-score,.obs-recording .obs-panel .obs-metrics strong {font-size:28px;}
+  .obs-recording .obs-panel .game-record-detail {position:static;font-size:9px;line-height:10px;}
+  .obs-recording .obs-panel .game-expanded .game-combo {margin-top:0;}
+}
+@media (max-width:1000px) {
+  .obs-recording {--recording-banner-height:180px;}
+  .obs-recording .obs-panel,.obs-recording .obs-panel:has(.game-hud) {height:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:20px 60px 65px;column-gap:16px;}
+  .obs-recording .obs-panel .obs-brand {grid-column:1;grid-row:1;}
+  .obs-recording .obs-panel .obs-piece {grid-column:1;grid-row:2;}
+  .obs-recording .obs-panel .obs-piece h1 {font-size:23px;line-height:29px;}
+  .obs-recording .obs-panel > .game-hud {grid-column:2;grid-row:1/3;}
+  .obs-recording .obs-panel .game-combo {grid-template-columns:auto minmax(0,1fr);gap:0 7px;}
+  .obs-recording .obs-panel .game-combo small {grid-column:1/-1;font-size:10px;}
+  .obs-recording .obs-panel .obs-best {grid-column:1;grid-row:3;border:0;padding:0;}
+  .obs-recording .obs-panel .obs-attempt {grid-column:2;grid-row:3;padding:0;border:0;}
+  .obs-recording .obs-panel .obs-score,.obs-recording .obs-panel .obs-metrics strong {font-size:26px;line-height:29px;}
+  .obs-recording .obs-panel .game-record-detail {font-size:8px;}
+  .obs-recording .obs-panel .obs-status {display:flex;font-size:9px;bottom:2px;}
+  .obs-recording .obs-panel .obs-progress {display:none;}
+  .obs-recording-celebrations {width:100%;height:100px;}
+}

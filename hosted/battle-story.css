@@ -1,0 +1,10 @@
+.battle-story-notice{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#b8ecff;font:700 clamp(10px,1.3vw,14px) system-ui;letter-spacing:.055em;animation:story-notice 2.6s both;pointer-events:none}
+.battle-story-critical{color:#ffadb8;text-shadow:0 0 9px #a72b4166}
+.battle-story-personalBest{color:#fae6a5}
+.shorts-combat .battle-story-notice{font-size:clamp(14px,2.1cqw,24px)}
+.battle-story-objective{position:absolute;top:12%;left:6%;right:6%;text-align:center;color:#d6f7ff;font:700 clamp(14px,2.5vw,28px) system-ui;letter-spacing:.04em}
+.battle-story-objective small{display:block;margin-top:10px;font-size:.55em;color:#adc1d7}
+.cinematic-story-summary{display:grid;gap:6px;margin-top:12px;color:inherit;font:600 clamp(11px,1.8cqw,22px) system-ui;letter-spacing:.04em}
+.shorts-ending .cinematic-story-summary{font-size:clamp(14px,2.8cqw,32px)}
+@keyframes story-notice{0%,100%{opacity:0}12%,85%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.battle-story-notice{animation:none}}

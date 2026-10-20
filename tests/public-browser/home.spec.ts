@@ -1,0 +1,167 @@
+import { test, expect, type Page } from "@playwright/test";
+import { defaultGameSettings } from "../../hosted/game-core";
+import { readFileSync } from "node:fs";
+import type { Exercise } from "../../hosted/sight-library";
+const catalog: Exercise[]=JSON.parse(readFileSync("public-app/catalog-seed.json","utf8"));
+import { noteGroups } from "../../hosted/sight-library";
+const id="a0000000-0000-4000-8000-000000000001";
+const user={id,email:"browser-test@example.test",email_confirmed_at:new Date().toISOString(),aud:"authenticated",role:"authenticated",user_metadata:{name:"Test Pianist"},app_metadata:{provider:"email",providers:["email"]},created_at:new Date().toISOString()};
+const token=[{alg:"HS256",typ:"JWT"},{sub:id,exp:Math.floor(Date.now()/1000)+3600,role:"authenticated"}].map(x=>Buffer.from(JSON.stringify(x)).toString("base64url")).join(".")+".fixture";
+const session={access_token:token,refresh_token:"fixture-only",expires_at:Math.floor(Date.now()/1000)+3600,expires_in:3600,token_type:"bearer",user};
+async function fixture(page:Page,signedIn=false) {
+  // Explicit UI fixtures only. Real SQL/RLS and reward behavior have separate tests.
+  await page.route("https://huxmltjtovpxxxupuxdg.supabase.co/auth/v1/**",async route=>{
+    const url=route.request().url();
+    await route.fulfill({json:url.includes("/user")?user:url.includes("/signup")?{user,session:null}:url.includes("/token")?session:{}});
+  });
+  await page.route("**/api/auth/session",r=>r.fulfill({json:{signedIn:true}}));
+  let settings=structuredClone(defaultGameSettings);
+  let snapshot: unknown=null;
+  settings.bossBattle.enabled=true;
+  const player=()=>({userId:id,xp:0,curveVersion:2,settings,best:0,sessionBest:0,exerciseBest:0,unlocks:[],celebrations:[]});
+  await page.route("**/api/platform",async route=>{
+    const c=route.request().postDataJSON();
+    if(c.action==="practiceExercise")return route.fulfill({json:catalog.find(x=>x.number===c.exerciseNumber)});
+    if(c.action==="battleStoryRecords"||c.action==="battleStorySave")return route.fulfill({json:[]});
+    if(c.action==="sightAttempt")return route.fulfill({json:{id:"fixture-attempt",exerciseNumber:c.exerciseNumber,hand:c.hand,accuracy:100,mistakes:0,createdAt:new Date().toISOString(),progress:{attempts:1,best:100}}});
+    if(c.action==="gameSettings")settings=c.settings;
+    await route.fulfill({json:player()});
+  });
+  await page.route("**/api/profile",r=>r.fulfill({json:{actor:user,history:[],attempts:[],victories:{count:0}}}));
+  await page.route("**/api/obs**",r=>{
+    if(r.request().url().includes("rtc=1"))return r.fulfill({json:{active:false,offers:[]}});
+    if(r.request().method()==="POST"){snapshot=r.request().postDataJSON().snapshot;return r.fulfill({json:{accepted:true}});}
+    return r.fulfill({json:{snapshot,gamePlayer:player(),updatedAt:Date.now(),attempts:0,best:null}});
+  });
+  await page.route("**/api/shorts**",r=>r.fulfill({json:[]}));
+  await page.addInitScript(({session,signedIn})=>{
+    if(signedIn)localStorage.setItem("sb-huxmltjtovpxxxupuxdg-auth-token",JSON.stringify(session));
+    const input={id:"test-midi",name:"Test piano",state:"connected",connection:"open",onmidimessage:null as null|((e:{data:Uint8Array;timeStamp:number})=>void),open:async()=>{},close:async()=>{}};
+    const probe=window as unknown as {midiRequests:number};probe.midiRequests=0;
+    Object.defineProperty(navigator,"requestMIDIAccess",{value:async()=>{probe.midiRequests++;return {inputs:new Map([["test-midi",input]]),onstatechange:null};}});
+    (window as unknown as {playNotes:(p:number[])=>void}).playNotes=(pitches:number[])=>{for(const pitch of pitches)input.onmidimessage?.({data:new Uint8Array([144,pitch,90]),timeStamp:performance.now()});};
+  },{session,signedIn});
+}
+test("public logged-out page, registration, login and password reset use Supabase",async({page})=>{
+  await fixture(page);
+  await page.goto("/");
+  await expect(page.getByRole("heading",{name:/Turn every note/})).toBeVisible();
+  await page.screenshot({path:"test-results/public-home-desktop.png",fullPage:true});
+  await page.getByRole("button",{name:"Create account",exact:true}).click();
+  await page.getByLabel("Player name").fill("New Pianist");await page.getByLabel("Email",{exact:true}).fill("new@example.test");await page.getByLabel("Password",{exact:true}).fill("Long-Test-Password-123");
+  const signup=page.waitForRequest(r=>r.url().includes("/signup"));
+  await page.getByRole("button",{name:"Create account",exact:true}).click();
+  expect((await signup).postDataJSON().data.name).toBe("New Pianist");
+  await expect(page.getByRole("status").filter({hasText:"verify your account"})).toBeVisible();
+  await page.screenshot({path:"test-results/public-registration.png",fullPage:true});
+  await page.getByRole("button",{name:"Log in",exact:true}).click();
+  await page.getByRole("button",{name:"Forgot password?"}).click();
+  const recovery=page.waitForRequest(r=>r.url().includes("/recover"));
+  await page.getByLabel("Email",{exact:true}).fill("new@example.test");await page.getByRole("button",{name:"Send reset link"}).click();
+  expect((await recovery).postDataJSON().email).toBe("new@example.test");
+  await expect(page.getByText(/If this address has an account/)).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:"test-results/public-home-mobile.png",fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole("button",{name:"Log in",exact:true}).click();
+  await page.getByLabel("Email",{exact:true}).fill("browser-test@example.test");
+  await page.getByLabel("Password",{exact:true}).fill("Long-Test-Password-123");
+  await page.getByRole("button",{name:"Log in",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Make it your battle."})).toBeVisible();
+  await page.locator(".sight-score svg").first().waitFor();
+  await page.locator(".sight-score").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1000); // Capture the loaded notation and sprite art, not loading placeholders.
+  await page.locator(".public-header").scrollIntoViewIfNeeded();
+  await page.screenshot({path:"test-results/public-player-mobile.png",fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole("button",{name:"Log out",exact:true}).click();
+  await expect(page.getByRole("heading",{name:/Welcome back/})).toBeVisible();
+});
+test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause and persistent score",async({page})=>{
+  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
+  await fixture(page,true);await page.goto("/");
+  await expect(page.getByRole("heading",{name:"Make it your battle."})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
+  await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
+  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeEnabled();
+  await page.getByRole("button",{name:/Grinwick Fast claws/}).click();
+  await page.getByLabel("Search pieces").fill("Schmitt Op. 16 · Exercise 2");
+  await page.getByRole("button",{name:"Add Schmitt Op. 16 · Exercise 2 to queue",exact:true}).click();
+  await page.getByRole("spinbutton",{name:"Loops"}).first().fill("2");
+  await expect(page.getByText("3 performances")).toBeVisible();
+  await page.getByRole("button",{name:"Move item 2 up"}).click();
+  await expect(page.locator(".battle-queue li").first()).toContainText("Exercise 2");
+  await page.getByRole("button",{name:"Move item 1 down"}).click();
+  await page.screenshot({path:"test-results/public-player-queue.png",fullPage:true});
+  await page.locator(".sight-score svg").first().waitFor();
+  await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.mountCheck="same");
+  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await expect(page.locator(".in-theatre")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Pause",exact:true})).toBeVisible();
+  await page.waitForTimeout(3500);
+  const before=await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp');
+  const exercise=catalog.find(x=>x.number===2001)!;
+  const pitches=noteGroups(exercise,"both").flatMap(g=>g.pitches);
+  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),pitches.slice(0,2));
+  await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(Number(before)-2);
+  const attempt=await page.locator("[data-battle-attempt]").getAttribute("data-battle-attempt");
+  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),[...pitches.slice(2,-2),pitches[0]]);
+  await expect(page.locator(".theatre-heading")).toContainText("Loop 2/2");
+  await expect(page.locator("[data-battle-attempt]")).toHaveAttribute("data-battle-attempt",attempt!);
+  await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(Number(before)-(pitches.length-2)-1);
+  await page.waitForTimeout(800); // Let the score crossfade and fitted layout settle before visual capture.
+  const bounds=await page.locator('.sight-score').evaluate(el=>({area:el.getBoundingClientRect().toJSON(),systems:[...el.querySelectorAll('.system')].map(x=>x.getBoundingClientRect().toJSON())}));
+  for(const ink of bounds.systems){
+    expect(ink.top).toBeGreaterThanOrEqual(bounds.area.top+15);
+    expect(ink.bottom).toBeLessThanOrEqual(bounds.area.bottom-15);
+    expect(ink.width).toBeGreaterThan(bounds.area.width*.5);
+  }
+  await page.screenshot({path:"test-results/public-theatre.png",fullPage:true});
+  await page.getByRole("button",{name:"Pause",exact:true}).click();
+  const pausedHP=await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp');
+  await page.evaluate(()=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes([50]));
+  expect(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp')).toBe(pausedHP);
+  await page.getByRole("button",{name:"Resume",exact:true}).click();
+  const nextNotes=noteGroups(catalog.find(e=>e.number===2002)!,"both").flatMap(g=>g.pitches);
+  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),[...pitches.slice(1),nextNotes[0]]);
+  await expect(page.locator(".theatre-heading h2")).toHaveText("Schmitt Op. 16 · Exercise 2");
+  await expect(page.locator("[data-battle-attempt]")).toHaveAttribute("data-battle-attempt",attempt!);
+  await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(Number(before)-(pitches.length-2)-pitches.length-1);
+  await page.getByRole("button",{name:"Return to setup"}).click();
+  await expect(page.locator(".sight-score")).toHaveAttribute("data-mount-check","same");
+  await expect(page.getByRole("button",{name:"Survival",exact:false})).toBeDisabled();
+  await page.getByRole("button",{name:"End Battle",exact:true}).click();
+  expect(errors).toEqual([]);
+  await page.waitForTimeout(600);
+  for(const [path,width,height] of [["recording",1920,750],["shorts",1080,1920]] as const){
+    await page.setViewportSize({width,height});await page.goto(`/obs/${path}`);
+    await expect(page.getByRole("complementary",{name:"Boss battle"})).toBeVisible();
+    await page.locator(".sight-score svg").first().waitFor();
+    await page.waitForTimeout(800);
+    await page.screenshot({path:`test-results/public-obs-${path}.png`});
+    expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
+  }
+});
+test("Victory holds over the mounted score and a deliberate new attempt dismisses it",async({page})=>{
+  await fixture(page,true);await page.goto("/");
+  await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
+  await page.getByRole("button",{name:"Remove item 1"}).click();
+  const exercise=catalog.find(e=>e.number===4001)!;
+  await page.getByLabel("Search pieces").fill(exercise.title!);
+  await page.getByRole("button",{name:`Add ${exercise.title} to queue`,exact:true}).click();
+  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await page.waitForTimeout(3500);
+  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(exercise,"both").flatMap(g=>g.pitches));
+  await expect(page.locator(".battle-cinematic")).toHaveAttribute("data-result","victory");
+  await expect(page.locator(".battle-cinematic")).toHaveAttribute("data-phase","holding",{timeout:15000});
+  await page.waitForTimeout(1000);
+  await expect(page.locator(".sight-score svg").first()).toBeAttached();
+  await page.screenshot({path:"test-results/public-victory.png",fullPage:true});
+  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await expect(page.locator(".battle-cinematic")).toHaveCount(0);
+  await expect(page.getByRole("status",{name:"Battle start countdown"})).toBeVisible();
+});
+test("real API rejects unsigned requests and cross-origin session writes",async({request})=>{
+  expect((await request.post("/api/platform",{data:{action:"gameState"},headers:{Origin:"http://localhost:5173"}})).status()).toBe(401);
+  expect((await request.post("/api/auth/session",{data:{},headers:{Origin:"https://untrusted.example"}})).status()).toBe(403);
+});

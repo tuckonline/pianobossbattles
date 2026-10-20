@@ -1,0 +1,15 @@
+# Repertoire imports
+
+## Pop! Goes the Weasel
+
+Owner-uploaded photograph, footer WP201. Traditional tune; this specific beginner arrangement has 16 bars in 3/4. `scripts/import-pop-goes-the-weasel.py` is the checked transcription, producing MusicXML and hand-assigned MIDI events together. RH melody has explicit quarter rests, dotted halves in bars 7 and 15, and D4 half/F4 quarter in bar 14. LH C3/E3/G3 chords in bars 3, 7, 11 and 15 tie into the following bar and must not be reattacked. Bar 13 is a staccato G-sharp4/A4 cluster played by LH over the RH; retain the treble engraving and override playing hand for highlighting/grading. Printed LH fingers are 2 on G-sharp and 1 on A. Include only clearly printed fingers. The score says Lively with no BPM, so 60 BPM is a practice starting point, not a source metronome marking. Photo retained at `/scores/repertoire/pop-goes-the-weasel-source.jpg`; exercise 7004 uses existing attempts/progress.
+
+For future pieces uploaded in this project, the owner requests interactive MIDI grading, not PDF-only entries. Add a checked MusicXML transcription and matching timed, hand-assigned sounding notes using the existing practice_exercises model. Keep the original PDF, difficulty and credits, and link from Repertoire to practice. Verify ties, rests, tuplets, chords and accidentals before publishing. Do not silently substitute an arrangement or ship an unverified OMR result. Omit uncertain fingerings (under 90% confidence); omit pieces that cannot be verified to the owner's 95% confidence threshold and report omissions.
+
+## Zelda Title Theme
+
+Original: owner-uploaded Pianotify PDF; Koji Kondo, piano arrangement by Torby Brand, Easy. 49 measures, 4/4, quarter note = 72. `zelda-omr.musicxml` is an uncorrected recognition draft, not a published score. `scripts/import-zelda.py` applies manually checked corrections, validates both staves' bar durations and tie continuity, and produces the interactive XML and event data. Missing whole notes, the bar 17 dotted half, bar 48 duration, bar 45/48 ties, and spurious bass key signature in bar 40 were corrected against the original. Arpeggiation is shown but chord pitches are graded without imposing a roll order. No fingering numbers are printed in this PDF.
+
+## Replacement: Zelda's Lullaby
+
+Replaces the active title-theme entry at the owner's request. Original Koji Kondo / Torby Brand score: 25 measures, 3/4, quarter note = 104. `scripts/import-lullaby.py` verifies all bar lengths and tie continuations. The recognition draft misassigned the final 8va to the left staff; corrected to the right hand in bars 24–25. Actual MIDI ending pitches are A5 C6 F6 A6 D6 B6 G7. Keep the printed ritardando as notation; practice/listen use the selected constant BPM. New exercise ID 7002 avoids mixing historical title-theme results with this piece. ID 7001 is archived, not erased. Its original assets and event fixture remain for historical reference. Difficulty remains Easy as requested for the replaced repertoire entry.

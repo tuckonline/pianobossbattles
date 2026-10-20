@@ -1,0 +1,191 @@
+.progress-save-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  border: 1px solid #d6e2ed;
+  border-radius: 8px;
+  background: #f6f9fc;
+  color: #29465e;
+  font-size: 13px;
+  min-height: 58px;
+}
+.progress-save-status .save-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #258469;
+  flex: none;
+}
+.progress-save-status.is-saving .save-dot,
+.progress-save-status.needs-sync .save-dot {
+  background: #b98224;
+}
+.progress-save-status small {
+  display: block;
+  color: #607489;
+  margin-top: 3px;
+  max-width: 800px;
+}
+.progress-save-status > a {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.progress-save-status button {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.progress-profile {
+  max-width: 1100px;
+  margin: auto;
+}
+.progress-profile > header {
+  padding: 14px 0 24px;
+}
+.progress-profile header h1 {
+  margin: 8px 0;
+  font-size: 34px;
+}
+.progress-profile header > p:last-child {
+  color: #607489;
+}
+.profile-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.profile-account h2,
+.profile-account p {
+  margin: 4px 0;
+}
+.profile-wide {
+  flex-basis: 100%;
+  padding-top: 14px;
+}
+.profile-level {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  background: #101d32;
+  color: #e7f1ff;
+  padding: 28px;
+  border-radius: 10px;
+  border-top: 3px solid #69bded;
+  margin: 20px 0;
+}
+.profile-level h2 {
+  font-size: 42px;
+  margin: 6px 0 18px;
+}
+.profile-level h2 span {
+  font-size: 16px;
+  font-weight: 500;
+  color: #a8c5df;
+  margin-left: 12px;
+}
+.profile-level p {
+  font-size: 13px;
+  color: #a8c5df;
+  margin: 12px 0 0;
+}
+.profile-level > p:last-child {
+  text-align: right;
+}
+.profile-xp-track {
+  grid-column: 1/-1;
+  height: 18px;
+  border: 1px solid #456080;
+  border-radius: 5px;
+  background: #1c304c;
+  overflow: hidden;
+}
+.profile-xp-track span {
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, #58d6e7, #6387ef, #b882e3, #edc18c);
+}
+.profile-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 16px;
+}
+.profile-achievements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.profile-achievement {
+  display: flex;
+  gap: 18px;
+  padding: 20px;
+  background: #101d32;
+  border: 1px solid #354b66;
+  border-radius: 10px;
+  color: #e7f1ff;
+  align-items: center;
+}
+.profile-achievement .achievement-art {
+  width: 88px;
+  height: 88px;
+  flex: none;
+}
+.profile-achievement h3 {
+  font-size: 17px;
+  margin: 6px 0;
+}
+.profile-achievement p,
+.profile-achievement small {
+  font-size: 13px;
+  color: #b5c8db;
+  margin: 6px 0;
+}
+.profile-achievement .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  color: #89d7e6;
+}
+.profile-achievement.locked {
+  background: #f4f7fa;
+  border-color: #d6e2ed;
+  color: #41556a;
+}
+.profile-achievement.locked p,
+.profile-achievement.locked small,
+.profile-achievement.locked .eyebrow {
+  color: #62778b;
+}
+.profile-achievement.locked .achievement-art {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+@media (max-width: 720px) {
+  .profile-achievements {
+    grid-template-columns: 1fr;
+  }
+  .profile-level {
+    padding: 18px;
+  }
+  .profile-level h2 span {
+    display: block;
+    margin: 8px 0;
+  }
+  .progress-save-status {
+    flex-wrap: wrap;
+  }
+  .profile-section-heading {
+    align-items: start;
+  }
+  .profile-account .badge {
+    white-space: normal;
+  }
+}
+
+.profile-account > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

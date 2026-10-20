@@ -1,0 +1,22 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
+import {noteGroups,type Exercise} from '../../hosted/sight-library';
+const ex=JSON.parse(readFileSync('hosted/data/repertoire.json','utf8'))[0] as Exercise;
+test('Repertoire offers MIDI grading and persists completed results',async({page})=>{
+ const id=`zelda-${Date.now()}`,headers={'oai-authenticated-user-id':id,'oai-authenticated-user-email':`${id}@example.test`};await page.setExtraHTTPHeaders(headers);
+ await page.goto('/student/repertoire');await page.getByRole('link',{name:'Practise with MIDI grading'}).click();
+ await expect(page.getByLabel('Exercise',{exact:true})).toHaveValue('7002');
+ await expect(page.locator('svg .note').first()).toBeAttached();
+ const xml=readFileSync('hosted/public/scores/repertoire/zeldas-lullaby.musicxml','utf8');
+ await expect(page.locator('svg .note')).toHaveCount((xml.match(/<pitch>/g)||[]).length);
+ await page.locator('svg').last().screenshot({path:'../../work/lullaby-render.png'});
+ await page.getByRole('button',{name:'Start MIDI practice',exact:true}).click();
+ await page.getByRole('button',{name:'Play C3',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Stop practice',exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Stop practice',exact:true}).click();
+ await page.getByRole('button',{name:'Listen',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Stop listening',exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Stop listening',exact:true}).click();
+ const r=await page.request.post('/api/platform',{headers:{...headers,origin:'http://127.0.0.1:8787'},data:{action:'sightAttempt',exerciseNumber:7002,hand:'both',played:noteGroups(ex,'both').flatMap(g=>g.pitches)}});expect(r.ok(),await r.text()).toBeTruthy();
+ await page.reload();await expect(page.getByRole('region',{name:'Collection progress',exact:true})).toContainText('1 learning');
+});

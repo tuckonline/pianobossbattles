@@ -1,0 +1,1512 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<score-partwise version="4.0">
+  <work>
+    <work-title>Czerny Op. 599 · No. 7</work-title>
+  </work>
+  <movement-title>Czerny Op. 599 · No. 7</movement-title>
+  <identification>
+    <creator type="composer">Carl Czerny</creator>
+    <encoding>
+      <encoding-date>2026-09-22</encoding-date>
+      <software>music21 v.10.5.0</software>
+      <supports element="beam" type="yes" />
+      <supports element="stem" type="yes" />
+      <supports element="accidental" type="yes" />
+      <supports attribute="new-system" element="print" type="yes" value="yes" />
+      <supports attribute="new-page" element="print" type="yes" value="yes" />
+    </encoding>
+  </identification>
+  <defaults>
+    <scaling>
+      <millimeters>210</millimeters>
+      <tenths>1292</tenths>
+    </scaling>
+    <page-layout>
+      <page-height>1827</page-height>
+      <page-width>1292</page-width>
+      <page-margins>
+        <left-margin>92</left-margin>
+        <right-margin>92</right-margin>
+        <top-margin>92</top-margin>
+        <bottom-margin>92</bottom-margin>
+      </page-margins>
+    </page-layout>
+    <system-layout>
+      <system-margins>
+        <left-margin>75</left-margin>
+        <right-margin>0</right-margin>
+      </system-margins>
+      <system-distance>120</system-distance>
+    </system-layout>
+  </defaults>
+  
+  
+  
+  <part-list>
+    <score-part id="P1">
+      <part-name>Klavier</part-name>
+      <score-instrument id="Ic38b4c45cdc8f6083e04d310fb0c3d3b">
+        <instrument-name>Piano (2)</instrument-name>
+      </score-instrument>
+    </score-part>
+  </part-list>
+  <!--=========================== Part 1 ===========================-->
+  <part id="P1">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1" width="314">
+      <print>
+        <staff-layout number="1" />
+      </print>
+      <attributes>
+        <divisions>10080</divisions>
+        <key color="#000000">
+          <fifths>0</fifths>
+          <mode>major</mode>
+        </key>
+        <time color="#000000">
+          <beats>4</beats>
+          <beat-type>4</beat-type>
+        </time>
+        <staves>2</staves>
+        <clef color="#000000" number="1">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+        <clef number="2">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="77" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="73" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="138" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="134" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="198" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="194" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="258" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="254" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="77" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="73">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>2</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2" width="219">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="48" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="48" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-5">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 3 ==========================-->
+    <measure implicit="no" number="3" width="255">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="79" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="75" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="139" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="135" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="199" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="195" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="135" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 4 ==========================-->
+    <measure implicit="no" number="4" width="219">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>2</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 5 ==========================-->
+    <measure implicit="no" number="5" width="302">
+      <print new-system="yes">
+        <staff-layout number="1" />
+      </print>
+      <attributes>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="61" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="57" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="122" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="118" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="184" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="180" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="245" default-y="47" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="241" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <attributes>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="61" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="57" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="180" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 6 ==========================-->
+    <measure implicit="no" number="6" width="223">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="123" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="119" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="123" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="119" default-y="-5">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 7 ==========================-->
+    <measure implicit="no" number="7" width="260">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="80" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="76" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="141" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="137" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="202" default-y="47" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="198" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="137" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 8 ==========================-->
+    <measure implicit="no" number="8" width="245">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>1</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="119" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <barline location="right">
+        <bar-style>light-light</bar-style>
+      </barline>
+    </measure>
+    <!--========================= Measure 9 ==========================-->
+    <measure implicit="no" number="9a" width="314">
+      <print new-system="yes">
+        <staff-layout number="1" />
+      </print>
+      <attributes>
+        <key color="#000000">
+          <fifths>0</fifths>
+          <mode>major</mode>
+        </key>
+        <time color="#000000">
+          <beats>4</beats>
+          <beat-type>4</beat-type>
+        </time>
+        <clef color="#000000">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="77" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="73" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="138" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="134" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="198" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="194" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="258" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="254" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <attributes>
+        <key color="#000000">
+          <fifths>0</fifths>
+          <mode>major</mode>
+        </key>
+        <time color="#000000">
+          <beats>4</beats>
+          <beat-type>4</beat-type>
+        </time>
+        <clef color="#000000" number="2">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="77" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="73">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>2</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 10 =========================-->
+    <measure implicit="no" number="10a" width="219">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="48" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="48" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-5">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 11 =========================-->
+    <measure implicit="no" number="11a" width="255">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="79" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="75" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="139" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="135" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="199" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="195" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="135" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 12 =========================-->
+    <measure implicit="no" number="12a" width="219">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="121" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="117" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>2</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 13 =========================-->
+    <measure implicit="no" number="13a" width="302">
+      <print new-system="yes">
+        <staff-layout number="1" />
+      </print>
+      <attributes>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="61" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="57" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="122" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="118" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="184" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="180" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="245" default-y="47" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="241" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <attributes>
+        <staff-details print-object="yes" />
+      </attributes>
+      <direction>
+        <direction-type>
+          <words default-x="61" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="57" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="180" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 14 =========================-->
+    <measure implicit="no" number="14a" width="223">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="123" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="119" default-y="-20">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="123" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="119" default-y="-5">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 15 =========================-->
+    <measure implicit="no" number="15a" width="260">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">4</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-20">
+        <pitch>
+          <step>F</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="80" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">3</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="76" default-y="-20">
+        <pitch>
+          <step>E</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="141" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">2</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="137" default-y="-20">
+        <pitch>
+          <step>D</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <direction>
+        <direction-type>
+          <words default-x="202" default-y="47" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="198" default-y="-20">
+        <pitch>
+          <step>G</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>10080</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="137" default-y="5">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+    </measure>
+    <!--========================= Measure 16 =========================-->
+    <measure implicit="no" number="16a" width="245">
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="42" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">1</words>
+        </direction-type>
+        <staff>1</staff>
+      </direction>
+      <note color="#000000" default-x="15">
+        <pitch>
+          <step>C</step>
+          <octave>6</octave>
+        </pitch>
+        <duration>40320</duration>
+        <voice>1</voice>
+        <type>whole</type>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>1</staff>
+      </note>
+      <backup>
+        <duration>40320</duration>
+      </backup>
+      <direction>
+        <direction-type>
+          <words default-x="19" default-y="15" font-family="Palatino" font-size="6.4776" font-style="normal" font-weight="bold" justify="left" valign="middle">5</words>
+        </direction-type>
+        <staff>2</staff>
+      </direction>
+      <note color="#000000" default-x="15" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <note color="#000000" default-x="119" default-y="-15">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>20160</duration>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notehead color="#000000" parentheses="no">normal</notehead>
+        <staff>2</staff>
+      </note>
+      <barline location="right">
+        <bar-style>light-light</bar-style>
+      </barline>
+    </measure>
+  </part>
+</score-partwise>
