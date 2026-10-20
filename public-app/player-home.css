@@ -147,7 +147,7 @@
 .authenticated-app .setlist-title{margin-bottom:12px}
 .authenticated-app .battle-preview .battle-stage{top:94px;height:calc(100% - 94px)}
 .authenticated-app .battle-preview .theatre-stage>.sight-score{background:#071e32;border-color:#205b7e}
-.authenticated-app .battle-preview .notation-broadcast>svg{filter:invert(1) hue-rotate(180deg)}
+
 .authenticated-app .battle-summary dl>div{padding-block:12px;min-height:50px}
 .authenticated-app .battle-summary .sequence-review{margin:10px 0;padding:0}
 .authenticated-app .battle-summary .readiness{margin:12px 0 0}

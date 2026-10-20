@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element -- Independent Vite SPA. */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { User } from "@supabase/supabase-js";
+import {notationPresets,defaultNotationPreset,type NotationPreset} from "../src/components/music/notation-presets";
+import "./notation-appearance.css";
 import { supabase, syncServerSession } from "./supabase";
 import { useMusicCatalog, type CatalogExercise } from "./catalog";
 import { collectionName } from "./music-labels";
@@ -78,11 +80,14 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const [logoutBusy,setLogoutBusy]=useState(false);
   const settings=game.player.settings, config=settings.bossBattle;
   useBattleAudioOutput(config,game.player.userId,"practice");
+  const notationPreset=settings.notationPreset??defaultNotationPreset, palette=notationPresets[notationPreset];
+  const notationStyle={'--notation-paper':palette.paper,'--notation-ink':palette.ink,'--notation-current':palette.current,'--notation-correct':palette.correct,'--notation-incorrect':palette.incorrect} as CSSProperties;
   const mode=config.enabled?config.gameMode:"practice", level=levelInfo(game.player.xp,game.player.curveVersion);
   const selectedMode=modes.find(m=>m.id===mode)!, opponent=bossProfile(config.bossId);
   const cinematic=usePracticeCinematicActive(),midiSupported=typeof navigator.requestMIDIAccess==="function";
-  const categories=useMemo(()=>[...new Set(catalog.filter(e=>e.available).map(e=>e.collection??"sight-reading"))].sort(),[catalog]);
-  const filtered=useMemo(()=>catalog.filter(e=>e.available&&(!category||e.collection===category)&&`${title(e)} ${e.composer??""} ${e.collection??""}`.toLowerCase().includes(search.toLowerCase())),[category,search,catalog]);
+  const categories=useMemo(()=>[...new Set(catalog.filter(e=>e.available&&e.published!==false).map(e=>e.collection??"sight-reading"))].sort(),[catalog]);
+  const activeCategory=categories.includes(category)?category:"";
+  const filtered=useMemo(()=>catalog.filter(e=>e.available&&e.published!==false&&(!activeCategory||e.collection===activeCategory)&&`${title(e)} ${e.composer??""} ${e.collection??""}`.toLowerCase().includes(search.toLowerCase())),[activeCategory,search,catalog]);
   const settingSummary=modeSettingSummary(config,hand);
   const unavailable=queue.some(e=>!catalog.find(p=>p.number===e.exercise.number)?.available);
   // Keep the currently mounted score's definition across publication refreshes.
@@ -116,7 +121,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
       catch(e){setNotice((e as Error).message);void refreshLibrary().catch(()=>{});}finally{setAuthorizing(false);}
     };
     const preview=view==="preview"||c.running;
-    return <div className={`player-home ${theatre?"in-theatre":"v2-builder"}`}>
+    return <div className={`player-home ${theatre?"in-theatre":"v2-builder"}`} data-notation-preset={notationPreset} style={notationStyle}>
       <header className="player-header">
         <a href="/" className="player-brand" onClick={e=>{e.preventDefault();if(!c.running){setTheatre(false);navigate("setup");}}}><PianoMark/><span>Piano Boss Battles<small>PRACTICE MUSIC. DEFEAT BOSSES.</small></span></a>
         <section className="player-strip" aria-label="Player profile">
@@ -147,7 +152,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
           </fieldset>
         </section>
         <section className="setup-section setlist-panel"><fieldset disabled={c.running||authorizing}>
-          <div className="setlist-title"><Icon name="music"/><div><h2>Build your setlist.</h2><small>Choose the pieces you’ll play in this battle.</small></div><label>Collection<select value={category} onChange={e=>setCategory(e.target.value)}><option value="">All collections</option>{categories.map(x=><option key={x} value={x}>{collectionName(x)}</option>)}</select></label></div>
+          <div className="setlist-title"><Icon name="music"/><div><h2>Build your setlist.</h2><small>Choose the pieces you’ll play in this battle.</small></div><label>Collection<select value={activeCategory} onChange={e=>setCategory(e.target.value)}><option value="">All collections</option>{categories.map(x=><option key={x} value={x}>{collectionName(x)}</option>)}</select></label></div>
           <label className="library-search"><span className="sr-only">Search pieces</span><input type="search" placeholder="Search pieces (Schmitt, Hanon, Beethoven…)" value={search} onChange={e=>setSearch(e.target.value)}/></label>
           <div className="music-list" aria-label="Song and exercise library">{filtered.map(e=><div key={e.number}><div><strong>{title(e)}</strong><small>{[e.composer,collectionName(e.collection??"sight-reading")].filter(Boolean).join(" · ")}</small></div><button aria-label={`Add ${title(e)} to queue`} onClick={()=>add(e)}>＋</button></div>)}{!filtered.length&&<p>No matching pieces. Try another search or collection.</p>}</div>
           <div className="queue-heading"><h3><Icon name="list"/>Your battle queue</h3><span>{queue.length} {queue.length===1?"piece":"pieces"} · {performances} performances</span></div>
@@ -176,6 +181,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         <aside className="setup-section battle-summary" hidden={theatre} aria-label="Your battle setup">
           <div className="summary-heading"><span className="eyebrow">YOUR BATTLE SETUP</span><button disabled={c.running} onClick={()=>navigate("setup")}>Edit Setup</button></div>
           <dl><div><dt><Icon name={selectedMode.icon}/>Game mode</dt><dd>{selectedMode.title}<small>{selectedMode.description}</small></dd></div><div><dt><img src={opponent.portrait} alt=""/>Boss</dt><dd>{opponent.id==="grinwick"?"Grinwick":opponent.name}<small>{mode==="practice"?"No battle in Practice mode":opponent.description}</small></dd></div><div><dt><Icon name="music"/>Music</dt><dd>{queue.length===1?title(queue[0].exercise):`${queue.length} pieces in your chain`}<small>{queue.length===1?collectionName(queue[0].exercise.collection??"sight-reading"):"Play in your chosen order"}</small></dd></div>{settingSummary.map(s=><div key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}{timePreview&&<div><dt>{timePreview.label}</dt><dd>{timePreview.value}</dd></div>}<div><dt>Setlist</dt><dd>{queue.length} {queue.length===1?"piece":"pieces"}<small>{performances} total performances</small></dd></div></dl>
+          <fieldset className="notation-appearance" disabled={!game.ready}><legend>Notation Appearance</legend><div>{Object.entries(notationPresets).map(([id,p])=><button type="button" key={id} aria-pressed={notationPreset===id} onClick={()=>void gameClient.notationAppearance(id as NotationPreset)}><span aria-hidden="true" style={{background:p.paper,color:p.ink}}>♫</span>{p.label}</button>)}</div><small>Your display only. OBS appearance stays unchanged.</small></fieldset>
           {queue.length>1&&<details className="sequence-review"><summary>Review full sequence</summary><ol>{queue.map((e,i)=><li key={i}>{title(e.exercise)}<small>{e.loops} {e.loops===1?"loop":"loops"}</small></li>)}</ol></details>}
           {!c.running?<button className="primary start-button" disabled={!!missing||c.saving||authorizing} onClick={start}><Icon name="swords"/>Start Battle<Icon name="arrow"/></button>:<><button className="primary start-button" onClick={()=>{if(c.paused)c.pause();setTheatre(true);}}>Return to Battle</button><button className="end-preview" onClick={c.stop}>End Battle</button></>}
           <p className="readiness" role="status">{c.running?"Your battle is paused here. Return when you’re ready.":missing||"Everything looks good. Start Battle when you’re ready."}</p>

@@ -718,6 +718,9 @@ class GameClient {
     else if(!this.state.battle.pressure)this.beginPressure(null);
     await this.saveSettings(settings);
   }
+  async notationAppearance(notationPreset:GameSettings['notationPreset']) {
+    await this.saveSettings({...this.state.player.settings,notationPreset});
+  }
   async shortsDisplay(display:GameSettings['shortsDisplay']) {
     // Presentation preferences never configure, reset or advance a battle.
     await this.saveSettings({...this.state.player.settings,shortsDisplay:display});

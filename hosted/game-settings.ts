@@ -4,6 +4,7 @@ import { z } from "zod";
 import { bossConfigSchema, defaultBossBattleConfig } from "./boss-config";
 import { defaultGameSettings, type GameSettings } from "./game-core";
 export const gameSettingsSchema = z.object({
+  notationPreset: z.enum(['classic','studio','slate','night']).default('studio'),
   shortsDisplay:shortsDisplaySchema.default(defaultShortsDisplay),
   cinematics: cinematicSettingsSchema.default(defaultCinematicSettings),
   bossBattle: bossConfigSchema.default(defaultBossBattleConfig),

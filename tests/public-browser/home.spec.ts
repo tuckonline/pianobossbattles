@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { defaultGameSettings } from "../../hosted/game-core";
+import {notationPresets} from "../../src/components/music/notation-presets";
 import {readFileSync} from 'node:fs';
 import {catalog as authoredCatalog} from '../../public-app/server-catalog';
 const catalog=authoredCatalog.filter(e=>e.collection!=='repertoire-archived').map(e=>e.notationUrl?{...e,notationXml:readFileSync('hosted/public'+e.notationUrl,'utf8'),notationUrl:undefined}:e);
@@ -15,7 +16,12 @@ async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) 
     await route.fulfill({json:url.includes("/user")?user:url.includes("/signup")?{user,session:null}:url.includes("/token")?session:{}});
   });
   await page.route("**/api/auth/session",r=>r.fulfill({json:{signedIn:true}}));
-  await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:true}:{admin,pieces:catalog.map(e=>({...e,available:true}))}}));
+  await page.route('**/api/music**',r=>{
+    if(r.request().url().includes('/authorize'))return r.fulfill({json:{authorized:true}});
+    const etag='"fixture-catalog-'+admin+'"';
+    if(r.request().headers()['if-none-match']===etag)return r.fulfill({status:304,headers:{etag}});
+    return r.fulfill({headers:{etag},json:{admin,pieces:catalog.map(e=>({...e,available:true}))}});
+  });
   let settings=structuredClone(defaultGameSettings);
   let snapshot: unknown=null;
   settings.bossBattle.enabled=true;
@@ -187,6 +193,7 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
   await page.locator(".sight-score svg").first().waitFor();
   await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.mountCheck="same");
+  await page.getByRole("button",{name:"Slate Focus",exact:true}).click();
   await page.getByRole("button",{name:"Start Battle",exact:true}).click();
   await expect(page.locator(".in-theatre")).toBeVisible();
   await expect(page.getByRole("button",{name:"Pause",exact:true})).toBeVisible();
@@ -474,4 +481,78 @@ for(const mode of ['Practice','Survival','Time Attack','Ultimate Boss'])test(`${
   }
   await page.getByRole('button',{name:'End Battle',exact:true}).click();
   await expect(page.locator('.player-xp [role="status"]')).toHaveText('All progress saved');
+});
+
+
+test('publication changes refresh open tabs immediately and other clients without focus',async({page,context})=>{
+ await fixture(page,true);
+ let available=true;
+ const respond=(r:import('@playwright/test').Route)=>{return r.fulfill({json:{admin:false,pieces:catalog.map(e=>e.number===2001&&!available?{number:e.number,title:e.title,collection:e.collection,right:[],left:[],available:false}:{...e,available:true})}});};
+ await page.route('**/api/music**',respond);
+ await page.goto('/');
+ const add=page.getByRole('button',{name:'Add Schmitt Op. 16 · Exercise 1 to queue',exact:true});
+ await expect(add).toBeVisible();
+ const other=await context.newPage();await fixture(other,true,true,true);
+ await other.route('**/api/admin/music',async r=>{
+  if(r.request().method()==='POST')available=r.request().postDataJSON().published;
+  await r.fulfill({json:{collections:[{id:'schmitt-op16',name:'Schmitt Op. 16',published:available,total:1,available:Number(available)}],pieces:[]}});
+ });
+ await other.goto('/admin/music');
+ await other.getByRole('button',{name:'Publish Schmitt Op. 16 collection',exact:true}).click();
+ await expect(other.getByRole('status')).toContainText('Publication settings saved.');
+ await expect(add).toHaveCount(0,{timeout:1500});
+ await expect(page.locator('.battle-queue')).toContainText('Unavailable');
+ await other.close();
+ // Independent client/server update: no local signal and no focus event.
+ available=true;
+ await expect(add).toBeVisible({timeout:4500});
+ await expect(page.locator('.battle-queue')).not.toContainText('Unavailable');
+});
+
+test('notation presets preserve engraving, feedback, saved preference and OBS styling',async({page,context})=>{
+ test.setTimeout(120000);
+ await fixture(page,true);
+ const samples=[catalog.find(e=>/Ode to Joy/i.test(e.title??''))!,catalog.find(e=>e.number===2007)!,catalog.find(e=>e.title==='Hanon No. 1')!];
+ expect(samples.every(Boolean)).toBe(true);
+ const captures:{label:string;image:string}[]=[];
+ for(const sample of samples){
+  await page.goto('/?music='+sample.number+'&view=preview');
+  const svg=page.locator('.sight-score .notation > svg').first();await expect(svg).toBeVisible({timeout:15000});
+  await page.waitForTimeout(300);
+  const before=await svg.evaluate(el=>{el.setAttribute('data-theme-mount','same');return {box:el.getBoundingClientRect().toJSON(),notes:el.querySelectorAll('.note').length};});
+  for(const [id,p] of Object.entries(notationPresets)){
+   await page.getByRole('button',{name:p.label,exact:true}).click();
+   await expect(page.locator('[data-notation-preset]')).toHaveAttribute('data-notation-preset',id);
+   await expect(svg).toHaveAttribute('data-theme-mount','same');
+   const actual=await svg.evaluate(el=>({box:el.getBoundingClientRect().toJSON(),notes:el.querySelectorAll('.note').length,filter:getComputedStyle(el).filter,ink:getComputedStyle(el.querySelector('.staff path')!).stroke}));
+   for(const k of ['width','height','x','y'])expect(Math.abs(actual.box[k]-before.box[k])).toBeLessThan(1);expect(actual.notes).toBe(before.notes);expect(actual.filter).toBe('none');
+   const rgb=(hex:string)=>'rgb('+[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(', ')+')';
+   expect(actual.ink).toBe(rgb(p.ink));
+   await expect(page.locator('.sight-score')).toHaveCSS('background-color',rgb(p.paper));
+   if(sample===samples[1])captures.push({label:p.label,image:(await page.locator('.sight-score').screenshot()).toString('base64')});
+   await page.setViewportSize({width:390,height:844});
+   await expect(svg).toBeVisible();
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+   await page.setViewportSize({width:1440,height:1100});await page.waitForTimeout(300);
+  }
+ }
+ await page.reload();await expect(page.getByRole('button',{name:'Night Mode',exact:true})).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.locator('.in-theatre')).toHaveAttribute('data-notation-preset','night');
+ await page.waitForTimeout(3500);
+ const current=page.locator('.sight-score .practice-note-current').first();await expect(current).toBeVisible();
+ await expect(current).toHaveCSS('color','rgb(57, 223, 255)');
+ const pitches=noteGroups(samples[2],'both')[0].pitches;
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),pitches);
+ await expect(page.locator('.sight-score .practice-note-correct').first()).toHaveCSS('color','rgb(100, 229, 185)');
+ await page.getByRole('button',{name:'End Battle',exact:true}).click();
+ for(const path of ['recording','shorts']){
+  await page.goto('/obs/'+path);await expect(page.locator('.sight-score svg').first()).toBeVisible();
+  expect(await page.locator('[data-notation-preset]').count()).toBe(0);
+  expect(await page.locator('.notation').first().evaluate(el=>getComputedStyle(el).getPropertyValue('--notation-paper'))).toBe('');
+ }
+ const comparison=await context.newPage();await comparison.setViewportSize({width:1440,height:660});
+ await comparison.setContent('<body style="margin:0;background:#081727;color:#e8f7ff;font-family:Arial"><h1 style="margin:20px;font-size:22px">Notation Appearance · Schmitt No. 7 · Both hands</h1><main style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 20px">'+captures.map(c=>'<section><h2 style="font-size:16px">'+c.label+'</h2><img style="width:100%" src="data:image/png;base64,'+c.image+'"></section>').join('')+'</main></body>');
+ await comparison.screenshot({path:'test-results/notation-presets-comparison.png',fullPage:true});await comparison.close();
 });

@@ -1,0 +1,19 @@
+/* Personal display only: OBS has no data-notation-preset ancestor. No engraving,
+   filters, layout changes or SVG replacement are needed when colors change. */
+.authenticated-app .player-home[data-notation-preset] .theatre-stage > .sight-score {
+  background:var(--notation-paper); color:var(--notation-ink);
+}
+[data-notation-preset] .notation {color:var(--notation-ink)}
+[data-notation-preset] .notation svg {color:inherit;fill:currentColor;stroke:currentColor}
+[data-notation-preset] .notation [fill]:not([fill="none"]) {fill:currentColor}
+[data-notation-preset] .notation [stroke]:not([stroke="none"]) {stroke:currentColor}
+[data-notation-preset] .notation .practice-note-current {color:var(--notation-current);fill:currentColor;stroke:currentColor}
+[data-notation-preset] .notation .practice-note-correct {color:var(--notation-correct);fill:currentColor;stroke:currentColor}
+[data-notation-preset] .notation .practice-note-incorrect {color:var(--notation-incorrect);fill:currentColor;stroke:currentColor}
+.authenticated-app .notation-appearance {margin:14px 0;padding:0;border:0}
+.authenticated-app .notation-appearance legend {font-size:13px;font-weight:600;margin-bottom:8px}
+.authenticated-app .notation-appearance > div {display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.authenticated-app .notation-appearance button {display:flex;align-items:center;gap:7px;padding:8px;font-size:12px;text-align:left}
+.authenticated-app .notation-appearance button[aria-pressed="true"] {border-color:#39dfff;background:#0b3349;box-shadow:inset 0 0 0 1px #39dfff}
+.authenticated-app .notation-appearance button span {display:grid;place-items:center;flex:none;width:25px;height:25px;border-radius:4px;font-size:20px}
+.authenticated-app .notation-appearance > small {display:block;margin-top:8px;font-size:11px;color:#9bb9cd}

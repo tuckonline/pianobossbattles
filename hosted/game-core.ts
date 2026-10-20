@@ -437,6 +437,7 @@ export class CelebrationQueue {
   }
 }
 export const defaultGameSettings = {
+  notationPreset: 'studio' as import('../src/components/music/notation-presets').NotationPreset,
   shortsDisplay: defaultShortsDisplay,
   cinematics: defaultCinematicSettings,
   bossBattle: defaultBossBattleConfig,

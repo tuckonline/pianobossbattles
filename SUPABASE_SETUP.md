@@ -289,3 +289,35 @@ and dedicated transactional email remain prelaunch requirements.
 
 - [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords)
 - [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
+
+
+### Notation appearance and publication refresh
+
+Personal notation appearance is stored in the existing `game_players.settings`
+JSON (`notationPreset`), validated by the settings command and restored on login.
+The default is Studio Light. Classic Paper, Slate Focus and Night Mode are also
+available in Battle Preview. Color tokens apply to the same mounted SVG in preview,
+Theatre and public practice; no inversion filter or engraving rebuild is used.
+OBS routes never receive the personal theme attribute and retain recording styling.
+
+Publishing/unpublishing sends a same-origin storage signal to open tabs immediately.
+Other visible browsers revalidate the authenticated catalog every two seconds using
+ETags (unchanged responses return 304). Hidden tabs refresh when visible again.
+Concurrent refreshes are serialized/coalesced. Network latency can extend this
+window; new battle starts always recheck publication on the server. Existing active
+attempts and earned progress remain intact. Admins can explicitly preview hidden
+music from the manager, but normal library lists only show published music.
+The isolated preview's Hyperdrive query caching was verified disabled.
+
+No database migration, auth/email setting or DNS change is required for these features.
+
+Verification for Notation Presets V1: 470 unit/database tests, 21 public browser
+tests against the production build, TypeScript, changed-file ESLint, and the
+production/Pages packaging build passed. Browser fixtures use simulated MIDI and
+auth sessions; real SQL persistence and account isolation use PGlite. The preset
+matrix covers Ode to Joy, Schmitt No. 7 and Hanon No. 1 in both hands at desktop
+and 390px width, including unchanged SVG identity/geometry, actual staff colors,
+current/correct feedback, refresh persistence and unchanged OBS theme scope.
+The chain regression exercises continuous loops and a piece transition in Slate
+Focus. Publication tests cover cross-tab signaling and a server change without
+any focus event. No new real email-delivery or physical-keyboard test was performed.

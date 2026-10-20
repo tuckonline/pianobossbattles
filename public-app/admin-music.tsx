@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- Independent Vite SPA. */
-import {useCallback,useEffect,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
+import {announceMusicPublication,watchMusicPublication} from './music-updates';
 import {collectionName} from './music-labels';
 import type {MusicRow} from './music-service';
 import './admin-music.css';
@@ -7,12 +8,14 @@ type Library={collections:{id:string;name:string;published:boolean;total:number;
 export function AdminMusic(){
  const [library,setLibrary]=useState<Library>(),[error,setError]=useState(''),[denied,setDenied]=useState(false),[busy,setBusy]=useState(false);
  const [selected,setSelected]=useState(''),[search,setSearch]=useState(''),[filter,setFilter]=useState('all'),[notice,setNotice]=useState('');
+ const inFlight=useRef(false);
  const request=useCallback(async(patch?:{kind:'piece'|'collection';id:string|number;published:boolean})=>{
-  setBusy(true);setError('');setNotice('');
-  try{const r=await fetch('/api/admin/music',{method:patch?'POST':'GET',headers:patch?{'Content-Type':'application/json'}:undefined,body:patch?JSON.stringify(patch):undefined,cache:'no-store'});const data=await r.json();if(!r.ok){setDenied(r.status===403);throw Error(data.error??'Unable to load music.');}setLibrary(data);setDenied(false);if(patch)setNotice('Publication settings saved. Player libraries update automatically; new starts are checked immediately.');}
-  catch(e){setError((e as Error).message);}finally{setBusy(false);}
+  if(inFlight.current)return;inFlight.current=true;
+  setBusy(true);if(patch)setNotice('');setError('');
+  try{const r=await fetch('/api/admin/music',{method:patch?'POST':'GET',headers:patch?{'Content-Type':'application/json'}:undefined,body:patch?JSON.stringify(patch):undefined,cache:'no-store'});const data=await r.json();if(!r.ok){setDenied(r.status===403);throw Error(data.error??'Unable to load music.');}setLibrary(data);setDenied(false);if(patch){announceMusicPublication();setNotice('Publication settings saved. Open tabs update immediately; other players refresh automatically within a few seconds.');}}
+  catch(e){setError((e as Error).message);}finally{setBusy(false);inFlight.current=false;}
  },[]);
- useEffect(()=>{void request();},[request]);
+ useEffect(()=>{void request();return watchMusicPublication(()=>void request());},[request]);
  const pieces=library?.pieces.filter(p=>(!selected||p.collection===selected)&&`${p.title} ${collectionName(p.collection)}`.toLowerCase().includes(search.toLowerCase())&&(filter==='all'||(filter==='available'?p.available:!p.available)))??[];
  return <div className="admin-music"><header><div><span className="eyebrow">PIANO BOSS BATTLES · ADMINISTRATION</span><h1>Music Library Manager</h1><p>Choose the music players can see and play.</p></div><a href="/">Back to your battle setup</a></header>
   {error&&<p role="alert" className="error">{error}</p>}{notice&&<p role="status">{notice}</p>}

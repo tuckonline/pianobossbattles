@@ -82,6 +82,16 @@ describe("Public PostgreSQL persistence with the original evaluator",()=>{
     expect(saved.settings.bossBattle.enabled).toBe(true);
     await expect(service.command(actor,{action:"createCourse",title:"Not permitted"})).rejects.toThrow();
   });
+  it("persists notation appearance independently of gameplay and other players",async()=>{
+    for(const notationPreset of ['classic','studio','slate','night'] as const){
+      await service.command(actor,{action:'gameSettings',settings:{...defaultGameSettings,notationPreset}});
+      const restored=await service.command(actor,{action:'gameState'}) as {settings:typeof defaultGameSettings};
+      expect(restored.settings.notationPreset).toBe(notationPreset);
+      expect(restored.settings.bossBattle).toEqual(defaultGameSettings.bossBattle);
+    }
+    const other=await service.command({...actor,id:b},{action:'gameState'}) as {settings:typeof defaultGameSettings};
+    expect(other.settings.notationPreset).toBe('studio');
+  });
   it("uses actual mixed music and accounts for every loop without changing battle notes",()=>{
     const plan=exerciseChain([{exercise:catalog.find(e=>e.number===2001)!,loops:3},{exercise:catalog.find(e=>e.number===4001)!,loops:2}],"both");
     expect(plan.loops).toBe(5);expect(plan.notes).toBeGreaterThan(100);
