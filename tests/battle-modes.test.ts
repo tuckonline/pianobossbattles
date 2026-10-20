@@ -27,9 +27,9 @@ for(const mode of ['survival','timeAttack','ultimateBoss'] as const)it(`${mode}:
  const before=structuredClone(result),s=run(start(mode,pitches.length),result.events);
  expect(s.correctHits).toBe(10);expect(s.bossHp).toBe(pitches.length-10);expect(s.mistakes).toBe(1);expect(result.noteXP).toBe(20);expect(result).toEqual(before);
 });
-for(const difficulty of bossDifficulties)it(`Survival preserves ${difficulty.label}; Time Attack ignores its HP damage`,()=>{
- for(const mode of ['survival','timeAttack'] as const){const b=start(mode),s=run({...b,config:{...b.config,bossDamagePerMistake:difficulty.damage}},[event(0,'incorrect')]);
- expect(s.playerHp).toBe(mode==='survival'?Math.max(0,30-difficulty.damage):30);}
+for(const difficulty of bossDifficulties)it(`Health modes preserve ${difficulty.label}; Time Attack ignores its HP damage`,()=>{
+ for(const mode of ['survival','timeAttack','ultimateBoss'] as const){const b=start(mode),s=run({...b,config:{...b.config,bossDamagePerMistake:difficulty.damage}},[event(0,'incorrect')]);
+ expect(s.playerHp).toBe(mode!=='timeAttack'?Math.max(0,30-difficulty.damage):30);}
 });
 it('settings persist all modes and freeze rules during an active or paused run',()=>{
  for(const mode of ['survival','timeAttack','ultimateBoss'] as const){
@@ -72,8 +72,8 @@ it('pause/resume excludes pauses; large delayed callbacks use elapsed time once'
  s=tick(s,2000000);expect(s).toMatchObject({status:'defeat',result:'timeout',timer:{running:false,elapsedMs:150000}});
  expect(tick(s,3000000)).toBe(s);expect(s.roundLosses).toBe(1);
 });
-it('timer has an exclusive deadline: final note before it wins, at/after it loses',()=>{
- const initial=run(start('timeAttack',2,1),[event(0)],1000); // ceil(1*1.5)=2 seconds
+for(const mode of ['timeAttack','ultimateBoss'] as const)it(`${mode} has an exclusive deadline: final note before it wins, at/after it loses`,()=>{
+ const initial=run(start(mode,2,1),[event(0)],1000); // ceil(1*1.5)=2 seconds
  expect(run(initial,[event(1)],2999).status).toBe('victory');
  expect(run(initial,[event(1)],3000)).toMatchObject({status:'defeat',result:'timeout',bossHp:1});
  expect(run(initial,[event(1)],3001).bossHp).toBe(1);

@@ -1,6 +1,6 @@
 import type {BattlePressure} from './battle-pressure';
 import { replayEvents, type GameEvent } from "./game-core";
-import { gameModeRegistry, prepareExerciseTimer, prepareTempoStage, enrageMultipliers, bossPhase, type BossPhase, type ExerciseTimer } from './battle-modes';
+import { gameModeRegistry, usesProgressiveTempo, prepareExerciseTimer, prepareTempoStage, enrageMultipliers, bossPhase, type BossPhase, type ExerciseTimer } from './battle-modes';
 import { noteGroups, practicePass, type Exercise, type Hand } from "./sight-library";
 import { bossConfigSchema, bossHpTarget, defaultBossBattleConfig, type BossBattleConfig } from "./boss-config";
 import {noteAttackRules,type BattleNoteAttack} from "./battle-note-attacks";
@@ -74,7 +74,7 @@ export function createBattle(config = defaultBossBattleConfig, expectedNotes = 0
     bossMaxHp, correctHits: 0, mistakes: 0, revision: 0, lastAt: 0, waiting,
     scoringAttemptId: "", seenIds: [], occurrences: [], noteAttacks:[],combatCues:[],
     remainingNotes:expectedNotes,remainingKnown:Number.isInteger(expectedNotes)&&expectedNotes>0,roundWins:0,roundLosses:0,recentRounds:[],roundHistory:[],lastSequence:-1,
-    musicalBeats,loopCount,firstPassBeats,timer:config.progressiveTempo?prepareTempoStage(config,musicalBeats===null?null:firstPassBeats):prepareExerciseTimer(config,musicalBeats,loopCount),shields:0,phase:'normal',lastCombo:0,shieldComboOrigin:0,
+    musicalBeats,loopCount,firstPassBeats,timer:usesProgressiveTempo(config)?prepareTempoStage(config,musicalBeats===null?null:firstPassBeats):prepareExerciseTimer(config,musicalBeats,loopCount),shields:0,phase:'normal',lastCombo:0,shieldComboOrigin:0,
     power:{charge:0,threshold:config.adaptivePower?Math.min(config.powerThreshold,Math.max(1,Math.ceil(expectedNotes*.6))):config.powerThreshold,activations:0} };
 }
 export function battleView(state: BattleState): BattleView {
@@ -148,7 +148,7 @@ export function reduceBattle(state: BattleState, event: BattleEvent): BattleStat
     // A loop is a scoring-ID boundary, not a pause or a new battle. Preserve the
     // monotonic clock (and any explicit user pause) across that boundary.
     state=advanceTimer(state,now);
-    if(state.config.progressiveTempo&&state.timer&&['active','paused'].includes(state.status)){
+    if(usesProgressiveTempo(state.config)&&state.timer&&['active','paused'].includes(state.status)){
       const timer=prepareTempoStage(state.config,event.beats===undefined?state.firstPassBeats??null:event.beats,(state.loop?.number??1)+1)!;
       // Advance on the existing authoritative boundary, never on a remount or
       // OBS clock. No banked Easy time, repeated intro, damage, or combo reset.

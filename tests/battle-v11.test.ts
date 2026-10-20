@@ -45,3 +45,27 @@ it('loop boundaries do not resume an explicit pause or defeat',()=>{
  b=reduceBattle(b,{type:'pause',attemptId:'one',now:0});
  b=reduceBattle(b,{type:'next-loop',attemptId:'one',nextAttemptId:'two',now:10000});expect(b.status).toBe('paused');expect(b.timer?.running).toBe(false);
 });
+
+it('Ultimate ignores a hidden Time Attack progression preference and keeps one full-chain clock',()=>{
+ const settings={...config,gameMode:'ultimateBoss' as const,progressiveTempo:true,selectedBpm:83,allowanceMultiplier:1.15};
+ let b=createBattle(settings,6,false,6.75,3,2.25);
+ const limit=Math.ceil(6.75*60/83*1.15)*1000;
+ expect(b.timer?.limitMs).toBe(limit);expect(b.timer?.tempoStage).toBeUndefined();
+ expect(b.config.progressiveTempo).toBe(true); // Retain the saved preference for Time Attack.
+ b=reduceBattle(b,{type:'start',attemptId:'first',countdown:true,now:0,at:1000});
+ const events=evaluateGame(ex,'both',[1,60,62],{playerId:'p',sessionId:'s',attemptId:'first',timestamp:4001}).events;
+ expect(reduceBattle(b,{type:'evaluate',attemptId:'first',events,now:1000})).toEqual(b);
+ b=reduceBattle(b,{type:'fight',attemptId:'first',now:3000,at:4000});
+ b=reduceBattle(b,{type:'evaluate',attemptId:'first',events,now:3001});
+ expect(b).toMatchObject({playerHp:26,bossHp:4,status:'active'});
+ b=reduceBattle(b,{type:'next-loop',attemptId:'first',nextAttemptId:'second',now:4001});
+ expect(b).toMatchObject({attemptId:'first',playerHp:26,bossHp:4,countdown:{releasedAt:4000},timer:{limitMs:limit,elapsedMs:1000,running:true}});
+ expect(b.timer?.tempoStage).toBeUndefined();
+ const beforeFailure=b;
+ const mistakes=evaluateGame(ex,'both',Array(7).fill(1),{playerId:'p',sessionId:'s',attemptId:'second',timestamp:5000}).events;
+ b=reduceBattle(b,{type:'evaluate',attemptId:'second',events:mistakes,now:4002});
+ expect(b).toMatchObject({playerHp:0,status:'defeat',result:'knockout',timer:{running:false}});
+ const later=evaluateGame(ex,'both',[60,62],{playerId:'p',sessionId:'s',attemptId:'second',timestamp:6000}).events;
+ expect(reduceBattle(b,{type:'evaluate',attemptId:'second',events:later,now:4003}).status).toBe('defeat');
+ expect(reduceBattle(beforeFailure,{type:'tick',attemptId:'second',now:3001+limit})).toMatchObject({playerHp:26,status:'defeat',result:'timeout'});
+});

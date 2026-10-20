@@ -6,6 +6,10 @@ export const gameModeRegistry = {
   timeAttack: { title: 'Time Attack', timed: true, health: false, shields: false, enrage: false, description: 'Beat the countdown. Mistakes cost time, not HP.' },
   ultimateBoss: { title: 'Ultimate Boss', timed: true, health: true, shields: true, enrage: true, description: 'Survive the clock and an enraging boss. Earn a shield every 10 consecutive correct notes.' },
 } as const;
+// A saved Time Attack progression preference must not shorten Ultimate's full-run clock.
+export function usesProgressiveTempo(config: { gameMode: GameMode; progressiveTempo: boolean }) {
+  return config.gameMode === 'timeAttack' && config.progressiveTempo;
+}
 export const battleTempoPresets = [{ title:'Easy', bpm:60 }, { title:'Medium', bpm:80 }, { title:'Fast', bpm:110 }, { title:'Expert', bpm:140 }] as const;
 export const timerAllowances = [{ title:'Generous', multiplier:1.5 }, { title:'Balanced', multiplier:1.3 }, { title:'Tight', multiplier:1.15 }, { title:'Precision', multiplier:1.05 }] as const;
 export type BossPhase = 'normal' | 'aggressive' | 'enraged';

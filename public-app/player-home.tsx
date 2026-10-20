@@ -8,7 +8,8 @@ import { SightReading, type PracticeControls } from "../hosted/sight-reading";
 import { gameClient, useGame } from "../hosted/game-client";
 import { levelInfo } from "../hosted/game-core";
 import { bossProfiles, bossProfile, type BossId } from "../hosted/boss-registry";
-import { bossDifficulties, bossDifficultyLabel, type BossBattleConfig } from "../hosted/boss-config";
+import { type BossBattleConfig } from "../hosted/boss-config";
+import { BattleSettings, modeSettingSummary, modeTimePreview } from "./battle-settings";
 import { BossBattlePanel } from "../hosted/boss-ui";
 import { battleLayout, type BossBattleLayoutConfig } from "../hosted/battle-layout";
 import { battleView } from "../hosted/boss-battle";
@@ -23,7 +24,7 @@ const modes = [
   {id:"timeAttack", title:"Time Attack", icon:"clock", description:"Every phrase races the clock."},
   {id:"practice", title:"Practice", icon:"bars", description:"Find your flow. No battle pressure."},
   {id:"survival", title:"Survival", icon:"heart", description:"Finish the music. Protect your HP."},
-  {id:"ultimateBoss", title:"Ultimate Boss", icon:"crown", description:"Survive the ultimate challenge."},
+  {id:"ultimateBoss", title:"Ultimate Boss", icon:"crown", description:"Survive the music. Beat the clock."},
 ] as const;
 const title=(e:Exercise)=>e.title??`Exercise ${e.number}`;
 const hero="/battle/cinematics/hero-finish.png";
@@ -70,6 +71,8 @@ export function PlayerHome({user}:{user:User}) {
   const cinematic=usePracticeCinematicActive(),midiSupported=typeof navigator.requestMIDIAccess==="function";
   const categories=useMemo(()=>[...new Set(catalog.map(e=>e.collection??"sight-reading"))].sort(),[]);
   const filtered=useMemo(()=>catalog.filter(e=>(!category||e.collection===category)&&`${title(e)} ${e.composer??""} ${e.collection??""}`.toLowerCase().includes(search.toLowerCase())),[category,search]);
+  const settingSummary=modeSettingSummary(config,hand);
+  const timePreview=useMemo(()=>modeTimePreview(config,queue,hand),[config,queue,hand]);
   const performances=queue.reduce((sum,e)=>sum+e.loops,0);
   useEffect(()=>{const back=()=>setView(currentView());window.addEventListener("popstate",back);return()=>window.removeEventListener("popstate",back);},[]);
   useEffect(()=>{try{localStorage.setItem(`pbb:setup:v2:${user.id}`,JSON.stringify({hand,entries:queue.map(e=>({number:e.exercise.number,loops:e.loops}))}));setDraftError("");}catch{setDraftError("This browser could not save your setlist locally. Keep this tab open to retain it.");}},[hand,queue,user.id]);
@@ -117,13 +120,7 @@ export function PlayerHome({user}:{user:User}) {
           <div className="panel-title"><Icon name="swords"/><div><h1>Build your battle.</h1><p>Choose a game mode, set your difficulty, and pick your boss.</p></div></div>
           <fieldset disabled={c.running}><legend><span className="section-number">1</span>Game mode<small>Pick how you want to play.</small></legend>
             <div className="mode-grid">{modes.map(m=><button key={m.id} aria-pressed={mode===m.id} onClick={()=>update(m.id==="practice"?{enabled:false}:{enabled:true,gameMode:m.id})}><Icon name={m.icon}/><b>{m.title}</b><small>{m.description}</small></button>)}</div>
-            <div className="settings-row"><div className="section-label"><span className="section-number">2</span><b>Battle settings</b><small>Fine-tune the challenge.</small></div><div className="compact-fields">
-              <label>Difficulty<select value={config.bossDamagePerMistake} onChange={e=>update({bossDamagePerMistake:Number(e.target.value)})}>{bossDifficulties.map(d=><option key={d.damage} value={d.damage}>{d.label}</option>)}</select></label>
-              <label>Hands<select value={hand} onChange={e=>{setHand(e.target.value as Hand);setQueue(q=>q.filter(({exercise:x})=>(!x.singleHand||x.singleHand===e.target.value)&&(!x.bothHandsOnly||e.target.value==="both")));}}><option value="both">Both hands</option><option value="right">Right hand</option><option value="left">Left hand</option></select></label>
-              <label>Target BPM<input type="number" min={20} max={300} disabled={mode!=="timeAttack"&&mode!=="ultimateBoss"} aria-describedby="tempo-help" value={config.selectedBpm} onChange={e=>update({selectedBpm:Math.min(300,Math.max(20,Math.round(Number(e.target.value)||60)))})}/></label>
-            </div></div>
-            <small id="tempo-help" className="tempo-help">{mode==="timeAttack"||mode==="ultimateBoss"?"Target tempo sets the time allowance.":"Target tempo applies to timed modes. Play at your own pace here."}</small>
-            {mode==="timeAttack"&&<label className="check tempo-progression"><input type="checkbox" checked={config.progressiveTempo} onChange={e=>update({progressiveTempo:e.target.checked})}/>Easy → Normal → Hard → Expert across loops</label>}
+            <BattleSettings config={config} hand={hand} update={update} onHandChange={next=>{setHand(next);setQueue(q=>q.filter(({exercise:x})=>(!x.singleHand||x.singleHand===next)&&(!x.bothHandsOnly||next==="both")));}}/>
             <div className="section-label boss-label"><span className="section-number">3</span><b>Choose your boss</b><small>{mode==="practice"?"Choose your next opponent. Practice has no battle pressure.":"Your opponent awaits."}</small></div>
             <div className="boss-grid">{Object.entries(bossProfiles).map(([id,b])=><button className={`boss-choice boss-${id}`} key={id} aria-pressed={config.bossId===id} onClick={()=>update({bossId:id as BossId})}><img src={b.portrait} alt=""/>{config.bossId===id&&<span className="boss-check"><Icon name="check"/></span>}<div><b>{id==="grinwick"?"Grinwick":b.name}</b><small>{b.description}</small></div></button>)}</div>
           </fieldset>
@@ -143,7 +140,7 @@ export function PlayerHome({user}:{user:User}) {
       </div>
       <div className={`preview-columns ${theatre?"playing":""}`} hidden={!theatre&&!preview}>
         <section className={`theatre ${!theatre?"battle-preview":""}`} aria-label="Battle preview and Theatre Mode">
-          <div className="theatre-heading"><div><span className="eyebrow">{theatre?"THEATRE MODE":"BATTLE PREVIEW"}</span><h2>{title(c.exercise)}</h2>{theatre?<small>Loop {c.pass}/{c.total} · {game.live.combo} note combo · {game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0}% accuracy</small>:<div className="preview-meta"><span><Icon name={selectedMode.icon}/>{selectedMode.title}</span><span>{bossDifficultyLabel(config.bossDamagePerMistake)}</span><span>{hand==="both"?"Both hands":`${hand==="left"?"Left":"Right"} hand`}</span>{(mode==="timeAttack"||mode==="ultimateBoss")&&<span>♩ {config.selectedBpm} BPM</span>}</div>}</div>
+          <div className="theatre-heading"><div><span className="eyebrow">{theatre?"THEATRE MODE":"BATTLE PREVIEW"}</span><h2>{title(c.exercise)}</h2>{theatre?<small>Loop {c.pass}/{c.total} · {game.live.combo} note combo · {game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0}% accuracy</small>:<div className="preview-meta"><span><Icon name={selectedMode.icon}/>{selectedMode.title}</span>{settingSummary.map(s=><span key={s.label}>{s.value}{s.label==="Time Pressure"?" time pressure":""}</span>)}</div>}</div>
             {!theatre&&<div className="opponent-caption"><span className="eyebrow">{mode==="practice"?"NEXT CHALLENGER":"YOUR OPPONENT"}</span><b>{opponent.id==="grinwick"?"Grinwick":opponent.name}</b><small>{opponent.description}</small></div>}
             <div className="theatre-controls" hidden={!theatre}>{!c.running?<button className="primary" disabled={!!missing||c.saving} onClick={start}>Start Battle</button>:<><button onClick={c.pause}>{c.paused?"Resume":"Pause"}</button><button onClick={c.stop}>End Battle</button></>}<button onClick={()=>{if(c.running&&!c.paused)c.pause();setTheatre(false);navigate("preview",true);}}>Return to preview</button></div>
           </div>
@@ -157,7 +154,7 @@ export function PlayerHome({user}:{user:User}) {
         </section>
         <aside className="setup-section battle-summary" hidden={theatre} aria-label="Your battle setup">
           <div className="summary-heading"><span className="eyebrow">YOUR BATTLE SETUP</span><button disabled={c.running} onClick={()=>navigate("setup")}>Edit Setup</button></div>
-          <dl><div><dt><Icon name={selectedMode.icon}/>Game mode</dt><dd>{selectedMode.title}<small>{selectedMode.description}</small></dd></div><div><dt><img src={opponent.portrait} alt=""/>Boss</dt><dd>{opponent.id==="grinwick"?"Grinwick":opponent.name}<small>{mode==="practice"?"No battle in Practice mode":opponent.description}</small></dd></div><div><dt><Icon name="music"/>Music</dt><dd>{queue.length===1?title(queue[0].exercise):`${queue.length} pieces in your chain`}<small>{queue.length===1?queue[0].exercise.collection:"Play in your chosen order"}</small></dd></div><div><dt>Difficulty</dt><dd>{bossDifficultyLabel(config.bossDamagePerMistake)}</dd></div><div><dt>Hands</dt><dd>{hand==="both"?"Both hands":`${hand==="left"?"Left":"Right"} hand`}</dd></div><div><dt>Target BPM</dt><dd>{mode==="timeAttack"||mode==="ultimateBoss"?config.selectedBpm:"At your pace"}{mode==="timeAttack"&&config.progressiveTempo&&<small>Easy → Normal → Hard → Expert</small>}</dd></div><div><dt>Setlist</dt><dd>{queue.length} {queue.length===1?"piece":"pieces"}<small>{performances} total performances</small></dd></div></dl>
+          <dl><div><dt><Icon name={selectedMode.icon}/>Game mode</dt><dd>{selectedMode.title}<small>{selectedMode.description}</small></dd></div><div><dt><img src={opponent.portrait} alt=""/>Boss</dt><dd>{opponent.id==="grinwick"?"Grinwick":opponent.name}<small>{mode==="practice"?"No battle in Practice mode":opponent.description}</small></dd></div><div><dt><Icon name="music"/>Music</dt><dd>{queue.length===1?title(queue[0].exercise):`${queue.length} pieces in your chain`}<small>{queue.length===1?queue[0].exercise.collection:"Play in your chosen order"}</small></dd></div>{settingSummary.map(s=><div key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}{timePreview&&<div><dt>{timePreview.label}</dt><dd>{timePreview.value}</dd></div>}<div><dt>Setlist</dt><dd>{queue.length} {queue.length===1?"piece":"pieces"}<small>{performances} total performances</small></dd></div></dl>
           {queue.length>1&&<details className="sequence-review"><summary>Review full sequence</summary><ol>{queue.map((e,i)=><li key={i}>{title(e.exercise)}<small>{e.loops} {e.loops===1?"loop":"loops"}</small></li>)}</ol></details>}
           {!c.running?<button className="primary start-button" disabled={!!missing||c.saving} onClick={start}><Icon name="swords"/>Start Battle<Icon name="arrow"/></button>:<><button className="primary start-button" onClick={()=>{if(c.paused)c.pause();setTheatre(true);}}>Return to Battle</button><button className="end-preview" onClick={c.stop}>End Battle</button></>}
           <p className="readiness" role="status">{c.running?"Your battle is paused here. Return when you’re ready.":missing||"Everything looks good. Start Battle when you’re ready."}</p>

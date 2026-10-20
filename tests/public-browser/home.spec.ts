@@ -229,7 +229,7 @@ test("V2 setup, preview, history navigation and reload preserve shared selection
     await page.getByRole("button",{name:new RegExp(`^${name} `)}).click();
     await expect(page.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-pressed","true");
   }
-  await page.getByRole("combobox",{name:"Difficulty",exact:true}).selectOption("6");
+  await page.getByRole("combobox",{name:"Time Pressure",exact:true}).selectOption("1.15");
   await page.getByRole("combobox",{name:"Hands",exact:true}).selectOption("left");
   await page.getByLabel("Target BPM",{exact:true}).fill("80");
   await page.getByLabel("Easy → Normal → Hard → Expert across loops").check();
@@ -244,14 +244,17 @@ test("V2 setup, preview, history navigation and reload preserve shared selection
   await page.screenshot({path:"test-results/v2-setup.png",fullPage:true});
   await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
   await expect(page).toHaveURL(/view=preview/);
-  for(const text of ["80","Hard","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
+  for(const text of ["60 → 80 → 110 → 140 BPM","Tight","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
   await page.getByText("Review full sequence",{exact:true}).click();
   await expect(page.locator(".sequence-review li").first()).toContainText("Exercise 2");
   await page.locator(".sight-score svg").first().waitFor();
   await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.navigationCheck="mounted");
   await expect(page.locator(".history[open]")).toHaveCount(0);
   await page.getByRole("button",{name:"Edit Setup",exact:true}).click();
+  await expect(page.getByLabel("Target BPM",{exact:true})).toBeDisabled();
+  await page.getByLabel("Easy → Normal → Hard → Expert across loops").uncheck();
   await expect(page.getByLabel("Target BPM",{exact:true})).toHaveValue("80");
+  await page.getByLabel("Easy → Normal → Hard → Expert across loops").check();
   await expect(page.getByRole("combobox",{name:"Hands",exact:true})).toHaveValue("left");
   await expect(page.locator(".battle-queue li").first()).toContainText("Exercise 2");
   await expect(page.getByRole("spinbutton",{name:"Loops"}).nth(1)).toHaveValue("3");
@@ -261,7 +264,7 @@ test("V2 setup, preview, history navigation and reload preserve shared selection
   expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(1);
   await expect(page.locator("[data-battle-status]")).not.toHaveAttribute("data-battle-status","active");
   await page.reload();
-  for(const text of ["80","Hard","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
+  for(const text of ["60 → 80 → 110 → 140 BPM","Tight","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
   await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeEnabled();
@@ -290,4 +293,97 @@ test("V2 explains unsupported Web MIDI without a broken connect control",async({
   await expect(page.getByRole("button",{name:"Connect MIDI Piano"})).toHaveCount(0);
   await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
+});
+
+test("mode settings switch immediately, retain preferences, and summarize only applicable rules",async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await fixture(page,true);await page.setViewportSize({width:1672,height:1000});await page.goto('/');
+  const mode=(name:string)=>page.getByRole('button',{name:new RegExp(`^${name} `)});
+  const controls=page.getByRole('group',{name:'Battle settings',exact:true});
+  const summary=page.locator('.battle-summary');
+  await mode('Survival').click();
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toBeVisible();
+  await expect(controls.getByLabel('Target BPM',{exact:true})).toHaveCount(0);
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true}).locator('option')).toHaveText(['Easy','Normal','Hard','Expert']);
+  await controls.getByRole('combobox',{name:'Combat Difficulty',exact:true}).selectOption('6');
+  await mode('Time Attack').click();
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveCount(0);
+  await controls.getByLabel('Target BPM',{exact:true}).fill('80');
+  await controls.getByRole('combobox',{name:'Time Pressure',exact:true}).selectOption('1.3');
+  await page.getByLabel('Easy → Normal → Hard → Expert across loops').check();
+  await mode('Ultimate Boss').click();
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveValue('6');
+  await expect(controls.getByLabel('Target BPM',{exact:true})).toBeEnabled();
+  await expect(controls.getByLabel('Target BPM',{exact:true})).toHaveValue('80');
+  await expect(controls.getByRole('combobox',{name:'Time Pressure',exact:true})).toHaveValue('1.3');
+  await expect(page.getByLabel('Easy → Normal → Hard → Expert across loops')).toHaveCount(0);
+  await page.getByLabel('Search pieces').fill('Schmitt Op. 16 · Exercise 2');
+  await page.getByRole('button',{name:'Add Schmitt Op. 16 · Exercise 2 to queue',exact:true}).click();
+  await page.getByRole('spinbutton',{name:'Loops'}).first().fill('2');
+  for(const name of ['Ultimate Boss','Practice','Survival','Time Attack']){
+    await mode(name).click();
+    await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+    await expect(summary.getByText('Both hands',{exact:true})).toBeVisible();
+    await expect(summary.getByText('Combat Difficulty',{exact:true})).toHaveCount(name==='Survival'||name==='Ultimate Boss'?1:0);
+    await expect(summary.getByText('Time Pressure',{exact:true})).toHaveCount(name==='Time Attack'||name==='Ultimate Boss'?1:0);
+    if(name==='Ultimate Boss'){
+      await expect(summary).toContainText('80 BPM');await expect(summary).toContainText('Hard');await expect(summary).toContainText('Normal');
+      const exercises=[2001,2002].map(n=>catalog.find(e=>e.number===n)!);
+      const {battleMusicalBeats,countdownLabel}=await import('../../hosted/battle-modes');
+      const seconds=Math.ceil((battleMusicalBeats(exercises[0],2)!+battleMusicalBeats(exercises[1])!)*60/80*1.3);
+      await expect(summary).toContainText(countdownLabel(seconds*1000));
+      await page.screenshot({path:'test-results/mode-ultimate-preview.png',fullPage:true});
+    }
+    if(name==='Practice')await expect(summary).toContainText('Self-Paced');
+    if(name==='Time Attack')await expect(summary).toContainText('First-loop allowance');
+    await page.getByRole('button',{name:'Edit Setup',exact:true}).click();
+    if(name==='Practice'){
+      await expect(controls.locator('select')).toHaveCount(1);
+      await expect(controls.locator('input')).toHaveCount(0);
+    }
+  }
+  await mode('Ultimate Boss').click();
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveValue('6');
+  await page.screenshot({path:'test-results/mode-ultimate-setup.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'test-results/mode-ultimate-narrow.png',fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.reload();
+  await expect(controls.getByRole('combobox',{name:'Time Pressure',exact:true})).toHaveValue('1.3');
+  await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveValue('6');
+  expect(errors).toEqual([]);
+});
+
+for(const mode of ['Practice','Survival','Time Attack','Ultimate Boss'])test(`${mode} launches with its selected rules and keeps MIDI scoring immediate`,async({page})=>{
+  await fixture(page,true);await page.goto('/');
+  await page.getByRole('button',{name:new RegExp(`^${mode} `)}).click();
+  if(mode==='Survival'||mode==='Ultimate Boss')await page.getByRole('combobox',{name:'Combat Difficulty',exact:true}).selectOption('10');
+  if(mode==='Time Attack'||mode==='Ultimate Boss'){
+    await page.getByLabel('Target BPM',{exact:true}).fill('80');
+    await page.getByRole('combobox',{name:'Time Pressure',exact:true}).selectOption('1.3');
+  }
+  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+  await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+  await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+  const intro=page.getByRole('status',{name:'Battle start countdown'}),panel=page.getByRole('complementary',{name:'Boss battle'});
+  if(mode==='Practice'){
+    await expect(intro).toHaveCount(0);await expect(panel).toHaveCount(0);
+  }else{
+    await expect(intro).toBeVisible();
+    await page.evaluate(()=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes([1]));
+    await expect(panel).toHaveAttribute('data-authoritative-player-hp','30');
+    await expect(intro).toHaveCount(0,{timeout:6000});
+    await expect(panel).toHaveAttribute('data-game-mode',mode==='Survival'?'survival':mode==='Time Attack'?'timeAttack':'ultimateBoss');
+  }
+  const pitches=noteGroups(catalog.find(e=>e.number===2001)!,'both').flatMap(g=>g.pitches);
+  const before=mode==='Practice'?0:Number(await panel.getAttribute('data-authoritative-boss-hp'));
+  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),[1,...pitches.slice(0,2)]);
+  await expect(page.locator('.theatre-heading')).toContainText('2 note combo');
+  if(mode!=='Practice'){
+    await expect(panel).toHaveAttribute('data-authoritative-boss-hp',String(before-2));
+    await expect(panel).toHaveAttribute('data-authoritative-player-hp',mode==='Time Attack'?'30':'20');
+    await expect(panel.locator('.battle-clock-shields')).toHaveCount(mode==='Survival'?0:1);
+  }
+  await page.getByRole('button',{name:'End Battle',exact:true}).click();
+  await expect(page.locator('.player-xp [role="status"]')).toHaveText('All progress saved');
 });
