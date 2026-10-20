@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "pianobossbattles-preview",
-  "account_id": "c5fd2cb61b7bd05dac120e8f23d303a6",
   "pages_build_output_dir": "dist/client",
   "compatibility_date": "2026-10-20",
   "compatibility_flags": ["nodejs_compat"],
