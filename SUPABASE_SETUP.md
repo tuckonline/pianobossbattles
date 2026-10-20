@@ -29,9 +29,9 @@ ChatGPT identity headers are not accepted as authentication.
 
 ## 2. Database migrations
 
-These migrations are for the **new Piano Boss Battles Supabase project only**.
-Do not run them against any other database. Use the Supabase SQL Editor to run
-the complete files, in order:
+**Completed on 2026-10-20:** both migrations were applied by Supabase CLI 2.121.0
+to `huxmltjtovpxxxupuxdg`. Remote migration history matches the local files.
+Do not rerun these initial files manually in SQL Editor.
 
 1. `supabase/migrations/202610200001_public_players.sql`
 2. `supabase/migrations/202610200002_music_catalog.sql`
@@ -44,9 +44,28 @@ records. Direct client progression writes are denied. Only the authenticated
 server API writes evaluated results. The second file seeds versioned music
 definitions only; it contains no original player data.
 
-These are initial migrations, not scripts to rerun over existing tables.
-Supabase Auth creates profile rows on signup; the API also initializes a profile
-for accounts created before migration.
+Supabase Auth creates profile rows on signup and synchronizes email/name changes.
+The API also initializes a profile for accounts created before migration.
+See [SUPABASE_MIGRATION_REPORT.md](SUPABASE_MIGRATION_REPORT.md) for the live
+schema audit and transaction-scoped two-account isolation results.
+
+For future migrations, run from this independent repository:
+
+```sh
+npx --yes supabase@2.121.0 login
+npx --yes supabase@2.121.0 link --project-ref huxmltjtovpxxxupuxdg
+npx --yes supabase@2.121.0 migration list --linked
+npx --yes supabase@2.121.0 db push --linked --dry-run --skip-vault
+# Apply only after reviewing the pending files and confirming the project ref:
+npx --yes supabase@2.121.0 db push --linked --skip-vault
+```
+
+The CLI login is stored outside Git; `supabase/.temp` is ignored. Complete login
+and any credential prompts in your terminal, never in chat. The CLI's dry run
+lists pending migrations; it does not execute or semantically validate SQL.
+Never use a linked reset. Do not push `config.toml` to the hosted project: it
+describes local development defaults and is not an instruction to overwrite
+live Auth or other service settings.
 
 ## 3. Local server connection (keep credentials on your computer)
 
@@ -90,8 +109,10 @@ origin if testing the combined server directly.
   and confirm no doubled effects in an actual recording.
 
 Browser tests use isolated mocked auth/network responses to verify UI behavior;
-they do not prove email delivery or a live Supabase database connection. Local
-PostgreSQL tests execute the real migrations and RLS policies in PGlite.
+they do not prove email delivery or the application's server connection. Local
+PostgreSQL tests execute the real migrations and RLS policies in PGlite. The
+live database migrations and SQL-level cross-account isolation are now verified;
+real email/password sessions and the app's `DATABASE_URL` connection remain to test.
 Do not approve public deployment until live authentication, database persistence,
 physical MIDI, and recording checks have passed.
 

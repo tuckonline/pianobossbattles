@@ -1,7 +1,9 @@
 # Public application V1 verification — 2026-10-20
 
-Status: implemented locally; not deployed. Live Supabase storage and email
-verification remain pending the owner's dashboard configuration.
+Status: implemented locally; not deployed. This records the original V1 checks.
+The later [migration report](SUPABASE_MIGRATION_REPORT.md) supersedes the database
+setup limitations below: migrations and live SQL-level RLS isolation are now
+verified. Email flows and the application's database connection remain unverified.
 
 ## Isolation
 

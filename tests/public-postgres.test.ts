@@ -19,13 +19,36 @@ beforeAll(async()=>{
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE SCHEMA auth;
     CREATE TABLE auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-    GRANT USAGE ON SCHEMA auth TO authenticated;`);
+    GRANT USAGE ON SCHEMA auth TO authenticated;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;`);
   await db.exec(readFileSync("supabase/migrations/202610200001_public_players.sql","utf8"));
   await db.exec(readFileSync("supabase/migrations/202610200002_music_catalog.sql","utf8"));
   await db.query("INSERT INTO auth.users VALUES($1,$2,$3),($4,$5,$6)",[a,"a@example.test",'{"name":"Alice"}',b,"b@example.test",'{"name":"Bob"}']);
 });
 afterAll(()=>db.close());
 describe("Public PostgreSQL persistence with the original evaluator",()=>{
+  it("locks down every table and trigger even with Supabase's permissive default grants",async()=>{
+    const tables=await db.query<{name:string;rls:boolean;policies:number;anon_read:boolean;client_write:boolean}>(`SELECT c.relname AS name,c.relrowsecurity AS rls,
+      (SELECT count(*)::int FROM pg_policy p WHERE p.polrelid=c.oid) AS policies,
+      has_table_privilege('anon',c.oid,'SELECT') AS anon_read,
+      has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE') AS client_write
+      FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r'`);
+    expect(tables.rows).toHaveLength(19);
+    for(const t of tables.rows){expect(t.rls,t.name).toBe(true);expect(t.anon_read,t.name).toBe(false);expect(t.client_write,t.name).toBe(false);expect(t.policies,t.name).toBe(['mutation_guards','practice_exercises'].includes(t.name)?0:1);}
+    expect((await db.query("SELECT has_function_privilege('authenticated','public.create_player_profile()','EXECUTE') AS allowed")).rows).toEqual([{allowed:false}]);
+  });
+  it("synchronizes Auth profile changes and supports deletion of a populated account",async()=>{
+    const id='c0000000-0000-4000-8000-000000000003';
+    await db.query('INSERT INTO auth.users VALUES($1,$2,$3)',[id,'before@example.test','{"name":"Before"}']);
+    await service.ensureUser(id,'before@example.test','Before');
+    await service.command({id,email:'before@example.test',name:'Before',roles:['STUDENT']},{action:'gameSettings',settings:defaultGameSettings});
+    await db.query('UPDATE auth.users SET email=$2,raw_user_meta_data=$3 WHERE id=$1',[id,'after@example.test','{"name":"After"}']);
+    expect((await db.query('SELECT email,name FROM public.users WHERE id=$1',[id])).rows).toEqual([{email:'after@example.test',name:'After'}]);
+    await db.query('DELETE FROM auth.users WHERE id=$1',[id]);
+    expect((await db.query('SELECT * FROM game_players WHERE user_id=$1',[id])).rows).toHaveLength(0);
+    expect((await db.query('SELECT * FROM roles WHERE user_id=$1',[id])).rows).toHaveLength(0);
+  });
   it("creates profiles on signup and denies cross-player reads and all direct XP writes",async()=>{
     await service.ensureUser(a,actor.email,actor.name);
     await service.command(actor,{action:"gameSettings",settings:defaultGameSettings});
