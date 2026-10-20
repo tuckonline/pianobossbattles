@@ -59,11 +59,11 @@ function readDraft(userId:string,catalog:CatalogExercise[]):{hand:Hand;queue:Cha
 }
 const currentView=()=>new URLSearchParams(location.search).get("view")==="preview"?"preview":"setup";
 export function PlayerHome({user}:{user:User}) {
-  const {catalog,error,refresh}=useMusicCatalog(user.id);
+  const {catalog,admin,error,refresh}=useMusicCatalog(user.id);
   if(!catalog)return <section className="setup-section"><h1>Music library</h1><p role={error?"alert":"status"}>{error||"Loading your music…"}</p>{error&&<button onClick={()=>void refresh().catch(()=>{})}>Retry</button>}</section>;
-  return <LoadedPlayerHome user={user} catalog={catalog} libraryError={error} refreshLibrary={refresh}/>;
+  return <LoadedPlayerHome user={user} catalog={catalog} admin={admin} libraryError={error} refreshLibrary={refresh}/>;
 }
-function LoadedPlayerHome({user,catalog,libraryError,refreshLibrary}:{user:User;catalog:CatalogExercise[];libraryError:string;refreshLibrary:()=>Promise<void>}) {
+function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user:User;catalog:CatalogExercise[];admin:boolean;libraryError:string;refreshLibrary:()=>Promise<void>}) {
   const game=useGame();
   const [draft]=useState(()=>readDraft(user.id,catalog));
   const [initialLibrary]=useState(catalog);
@@ -121,7 +121,7 @@ function LoadedPlayerHome({user,catalog,libraryError,refreshLibrary}:{user:User;
         <a href="/" className="player-brand" onClick={e=>{e.preventDefault();if(!c.running){setTheatre(false);navigate("setup");}}}><PianoMark/><span>Piano Boss Battles<small>PRACTICE MUSIC. DEFEAT BOSSES.</small></span></a>
         <section className="player-strip" aria-label="Player profile">
           <img className="player-avatar" src={hero} alt=""/>
-          <div className="player-identity"><b>{String(user.user_metadata.name??"Pianist")}</b><small>Level {level.level} <span>{level.title}</span></small></div>
+          <div className="player-identity"><b>{String(user.user_metadata.name??"Pianist")}</b><small>Level {level.level} <span>{level.title}</span></small>{admin&&<a className="music-admin-link" href="/admin/music" target="_blank" rel="noopener" title="Manage music library (opens in a new tab)">Music Library</a>}</div>
           <div className="player-xp"><span>{game.player.xp.toLocaleString()} / {level.upper.toLocaleString()} XP</span><progress aria-label="Level progress" max={100} value={level.percent}/><small role="status">{game.error||game.recoveryError?"Progress needs attention":game.saving||game.pending?"Saving progress…":game.lastSaved?"All progress saved":"Connected to your profile"}</small></div>
           <div className="profile-stat"><b>{victories}</b><small>Bosses defeated</small></div><div className="profile-stat"><b>{practiced}</b><small>Pieces practiced</small></div><button className="quiet" disabled={c.running||logoutBusy} onClick={()=>void logout()}>Log out</button>
         </section>

@@ -12,6 +12,7 @@
 .authenticated-app .player-identity>b{font-size:16px}
 .authenticated-app .player-identity small{white-space:nowrap;color:#d2e8f6;font-size:12px}
 .authenticated-app .player-identity small span{color:#9fc2dc;margin-left:6px}
+.authenticated-app .music-admin-link{display:block;margin-top:4px;font-size:12px;color:var(--cyan);text-underline-offset:3px}
 .authenticated-app .player-xp{width:200px;min-width:140px;flex:none}
 .authenticated-app .player-xp>span{justify-content:flex-end;font-size:12px;font-variant-numeric:tabular-nums}
 .authenticated-app .player-xp>small{font-size:10px;text-align:right;color:#8db8cf;line-height:1.4}

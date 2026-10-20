@@ -184,8 +184,10 @@ physical MIDI, and recording checks have passed.
 ## Music Library Manager — local testing, 2026-10-20
 
 Open **http://localhost:5173/admin/music** after signing in. The owner account
-explicitly identified in this chat has been granted `MUSIC_ADMIN`. There are no
-admin controls on the normal dashboard. Other accounts remain ordinary players.
+explicitly identified in this chat has been granted `MUSIC_ADMIN`. Administrators
+have a **Music Library** link beneath their profile level on the dashboard. It
+opens the manager in a new tab so an active practice session stays open. Other
+accounts do not see the link; publication controls remain inside the manager.
 
 Select a collection, search its pieces, and use **Published / Unpublished**.
 Collection availability and individual piece flags are independent. Restoring a

@@ -8,14 +8,14 @@ const id="a0000000-0000-4000-8000-000000000001";
 const user={id,email:"browser-test@example.test",email_confirmed_at:new Date().toISOString(),aud:"authenticated",role:"authenticated",user_metadata:{name:"Test Pianist"},app_metadata:{provider:"email",providers:["email"]},created_at:new Date().toISOString()};
 const token=[{alg:"HS256",typ:"JWT"},{sub:id,exp:Math.floor(Date.now()/1000)+3600,role:"authenticated"}].map(x=>Buffer.from(JSON.stringify(x)).toString("base64url")).join(".")+".fixture";
 const session={access_token:token,refresh_token:"fixture-only",expires_at:Math.floor(Date.now()/1000)+3600,expires_in:3600,token_type:"bearer",user};
-async function fixture(page:Page,signedIn=false,midiSupported=true) {
+async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) {
   // Explicit UI fixtures only. Real SQL/RLS and reward behavior have separate tests.
   await page.route("https://huxmltjtovpxxxupuxdg.supabase.co/auth/v1/**",async route=>{
     const url=route.request().url();
     await route.fulfill({json:url.includes("/user")?user:url.includes("/signup")?{user,session:null}:url.includes("/token")?session:{}});
   });
   await page.route("**/api/auth/session",r=>r.fulfill({json:{signedIn:true}}));
-  await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:true}:{admin:false,pieces:catalog.map(e=>({...e,available:true}))}}));
+  await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:true}:{admin,pieces:catalog.map(e=>({...e,available:true}))}}));
   let settings=structuredClone(defaultGameSettings);
   let snapshot: unknown=null;
   settings.bossBattle.enabled=true;
@@ -45,7 +45,11 @@ async function fixture(page:Page,signedIn=false,midiSupported=true) {
 }
 
 test('music administrator toggles parent and piece publication and previews hidden music',async({page})=>{
- await fixture(page,true);
+ await fixture(page,true,true,true);
+ await page.goto('/');
+ await expect(page.getByRole('link',{name:'Music Library',exact:true})).toHaveAttribute('href','/admin/music');
+ await expect(page.getByRole('link',{name:'Music Library',exact:true})).toHaveAttribute('target','_blank');
+ await page.screenshot({path:'test-results/music-admin-account-link.png'});
  const pieces=catalog.filter(e=>e.collection==='schmitt-op16').map(e=>({number:e.number,title:e.title,collection:e.collection,published:true}));
  let published=true;
  await page.route('**/api/admin/music',async r=>{
@@ -80,6 +84,8 @@ test('ordinary player cannot manage music and keeps unavailable saved queue entr
  await page.goto('/admin/music');await expect(page.getByRole('alert')).toHaveText('Administrator access required.');
  await expect(page.locator('.admin-music-columns')).toHaveCount(0);
  await page.getByRole('link',{name:'Back to your battle setup'}).click();
+ await expect(page.getByRole('heading',{name:'Build your battle.'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Music Library',exact:true})).toHaveCount(0);
  await expect(page.locator('.battle-queue li')).toHaveCount(2);
  await expect(page.locator('.battle-queue li').first()).toContainText('Unavailable');
  await expect(page.getByRole('spinbutton',{name:'Loops'}).first()).toHaveValue('5');
