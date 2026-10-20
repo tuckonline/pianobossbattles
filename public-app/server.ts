@@ -17,6 +17,9 @@ const pool = process.env.DATABASE_URL ? new Pool({
 export async function handle(request: Request): Promise<Response> {
   const url = new URL(request.url);
     if (!url.pathname.startsWith("/api/")) {
+      // A Pages packaging run may share dist/client with this Node preview.
+      // Never serve its reserved server bundle or private notation as an asset.
+      if (/^\/(?:scores(?:\/|$)|_worker(?:[./]|$)|_headers$|_routes\.json$)/.test(url.pathname)) return new Response("Not found",{status:404});
       const root = resolve("dist/client");
       const path = resolve(root, "." + decodeURIComponent(url.pathname));
       if (!path.startsWith(root + sep) && path !== root) return new Response("Not found", { status: 404 });

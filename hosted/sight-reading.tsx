@@ -455,7 +455,7 @@ export function SightReading({
     .map((n) => n.pitch) : state.pending;
   const hintsDocked = followSettings.stream && followSettings.dockHints && followSettings.bottom >= 15 && showHints && (running || listening);
   const score = (<div data-broadcast-viewport={experience?"recording":undefined} data-broadcast-spacing={experience?"adaptive":undefined} className={`panel sight-score practice-cinematic-region${exercise.collection === 'moonlight' ? ' moonlight-score' : ''}`} style={!experience && followSettings.stream ? { paddingBottom: `${followSettings.bottom}vh` } : undefined}>
-        <NotationViewer
+        {groups.length ? <NotationViewer
           presentationId={`${exercise.number}:${repeatPass}`}
           xml={xml}
           activeMeasure={active}
@@ -473,7 +473,7 @@ export function SightReading({
           hideTitle
           onDisplayedZoom={setDisplayedScoreZoom}
           noteFeedback={listening ? undefined : noteFeedback}
-        />
+        /> : <p role="status">Sheet music is unavailable for this selection.</p>}
         <PracticeBattleIntro/>
         <PracticeCinematic exerciseNumber={exercise.number} force={!!experience}/>
       </div>);

@@ -1,8 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 import { defaultGameSettings } from "../../hosted/game-core";
-import { readFileSync } from "node:fs";
-import type { Exercise } from "../../hosted/sight-library";
-const catalog: Exercise[]=JSON.parse(readFileSync("public-app/catalog-seed.json","utf8"));
+import {readFileSync} from 'node:fs';
+import {catalog as authoredCatalog} from '../../public-app/server-catalog';
+const catalog=authoredCatalog.filter(e=>e.collection!=='repertoire-archived').map(e=>e.notationUrl?{...e,notationXml:readFileSync('hosted/public'+e.notationUrl,'utf8'),notationUrl:undefined}:e);
 import { noteGroups } from "../../hosted/sight-library";
 const id="a0000000-0000-4000-8000-000000000001";
 const user={id,email:"browser-test@example.test",email_confirmed_at:new Date().toISOString(),aud:"authenticated",role:"authenticated",user_metadata:{name:"Test Pianist"},app_metadata:{provider:"email",providers:["email"]},created_at:new Date().toISOString()};
@@ -15,6 +15,7 @@ async function fixture(page:Page,signedIn=false,midiSupported=true) {
     await route.fulfill({json:url.includes("/user")?user:url.includes("/signup")?{user,session:null}:url.includes("/token")?session:{}});
   });
   await page.route("**/api/auth/session",r=>r.fulfill({json:{signedIn:true}}));
+  await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:true}:{admin:false,pieces:catalog.map(e=>({...e,available:true}))}}));
   let settings=structuredClone(defaultGameSettings);
   let snapshot: unknown=null;
   settings.bossBattle.enabled=true;
@@ -42,6 +43,87 @@ async function fixture(page:Page,signedIn=false,midiSupported=true) {
     (window as unknown as {playNotes:(p:number[])=>void}).playNotes=(pitches:number[])=>{for(const pitch of pitches)input.onmidimessage?.({data:new Uint8Array([144,pitch,90]),timeStamp:performance.now()});};
   },{session,signedIn,midiSupported});
 }
+
+test('music administrator toggles parent and piece publication and previews hidden music',async({page})=>{
+ await fixture(page,true);
+ const pieces=catalog.filter(e=>e.collection==='schmitt-op16').map(e=>({number:e.number,title:e.title,collection:e.collection,published:true}));
+ let published=true;
+ await page.route('**/api/admin/music',async r=>{
+  if(r.request().method()==='POST'){const x=r.request().postDataJSON();if(x.kind==='collection')published=x.published;else pieces.find(e=>e.number===x.id)!.published=x.published;}
+  return r.fulfill({json:{collections:[{id:'schmitt-op16',name:'Schmitt Op. 16',published,total:pieces.length,available:published?pieces.filter(e=>e.published).length:0}],pieces:pieces.map(e=>({...e,available:published&&e.published,collectionPublished:published}))}});
+ });
+ await page.goto('/admin/music');
+ await expect(page.getByRole('heading',{name:'Music Library Manager'})).toBeVisible();
+ await page.getByLabel('Search pieces').fill('Exercise 7');
+ const piece=page.getByRole('button',{name:'Publish Schmitt Op. 16 · Exercise 7',exact:true});
+ await piece.click();await expect(piece).toHaveAttribute('aria-pressed','false');
+ const collection=page.getByRole('button',{name:'Publish Schmitt Op. 16 collection',exact:true});
+ await collection.click();await expect(collection).toHaveAttribute('aria-pressed','false');
+ await expect(page.getByText('0 available / 213 pieces')).toBeVisible();
+ await collection.click();await expect(piece).toHaveAttribute('aria-pressed','false');
+ await page.getByLabel('Availability').selectOption('unavailable');
+ await expect(page.locator('.admin-pieces li')).toHaveCount(1);
+ await page.screenshot({path:'test-results/music-admin-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'test-results/music-admin-mobile.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.getByRole('link',{name:'Test piece'}).click();
+ await expect(page.locator('.battle-queue')).toContainText('Schmitt Op. 16 · Exercise 7');
+});
+
+test('ordinary player cannot manage music and keeps unavailable saved queue entries',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await fixture(page,true);
+ await page.route('**/api/admin/music',r=>r.fulfill({status:403,json:{error:'Administrator access required.'}}));
+ await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:false}:{admin:false,pieces:catalog.map(e=>e.number===2001?{number:2001,title:e.title,collection:e.collection,right:[],left:[],available:false}:{...e,available:true})}}));
+ await page.addInitScript(id=>localStorage.setItem(`pbb:setup:v2:${id}`,JSON.stringify({hand:'both',entries:[{number:2001,loops:5},{number:2002,loops:2}]})),id);
+ await page.goto('/admin/music');await expect(page.getByRole('alert')).toHaveText('Administrator access required.');
+ await expect(page.locator('.admin-music-columns')).toHaveCount(0);
+ await page.getByRole('link',{name:'Back to your battle setup'}).click();
+ await expect(page.locator('.battle-queue li')).toHaveCount(2);
+ await expect(page.locator('.battle-queue li').first()).toContainText('Unavailable');
+ await expect(page.getByRole('spinbutton',{name:'Loops'}).first()).toHaveValue('5');
+ await expect(page.getByRole('button',{name:'Add Schmitt Op. 16 · Exercise 1 to queue',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Edit Setup',exact:true}).click();
+ await page.screenshot({path:'test-results/music-unavailable-queue.png',fullPage:true});
+ await page.getByRole('button',{name:'Remove item 1',exact:true}).click();
+ await expect(page.locator('.battle-queue li')).toHaveCount(1);
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
+ expect(errors).toEqual([]);
+});
+
+test('a piece hidden after rendering is rejected at start without beginning MIDI evaluation',async({page})=>{
+ await fixture(page,true);await page.goto('/');
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await page.route('**/api/music/authorize',r=>r.fulfill({status:403,json:{error:'A piece in your queue is unavailable. Refresh the library or remove it before starting.'}}));
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('unavailable');
+ await expect(page.locator('.in-theatre')).toHaveCount(0);
+});
+
+test('republishing restores a saved unavailable piece without losing its loops',async({page})=>{
+ await fixture(page,true);let available=false;
+ await page.route('**/api/music**',r=>r.fulfill({json:r.request().url().includes('/authorize')?{authorized:true}:{admin:false,pieces:catalog.map(e=>e.number===2001&&!available?{number:2001,title:e.title,collection:e.collection,right:[],left:[],available:false}:{...e,available:true})}}));
+ await page.addInitScript(id=>localStorage.setItem(`pbb:setup:v2:${id}`,JSON.stringify({hand:'both',entries:[{number:2001,loops:5}]})),id);
+ await page.goto('/');await expect(page.locator('.battle-queue')).toContainText('Unavailable');
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ available=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(page.locator('.battle-queue')).not.toContainText('Unavailable');
+ await expect(page.getByRole('spinbutton',{name:'Loops'})).toHaveValue('5');
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await expect(page.locator('.sight-score svg').first()).toBeVisible();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.locator('.in-theatre')).toBeVisible();
+ await page.waitForTimeout(3500);
+ const before=Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'));
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
+ await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(before-2);
+});
 test("public logged-out page, registration, login and password reset use Supabase",async({page})=>{
   await fixture(page);
   await page.goto("/");
@@ -224,7 +306,7 @@ test("V2 setup, preview, history navigation and reload preserve shared selection
   await fixture(page,true);await page.setViewportSize({width:1672,height:1000});await page.goto("/");
   await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
   await expect(page.getByRole("region",{name:"Player profile"})).toContainText("Test Pianist");
-  await expect(page.locator(".music-list>div")).toHaveCount(404); // 228 authored seed definitions plus the existing generated/library pieces.
+  await expect(page.locator(".music-list>div")).toHaveCount(403); // Existing catalog, excluding the deliberately archived piece.
   for(const name of ["Practice","Survival","Ultimate Boss","Time Attack"]){
     await page.getByRole("button",{name:new RegExp(`^${name} `)}).click();
     await expect(page.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-pressed","true");

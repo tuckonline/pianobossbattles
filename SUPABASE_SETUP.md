@@ -181,6 +181,108 @@ the app's `DATABASE_URL` connection is verified with certificate-checked TLS 1.3
 Do not approve public deployment until live authentication, database persistence,
 physical MIDI, and recording checks have passed.
 
+## Music Library Manager — local testing, 2026-10-20
+
+Open **http://localhost:5173/admin/music** after signing in. The owner account
+explicitly identified in this chat has been granted `MUSIC_ADMIN`. There are no
+admin controls on the normal dashboard. Other accounts remain ordinary players.
+
+Select a collection, search its pieces, and use **Published / Unpublished**.
+Collection availability and individual piece flags are independent. Restoring a
+collection never republishes a piece you separately hid. **Test piece** loads
+that selection in the existing battle builder, including unpublished music for
+administrators. The default ordinary-player catalog contains 403 pieces;
+Archived Repertoire remains unpublished. Administrators can see all 404.
+
+Player libraries refresh on focus and every 15 seconds, with conditional requests
+to avoid repeatedly downloading unchanged notation. Every new Start Battle
+checks the whole queue against the database immediately. Hidden saved entries
+retain their position and loop count, show **Unavailable**, and can be removed.
+Republishing restores their playable definition without recreating the queue.
+Publication does not erase XP, achievements, histories, or personal bests.
+
+### Secure role administration
+
+Only a trusted operator with this project's local, ignored `DATABASE_URL` can
+run the role helper. It validates the expected Supabase project/pooler and
+requires exactly one existing, email-confirmed account. It never uses editable
+profile metadata or browser flags as authorization.
+
+```sh
+npx tsx scripts/music-admin.ts grant PLAYER_EMAIL huxmltjtovpxxxupuxdg
+npx tsx scripts/music-admin.ts revoke PLAYER_EMAIL huxmltjtovpxxxupuxdg
+```
+
+Run these from this repository, substituting the account email. Never put a
+database password, connection URL, access token, or service-role key in the
+command or chat. The helper reads the existing ignored environment file.
+Revocation takes effect on the next protected request, without waiting for the
+Supabase token cache to expire. The older `grant-role` script belongs to the
+legacy application and is not this music-administration procedure.
+
+### Schema and delivery safeguards
+
+Applied after CLI dry run and target confirmation to
+`huxmltjtovpxxxupuxdg` only:
+
+- `202610200003_music_publication.sql`: adds `music_collections.published`,
+  `practice_exercises.published`, and private `music_scores` XML storage.
+  New collection/piece defaults are **unpublished**.
+- `202610200004_existing_music_visibility.sql`: registers the existing generated
+  catalog and private score files. All 228 original definitions were preserved
+  byte-for-byte; 176 existing browser-generated definitions are now also stored
+  server-side. It deliberately publishes the existing active catalog and leaves
+  archived content hidden. No player records were migrated or deleted.
+
+These migrations are already recorded remotely; do not rerun their SQL manually.
+The generator `scripts/prepare-music-publication.ts` records the original import,
+not an ongoing content sync command. Future additions need a new migration.
+
+All music/publication tables have RLS enabled and no direct grants to `anon` or
+`authenticated`. The trusted server checks the `roles` table for administrator
+access and checks both publication flags for ordinary requests. Protected reads,
+queue authorization, gameplay sync, and result endpoints enforce availability.
+Already-recorded attempts can finish syncing their earned progress after music
+is hidden; a new attempt ID cannot use that exception.
+
+Public browser bundles exclude authoring libraries and private notation. A build
+guard rejects accidental catalog JSON imports. XML is served only by the
+authenticated API; `/scores/*` files are no longer public assets. The local Node
+server also refuses the reserved Pages server-bundle path. No privileged
+database credentials or role keys are included in browser assets.
+
+### Verification and deployment status
+
+- 469 unit/database tests passed, across 65 files.
+- 19 public browser tests passed, including admin/ordinary UI fixtures, queue
+  preservation, republishing, direct-start rejection, all four modes, immediate
+  MIDI scoring, continuous loops, Theatre, and both OBS views.
+- Three manager/queue tests also passed against the production build locally.
+- Security tests use separate provider-verified identity fixtures against real
+  SQL migrations in PGlite: forged admin metadata, direct role/publication writes,
+  hidden score reads, mixed queues, parent overrides, and role revocation.
+  These are not claims of two live email-account logins.
+- Live Supabase checks confirmed migration history, RLS/grants, 11 collections,
+  404 definitions, 40 XML scores, unchanged original definition hashes, and
+  unchanged existing player progress hashes.
+- The owner's real signed-in local admin UI loaded successfully; a piece was
+  unpublished and republished through the real API, then restored to its original
+  published setting. No deployment was needed for that change.
+- TypeScript passed. Changed-file lint has no errors; the pre-existing shared
+  `SightReading` effect-dependency warning remains. Production/Pages packaging
+  passed (Wrangler dry run only). Static-score/server-bundle URL checks and
+  browser credential/catalog checks passed.
+- Screenshots: `.local/music-manager/admin-live.png`,
+  `.local/music-manager/music-admin-mobile.png`, and
+  `.local/music-manager/music-unavailable-queue.png` (local, ignored).
+
+**No website deployment was performed.** The previously deployed preview still
+runs its older bundled catalog and does not enforce the new publication controls
+until the new runtime is deployed with approval. Test the manager and updated
+player experience on localhost for now. The original ChatGPT application, its
+D1 database, production domain, and DNS remain unchanged. Live password recovery
+and dedicated transactional email remain prelaunch requirements.
+
 ## Reference
 
 - [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords)

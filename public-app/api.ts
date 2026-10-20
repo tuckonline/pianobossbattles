@@ -6,6 +6,7 @@ import { handleScoreSignaling } from "../hosted/obs-signaling";
 import { handleShorts } from "../hosted/shorts-service";
 import { DomainError } from "../src/domains/auth/permissions";
 import { PostgresBridge } from "./postgres";
+import { handleMusic, authorizeMusicCommand, readMusicExercise } from "./music-service";
 import { z } from "zod";
 
 types.setTypeParser(20, Number);
@@ -54,6 +55,7 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
     const db = new PostgresBridge(pool, undefined, user.id).asD1();
     const service = new D1Platform(db);
     const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
+    if (url.pathname === "/api/music" || url.pathname === "/api/music/authorize" || url.pathname === "/api/admin/music") return await handleMusic(request,pool,user.id);
     if (url.pathname === "/api/obs") return url.searchParams.get("rtc") === "1"
       ? handleScoreSignaling(request, db, user.id) : handleOverlay(request, db, user.id);
     if (url.pathname === "/api/shorts") return handleShorts(request, db, user.id);
@@ -68,6 +70,8 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
     if (url.pathname === "/api/platform" && request.method === "POST") {
       const input = await request.json();
       if (!actions.has(input?.action)) throw new DomainError("Command unavailable in the public application.", 403);
+      await authorizeMusicCommand(pool,user.id,input);
+      if(input.action === "practiceExercise")return Response.json(await readMusicExercise(pool,z.number().int().positive().parse(input.exerciseNumber)));
       return Response.json(await service.command(actor, input));
     }
     throw new DomainError("Not found",404);

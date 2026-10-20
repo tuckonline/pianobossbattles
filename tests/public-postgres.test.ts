@@ -3,7 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { PostgresBridge } from "../public-app/postgres";
 import { D1Platform } from "../hosted/service";
-import { catalog } from "../public-app/catalog";
+import { catalog } from "../public-app/server-catalog";
 import { noteGroups } from "../hosted/sight-library";
 import { defaultGameSettings } from "../hosted/game-core";
 import { handleOverlay } from "../hosted/obs-service";

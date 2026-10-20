@@ -22,8 +22,9 @@ export function chainScoreSnapshot(snapshot:OverlaySnapshot,game:OverlaySnapshot
   const chain=game?.battle?.chain,id=chain?`${chain.exerciseNumber}:${chain.pass}`:undefined;
   if(!chain||snapshot.score?.presentationId===id)return {...snapshot,game};
   const exercise=schmittLibrary.find(e=>e.number===chain.exerciseNumber);
-  if(!exercise)return {...snapshot,game};
-  return {...snapshot,game,exerciseNumber:exercise.number,title:exercise.title??`Exercise ${exercise.number}`,
-    measure:1,totalMeasures:exercise.right.length,accuracy:null,mistakes:0,
+  // Public builds load protected definitions through the API. Even before that
+  // fetch completes, invalidate the previous pass rather than freezing its note.
+  return {...snapshot,game,exerciseNumber:chain.exerciseNumber,title:exercise?.title??`Exercise ${chain.exerciseNumber}`,
+    measure:1,totalMeasures:exercise?.right.length??1,accuracy:null,mistakes:0,
     score:snapshot.score?{...snapshot.score,presentationId:id,activeMeasure:0,activeBeat:0,feedback:[]}:undefined};
 }
