@@ -1,11 +1,12 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase, syncServerSession } from "./supabase";
+import { authCallback, supabase, syncServerSession } from "./supabase";
 
 export function useAccount() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false), [error, setError] = useState("");
   const [recovery, setRecovery] = useState(false);
+  const recoveryComplete = useRef(false);
   useEffect(() => {
     let active = true, serial = Promise.resolve(), previousUser = "";
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
@@ -13,7 +14,20 @@ export function useAccount() {
       serial = serial.then(async () => {
         try {
           if (!active) return;
-          if (event === "PASSWORD_RECOVERY") setRecovery(true);
+          const initialized = await supabase.auth.initialize();
+          if (!active) return;
+          if (initialized.error || authCallback.hasError) {
+            throw new Error("This email link could not be verified. It may have expired or already been used. Request a new link and open it in the same browser where you requested it.");
+          }
+          // Without the original browser's PKCE verifier, the SDK silently skips
+          // code exchange. Do not disguise that failure as an ordinary login.
+          if (authCallback.hasCode && new URL(location.href).searchParams.has("code")) {
+            throw new Error("This email link was opened in a different browser or its recovery data is missing. Open the link in the same browser where you requested it. If it has expired, request a new reset link there.");
+          }
+          const recoveryRequested = new URL(location.href).searchParams.get("recovery") === "1";
+          if (recoveryRequested && !next) {
+            throw new Error("No verified password-reset session is available. Request a new reset link and open it in the same browser.");
+          }
           if (previousUser && next?.user.id !== previousUser) {
             await syncServerSession();
             location.reload(); // singleton MIDI/session/outbox must never cross accounts
@@ -21,6 +35,14 @@ export function useAccount() {
           }
           await syncServerSession(next?.access_token);
           if (!active) return;
+          if (next && !recoveryComplete.current && (event === "PASSWORD_RECOVERY" || recoveryRequested)) {
+            // Keep the form across reloads and late subscriptions to INITIAL_SESSION.
+            // This flag selects the UI only; Supabase and the API still verify the session.
+            const url = new URL(location.href);
+            url.searchParams.set("recovery", "1");
+            history.replaceState(history.state, "", url);
+            setRecovery(true);
+          } else if (!next) setRecovery(false);
           previousUser = next?.user.id ?? "";
           setSession(next); setError(""); setReady(true);
         } catch (e) { if(active){setError((e as Error).message);setReady(true);} }
@@ -28,7 +50,13 @@ export function useAccount() {
     });
     return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
-  return { session, ready, error, recovery, finishRecovery: () => setRecovery(false) };
+  return { session, ready, error, recovery, finishRecovery: () => {
+    recoveryComplete.current = true;
+    const url = new URL(location.href);
+    url.searchParams.delete("recovery");
+    history.replaceState(history.state, "", url);
+    setRecovery(false);
+  } };
 }
 export function AccountForm({ recovery=false, onRecovered }: { recovery?: boolean; onRecovered?: () => void }) {
   const [mode, setMode] = useState<"login"|"register"|"reset">("login");
@@ -43,7 +71,7 @@ export function AccountForm({ recovery=false, onRecovered }: { recovery?: boolea
         if(r.error)throw r.error;setMessage("Check your email to verify your account, then sign in.");
       } else if(mode==="reset"){
         const r=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/?recovery=1"});if(r.error)throw r.error;
-        setMessage("If this address has an account, you’ll receive a password reset link.");
+        setMessage("If this address has an account, you’ll receive a password reset link. Open it in this same browser. If your email app opens another browser, copy the email link into this browser’s address bar. Never share the link.");
       } else { const r=await supabase.auth.signInWithPassword({email,password});if(r.error)throw r.error; }
     }catch(e){setError((e as Error).message);}finally{setBusy(false);}
   }

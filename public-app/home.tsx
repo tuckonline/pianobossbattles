@@ -47,7 +47,7 @@ export function PublicApp() {
         account.session?<PlayerHome user={account.session.user}/>:
         <><section className="welcome"><div><span className="eyebrow">YOUR PIANO. YOUR POWER.</span><h1>Turn every note<br/>into a <em>battle cry.</em></h1><p>Connect your piano, choose your challenge, and let the music do the fighting. Your next great performance starts here.</p><div className="welcome-fighters"><img src={hero} alt="Piano Blade, the cyan sword-wielding pianist"/><span>VS</span><img src={bossProfiles.grinwick.portrait} alt="Grinwick, the chaos gremlin"/></div></div><AccountForm/></section>
         <div className="public-steps"><p><b>01</b> Connect your MIDI piano</p><p><b>02</b> Choose your musical challenge</p><p><b>03</b> Play. Battle. Level up.</p></div></>}
-        {account.error&&<p role="alert" className="error">{account.error}</p>}
+        {account.error&&<p role="alert" className="error">{account.error} <a href="/">Return to sign in</a></p>}
       </main><footer>Original music battles. Real piano progress.</footer>
     </div>}</>;
 }

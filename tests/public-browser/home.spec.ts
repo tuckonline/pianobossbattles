@@ -165,3 +165,50 @@ test("real API rejects unsigned requests and cross-origin session writes",async(
   expect((await request.post("/api/platform",{data:{action:"gameState"},headers:{Origin:"http://localhost:5173"}})).status()).toBe(401);
   expect((await request.post("/api/auth/session",{data:{},headers:{Origin:"https://untrusted.example"}})).status()).toBe(403);
 });
+
+for (const signedIn of [false, true]) {
+  test(`reset link without the originating PKCE verifier explains the failure (existing session: ${signedIn})`,async({page})=>{
+    await fixture(page,signedIn);
+    let exchanges=0;
+    page.on("request",r=>{if(r.url().includes("grant_type=pkce"))exchanges++;});
+    await page.goto("/?recovery=1&code=fixture-unexchanged-code");
+    await expect(page.getByRole("alert")).toContainText("different browser");
+    await expect(page.getByRole("alert")).toContainText("same browser");
+    await expect(page.getByRole("heading",{name:"Choose a new password"})).toHaveCount(0);
+    await expect(page.getByRole("heading",{name:"Make it your battle."})).toHaveCount(0);
+    expect(exchanges).toBe(0);
+    await page.getByRole("link",{name:"Return to sign in",exact:true}).click();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+  });
+}
+
+test("verified PKCE recovery shows the password form, survives reload and clears after update",async({page})=>{
+  await fixture(page);
+  await page.addInitScript(()=>{
+    if(location.search.includes("code="))localStorage.setItem("sb-huxmltjtovpxxxupuxdg-auth-token-code-verifier",JSON.stringify("fixture-verifier/recovery"));
+  });
+  const exchange=page.waitForRequest(r=>r.url().includes("grant_type=pkce"));
+  await page.goto("/?recovery=1&code=fixture-recovery-code");
+  expect((await exchange).postDataJSON()).toMatchObject({auth_code:"fixture-recovery-code",code_verifier:"fixture-verifier"});
+  await expect(page.getByRole("heading",{name:"Choose a new password"})).toBeVisible();
+  expect(new URL(page.url()).searchParams.has("code")).toBe(false);
+  await page.reload();
+  await expect(page.getByRole("heading",{name:"Choose a new password"})).toBeVisible();
+  await page.screenshot({path:"test-results/public-password-recovery.png"});
+  await page.getByLabel("Password",{exact:true}).fill("Fixture-New-Password-123");
+  const update=page.waitForRequest(r=>r.url().includes("/auth/v1/user")&&r.method()==="PUT");
+  await page.getByRole("button",{name:"Update password",exact:true}).click();
+  expect((await update).postDataJSON().password).toBe("Fixture-New-Password-123");
+  await expect(page.getByRole("heading",{name:"Make it your battle."})).toBeVisible();
+  expect(new URL(page.url()).searchParams.has("recovery")).toBe(false);
+  await page.reload();
+  await expect(page.getByRole("heading",{name:"Make it your battle."})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Choose a new password"})).toHaveCount(0);
+});
+
+test("expired recovery links show a useful error without exposing a password form",async({page})=>{
+  await fixture(page,true);
+  await page.goto("/?recovery=1#error=access_denied&error_code=otp_expired&error_description=fixture");
+  await expect(page.getByRole("alert")).toContainText("expired or already been used");
+  await expect(page.getByRole("heading",{name:"Choose a new password"})).toHaveCount(0);
+});

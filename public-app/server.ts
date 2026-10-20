@@ -2,6 +2,7 @@ import "dotenv/config";
 import { createServer } from "node:http";
 import { Readable } from "node:stream";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { resolve, extname, sep } from "node:path";
 import { Pool, types } from "pg";
 import { createClient, type User } from "@supabase/supabase-js";
@@ -36,7 +37,10 @@ async function verifiedUser(token:string) {
   return data.user;
 }
 const pool = process.env.DATABASE_URL ? new Pool({
-  connectionString: process.env.DATABASE_URL, max: 10, ssl: { rejectUnauthorized: true },
+  connectionString: process.env.DATABASE_URL, max: 10, ssl: {
+    rejectUnauthorized: true,
+    ...(process.env.DATABASE_SSL_CA_FILE ? { ca: readFileSync(process.env.DATABASE_SSL_CA_FILE, "utf8") } : {}),
+  },
 }) : null;
 const actions = new Set(["gameState", "gameSync", "gameSettings", "gameSessionEnd",
   "battleStoryRecords", "battleStorySave", "practiceExercise", "sightAttempt", "resetStreamStats", "gameBackup"]);
