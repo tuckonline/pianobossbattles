@@ -618,8 +618,15 @@ test('player presets leave the designated OBS source audible and a second source
   expect(state.player().settings.bossBattle).toMatchObject({audioOutput:'obs',soundEnabled:true,volume:.13});
  }
  const obs=await context.newPage();await fixture(obs,true);await audioProbe(obs);
- const overlay=(p:Page)=>p.route('**/api/obs**',r=>r.fulfill({json:r.request().url().includes('rtc=1')?{active:false,offers:[]}:{snapshot:state.snapshot(),gamePlayer:state.player(),updatedAt:Date.now(),attempts:0,best:null}}));
- await overlay(obs);await obs.goto('/obs/recording?battleAudio=1');await obs.locator('body').click({position:{x:10,y:10}});
+ const overlay=(p:Page)=>p.route('**/api/obs**',r=>{
+  const url=new URL(r.request().url()),snapshot={snapshot:state.snapshot(),gamePlayer:state.player(),updatedAt:Date.now(),attempts:0,best:null};
+  if(url.searchParams.has('rtc'))return r.fulfill({json:{active:false,offers:[]}});
+  // Exercise the live SSE path; JSON on this endpoint forces slow fallback polling
+  // and legitimately discards time-sensitive audio cues as stale.
+  if(url.searchParams.has('stream'))return r.fulfill({contentType:'text/event-stream',body:`retry: 100\ndata: ${JSON.stringify(snapshot)}\n\n`});
+  return r.fulfill({json:snapshot});
+ });
+ await overlay(obs);await obs.goto('/obs/recording?battleAudio=1');await expect(obs.getByRole('complementary',{name:'Boss battle',exact:true})).toBeVisible();await obs.locator('body').click({position:{x:10,y:10}});
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
  const duplicate=await context.newPage();await fixture(duplicate,true);await audioProbe(duplicate);await overlay(duplicate);await duplicate.goto('/obs/shorts?battleAudio=1');await duplicate.locator('body').click({position:{x:10,y:10}});
@@ -627,10 +634,35 @@ test('player presets leave the designated OBS source audible and a second source
  for(const group of notes.slice(0,4)){await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),group.pitches);await page.waitForTimeout(180);}
  await expect.poll(()=>audioStarts(obs)).toBeGreaterThan(0);
  expect(await audioStarts(page)).toBe(0);expect(await audioStarts(duplicate)).toBe(0);
- await duplicate.close();await obs.reload();await obs.locator('body').click({position:{x:10,y:10}});await page.waitForTimeout(1000);
+ await duplicate.close();await obs.reload();await expect(obs.getByRole('complementary',{name:'Boss battle',exact:true})).toBeVisible();await obs.locator('body').click({position:{x:10,y:10}});await page.waitForTimeout(1000);
  const refreshed=await audioStarts(obs);await page.waitForTimeout(700);expect(await audioStarts(obs)).toBe(refreshed);
  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),notes[4].pitches);
  await expect.poll(()=>audioStarts(obs)).toBeGreaterThan(refreshed);
  expect(await audioStarts(page)).toBe(0);expect(await obs.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
  await obs.close();
+});
+
+
+test('dashboard entry uses a neutral loading state and retries without showing a library page',async({page})=>{
+ await fixture(page,true);
+ let release!:()=>void;
+ const waiting=new Promise<void>(resolve=>{release=resolve;});
+ let fail=true,adminRequests=0;
+ page.on('request',r=>{if(new URL(r.url()).pathname==='/api/admin/music')adminRequests++;});
+ await page.route('**/api/music?**',async r=>{
+  if(fail){await waiting;return r.fulfill({status:503,json:{error:'Could not load your music. Please try again.'}});}
+  return r.fallback();
+ });
+ await page.goto('/');
+ await expect(page.getByRole('status',{name:''}).filter({hasText:'Preparing your dashboard…'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Music library',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Build your battle.',exact:true})).toHaveCount(0);
+ expect(new URL(page.url()).pathname).toBe('/');expect(adminRequests).toBe(0);
+ release();
+ await expect(page.getByRole('alert')).toHaveText('Could not load your music. Please try again.');
+ fail=false;await page.getByRole('button',{name:'Retry',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Build your battle.',exact:true})).toBeVisible();
+ await expect(page.getByRole('region',{name:'Preparing your dashboard',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'Music Library',exact:true})).toHaveCount(0);
+ expect(new URL(page.url()).pathname).toBe('/');expect(adminRequests).toBe(0);
 });

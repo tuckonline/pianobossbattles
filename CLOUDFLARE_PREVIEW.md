@@ -48,23 +48,56 @@ allowlist. Existing localhost and production-domain entries are preserved; Site
 URL remains localhost during local testing. Unique per-deployment URLs are not
 auth callback destinations. Use the stable preview URL for sign-in and testing.
 
-## Prelaunch gates
+## Current limited-beta release authorization
 
-- **Password recovery: UNVERIFIED.** The default sender hit its quota. A delivered
-  reset email did not complete recovery in a different browser; corrected PKCE
-  handling has fixture coverage but the real reset flow must still be completed.
-- Configure a dedicated transactional SMTP provider, sender domain and delivery
-  monitoring before public launch. Verify registration, confirmation and password
-  reset delivery to non-team recipients. Do not disable confirmation to work
-  around the default sender's restrictions.
-- Complete deployed login, refresh persistence, real MIDI and OBS recording checks.
-- Review Cloudflare request/CPU and Hyperdrive query quotas under actual OBS polling
-  load before inviting players; no plan upgrade is performed by this deployment.
-- Complete final security and cross-player isolation review.
-- Obtain explicit owner approval before public-domain deployment or DNS changes.
+Updated from the owner's latest manual verification. This section supersedes older
+email and device-testing statements below and in earlier setup notes.
 
-See SUPABASE_SETUP.md for the completed local registration, saved-progress and
-database/RLS checks. Preview verification results are recorded separately below.
+**Completed, owner-confirmed:** Resend account and pianobossbattles.com sending-domain
+verification; DKIM and sending records verified; Supabase custom SMTP at
+smtp.resend.com using accounts@pianobossbattles.com; real password-reset email,
+password change and successful recovery; physical MIDI gameplay on the Cloudflare
+preview; Cloudflare Email Routing for accounts@ and support@ to the verified
+Outlook inbox. The owner subsequently confirmed registration with a new email
+address worked and supplied a screenshot of the signed-in new player dashboard.
+Non-team registration/confirmation is therefore recorded as owner-confirmed passed.
+These steps are complete, not remaining blockers. No SMTP credential,
+Resend configuration or email DNS changes are required or authorized by this report.
+
+The current approved preview is deployed at commit ee1cba2. Its 474 unit/database
+and 23 local browser tests passed, as did TypeScript, changed-file lint and build.
+Post-deployment audio/notation checks passed after rechecking two loading-sensitive
+failures. Fixture tests do not replace the remaining real-account checks.
+
+Remaining launch gates:
+
+1. **New earned progress:** complete a real MIDI battle on preview, record the
+   resulting XP/history/personal best, log out and back in, and confirm it persists.
+   Existing saved-progress restoration and physical MIDI playback are already
+   confirmed; the combined new-write/re-login scenario remains unverified.
+2. **Two real accounts:** verify private progress/OBS-state isolation and that a
+   normal account cannot use admin publication endpoints. Existing live SQL RLS
+   isolation and automated permission tests passed; real browser-account coverage
+   is still required.
+3. **Production operations/security:** review production secrets/bindings and
+   origin/cookie protections, verify backup coverage and a restoration procedure,
+   enable appropriate error/uptime monitoring, document/test rollback, and check
+   capacity/abuse controls for the expected limited beta. Current automation is
+   intentionally preview-only. Paid services and security-sensitive decisions
+   require owner approval.
+4. **Public readiness:** provide privacy/terms pages, support and a verified
+   account-deletion process; complete a distribution-license review of the music,
+   artwork and audio. Some license documents exist, but a complete release review
+   has not been recorded. Do not delete an actual account as a test without consent.
+5. **Production cutover:** configure exact production Auth callbacks, Site URL and
+   application origin, production backend bindings, custom domain/HTTPS and the
+   chosen bare-domain redirect; smoke-test registration/login/recovery and progress
+   at www.pianobossbattles.com. Preserve preview and the original application.
+
+The owner subsequently explicitly authorized production launch and requested
+www.pianobossbattles.com setup. The unchecked items above remain recorded; this
+authorization is not evidence that unperformed tests passed. Do not announce the
+beta or invite users.
 
 ## Preview verification — 2026-10-20
 
@@ -106,6 +139,76 @@ not share that signed-in session, so this is explicitly owner-confirmed evidence
 separate from the fixture tests. A new physical-MIDI performance saved through
 the preview has not yet been verified.
 
-**Password recovery remains UNVERIFIED.** No further recovery email was sent
-during this deployment. Dedicated transactional email and an end-to-end password
-reset remain mandatory prelaunch gates.
+**Historical status superseded:** the owner subsequently configured Resend SMTP
+and completed real password recovery, as recorded in the current launch decision above.
+
+
+## Production deployment workflow
+
+Production is a separate, manually deployed Pages project, `pianobossbattles`,
+with production branch label `production`. The existing `pianobossbattles-preview`
+project and original ChatGPT-hosted application remain unchanged. Neither Pages
+project has Git integration; a Git push alone does not publish production.
+
+Production uses APP_ORIGIN=https://www.pianobossbattles.com and the same independent
+Supabase project/Hyperdrive connection as the preview. Existing players retain
+progress; no data or schema is migrated. Database credentials remain server-side
+in Hyperdrive. The browser receives only the existing public Supabase settings.
+
+After explicit release approval, run all relevant checks, then:
+
+1. `npm run build:preview` (shared Pages/Worker packaging, not a deployment).
+2. Commit and push the reviewed release to `feature/end-user-website-v1`.
+3. `npm run deploy:production -- --confirm-production`.
+4. Verify the custom-domain HTTPS response, matching client build, real API
+   authentication/origin protections, and browser behavior before reporting success.
+
+The deployment helper refuses dirty/unpushed releases and does not merge main.
+Keep `noindex` during the limited beta; no announcements are automated.
+
+For a later application rollback, use Cloudflare Pages > pianobossbattles >
+Deployments to select a prior known-good **production** deployment and Rollback.
+Verify the custom domain afterwards. This is code rollback only, not a database
+restore. The initial release has no earlier production deployment; preserve its
+commit/deployment ID as the first recovery baseline. Database backup/restore
+validation remains a separate operational check. Never point production at a
+preview deployment as an improvised rollback, and never reset the linked database.
+
+
+## Historical production preparation interruption — 2026-10-20
+
+- Both Cloudflare and the intended Supabase dashboard are signed in.
+- The separate Pages project `pianobossbattles` was created with production origin,
+  Supabase public settings and the existing Hyperdrive binding. No code has been
+  deployed there yet, and no custom domain/DNS record has been added.
+- Existing eight DNS records were inspected; all are email-related and unchanged.
+  There was no existing www record. Supabase Site URL remains localhost; production
+  URL changes have not been saved pending a deployable release.
+- TypeScript, changed-file ESLint and Pages/Worker production packaging passed.
+  A scan of 65 built client files found no local database credential value.
+- A rerun with one worker and workspace-local temp files passed 440 tests; 34 tests
+  could not run because five Miniflare suites hit sandbox EACCES on localhost.
+  The 24 browser tests could not launch because the sandbox's Playwright browser
+  executable was absent. These are infrastructure limits, not passing test results.
+  Earlier full-suite results remain historical evidence, not a fresh full pass.
+- Git remote access failed (`getaddrinfo() thread failed to start`) in the current
+  restricted execution environment. Current release changes remain uncommitted and
+  unpushed. Do not report production deployment success or bypass approvals.
+
+
+## Production release candidate — 2026-10-20
+
+Network and filesystem permissions were subsequently restored by the session.
+GitHub connectivity is confirmed. All 474 tests (65 suites) now pass, including
+Miniflare/local-network suites. TypeScript, changed-file lint and production
+Pages/Worker build passed. Exact www root and password-recovery redirects are
+added alongside the existing localhost/preview callbacks, without SMTP changes.
+The branded dashboard loading fallback replaces the transient Music library
+heading and retains error/retry behavior; it does not change admin permissions.
+
+Browser verification: 23/24 passed in the full local run. The audio fixture was
+returning JSON for an SSE endpoint, forcing fallback polling and stale-cue drops;
+it now returns real event-stream messages and waits for the rendered battle panel
+before the unlock gesture. The corrected audio/duplicate-source/reconnect case
+passed twice consecutively. No production audio/gameplay behavior was changed.
+All 24 browser cases therefore passed across the full run and targeted rechecks.

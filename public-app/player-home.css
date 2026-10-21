@@ -159,3 +159,6 @@
 body:has(.authenticated-app)>.skip:not(:focus-visible){top:-100px}
 .authenticated-app .music-list strong{font-size:13px}
 .authenticated-app .battle-summary dd{font-size:13px}
+
+.authenticated-app .player-loading{min-height:240px;padding:36px 0}
+.authenticated-app .player-loading p{color:#a8c5da;margin-top:24px}

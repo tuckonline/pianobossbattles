@@ -22,7 +22,8 @@
     "pretest": "node public-app/prepare-tests.mjs",
     "test:public-browser": "playwright test --config playwright.public.config.ts",
     "build:preview": "npm run build && node public-app/build-preview.mjs",
-    "deploy:preview": "node public-app/deploy-preview.mjs"
+    "deploy:preview": "node public-app/deploy-preview.mjs",
+    "deploy:production": "node public-app/deploy-production.mjs"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.5",

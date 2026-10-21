@@ -1,5 +1,13 @@
 # Public Piano Boss Battles: local setup
 
+> Current status: the owner has configured verified Resend SMTP and confirmed real
+> password recovery and physical MIDI gameplay on the Cloudflare preview. Accounts@
+> and support@ email routing is also configured. Do not repeat or reconfigure these
+> completed steps. See [the current launch decision](CLOUDFLARE_PREVIEW.md#current-limited-beta-release-authorization)
+> for remaining gates. Older dated test/setup notes below are historical; the latest
+> approved preview (ee1cba2) is deployed, while the newly authorized production setup is in progress.
+
+
 This is an independent app. It has no Sites deployment identity, D1 binding,
 deployment workflow, or connection to the original live application. Nothing here
 migrates player data from that application.

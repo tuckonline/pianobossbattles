@@ -64,7 +64,7 @@ function readDraft(userId:string,catalog:CatalogExercise[]):{hand:Hand;queue:Cha
 const currentView=()=>new URLSearchParams(location.search).get("view")==="preview"?"preview":"setup";
 export function PlayerHome({user}:{user:User}) {
   const {catalog,admin,error,refresh}=useMusicCatalog(user.id);
-  if(!catalog)return <section className="setup-section"><h1>Music library</h1><p role={error?"alert":"status"}>{error||"Loading your music…"}</p>{error&&<button onClick={()=>void refresh().catch(()=>{})}>Retry</button>}</section>;
+  if(!catalog)return <section className="player-loading" aria-label="Preparing your dashboard" aria-busy={!error}><div className="player-brand"><PianoMark/><span>Piano Boss Battles<small>PRACTICE MUSIC. DEFEAT BOSSES.</small></span></div><p role={error?"alert":"status"}>{error||"Preparing your dashboard…"}</p>{error&&<button onClick={()=>void refresh().catch(()=>{})}>Retry</button>}</section>;
   return <LoadedPlayerHome user={user} catalog={catalog} admin={admin} libraryError={error} refreshLibrary={refresh}/>;
 }
 function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user:User;catalog:CatalogExercise[];admin:boolean;libraryError:string;refreshLibrary:()=>Promise<void>}) {
