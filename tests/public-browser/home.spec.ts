@@ -48,6 +48,7 @@ async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) 
     Object.defineProperty(navigator,"requestMIDIAccess",{value:!midiSupported?undefined:async()=>{probe.midiRequests++;return {inputs:new Map([["test-midi",input]]),onstatechange:null};}});
     (window as unknown as {playNotes:(p:number[])=>void}).playNotes=(pitches:number[])=>{for(const pitch of pitches)input.onmidimessage?.({data:new Uint8Array([144,pitch,90]),timeStamp:performance.now()});};
   },{session,signedIn,midiSupported});
+  return {player,snapshot:()=>snapshot};
 }
 
 test('music administrator toggles parent and piece publication and previews hidden music',async({page})=>{
@@ -555,4 +556,81 @@ test('notation presets preserve engraving, feedback, saved preference and OBS st
  const comparison=await context.newPage();await comparison.setViewportSize({width:1440,height:660});
  await comparison.setContent('<body style="margin:0;background:#081727;color:#e8f7ff;font-family:Arial"><h1 style="margin:20px;font-size:22px">Notation Appearance · Schmitt No. 7 · Both hands</h1><main style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 20px">'+captures.map(c=>'<section><h2 style="font-size:16px">'+c.label+'</h2><img style="width:100%" src="data:image/png;base64,'+c.image+'"></section>').join('')+'</main></body>');
  await comparison.screenshot({path:'test-results/notation-presets-comparison.png',fullPage:true});await comparison.close();
+});
+
+
+async function audioProbe(page:Page){
+ await page.addInitScript(()=>{
+  const data={starts:0,gains:[] as number[]};Object.assign(window,{battleAudioProbe:data});
+  const native=AudioContext.prototype.createBufferSource;
+  AudioContext.prototype.createBufferSource=function(){const source=native.call(this),start=source.start.bind(source);source.start=function(...args:Parameters<typeof source.start>){data.starts++;return start(...args);};return source;};
+  const gain=AudioContext.prototype.createGain;
+  AudioContext.prototype.createGain=function(){const node=gain.call(this),set=node.gain.setTargetAtTime.bind(node.gain);node.gain.setTargetAtTime=function(value,time,constant){data.gains.push(value);return set(value,time,constant);};return node;};
+ });
+}
+const audioStarts=(page:Page)=>page.evaluate(()=>(window as unknown as {battleAudioProbe:{starts:number}}).battleAudioProbe.starts);
+
+test('Battle Audio presets, test sound, volume and mute persist without affecting MIDI',async({page})=>{
+ await fixture(page,true);await audioProbe(page);await page.goto('/');
+ const audio=page.getByRole('region',{name:'Battle Audio',exact:true});
+ await expect(audio.getByRole('button',{name:/Focus Mode/})).toHaveAttribute('aria-pressed','true');
+ await expect(audio.getByRole('slider')).toHaveCount(0);
+ await expect(audio.locator('details')).not.toHaveAttribute('open');
+ await audio.getByRole('button',{name:/Immersive Mode/}).click();
+ await expect(audio.getByRole('slider',{name:/^Effects volume/})).toHaveValue('20');
+ await audio.getByRole('button',{name:'Test Sound',exact:true}).click();
+ await expect.poll(()=>audioStarts(page)).toBeGreaterThan(0);
+ await audio.getByRole('button',{name:/Cinematic Mode/}).click();
+ await expect(audio.getByRole('slider',{name:/^Effects volume/})).toHaveValue('40');
+ await audio.getByRole('slider',{name:/^Effects volume/}).fill('65');
+ await expect(page.getByRole('status').filter({hasText:'All progress saved'})).toBeVisible();
+ await page.reload();await expect(audio.getByRole('button',{name:/Cinematic Mode/})).toHaveAttribute('aria-pressed','true');
+ await expect(audio.getByRole('slider',{name:/^Effects volume/})).toHaveValue('65');
+ await audio.getByRole('slider',{name:/^Effects volume/}).fill('0');
+ await expect(audio.getByRole('button',{name:'Test Sound',exact:true})).toBeDisabled();
+ await audio.getByRole('button',{name:/Focus Mode/}).click();
+ await expect(audio.getByRole('slider')).toHaveCount(0);
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ const hp=page.locator('[data-authoritative-boss-hp]');const before=Number(await hp.getAttribute('data-authoritative-boss-hp'));
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
+ await expect.poll(async()=>Number(await hp.getAttribute('data-authoritative-boss-hp'))).toBe(before-2);
+ await page.waitForTimeout(500);expect(await audioStarts(page)).toBe(0);
+ await page.getByRole('button',{name:'End Battle',exact:true}).click();
+ await page.getByRole('button',{name:'Return to preview',exact:true}).click();
+ await audio.screenshot({path:'test-results/battle-audio-focus.png'});
+ await page.setViewportSize({width:390,height:844});await audio.getByRole('button',{name:/Immersive Mode/}).click();
+ await audio.screenshot({path:'test-results/battle-audio-mobile.png'});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('player presets leave the designated OBS source audible and a second source silent',async({page,context})=>{
+ test.setTimeout(90000);
+ const state=await fixture(page,true);await audioProbe(page);await page.goto('/');
+ const audio=page.getByRole('region',{name:'Battle Audio',exact:true});
+ await audio.getByText('Advanced audio settings',{exact:true}).click();
+ await audio.getByLabel('Combat audio output').selectOption('obs');
+ await audio.getByLabel('Enable OBS battle effects').check();
+ await audio.getByRole('slider',{name:/Audience effects volume/}).fill('65');
+ for(const name of ['Immersive Mode','Cinematic Mode','Focus Mode']){
+  await audio.getByRole('button',{name:new RegExp(name)}).click();
+  expect(state.player().settings.bossBattle).toMatchObject({audioOutput:'obs',soundEnabled:true,volume:.13});
+ }
+ const obs=await context.newPage();await fixture(obs,true);await audioProbe(obs);
+ const overlay=(p:Page)=>p.route('**/api/obs**',r=>r.fulfill({json:r.request().url().includes('rtc=1')?{active:false,offers:[]}:{snapshot:state.snapshot(),gamePlayer:state.player(),updatedAt:Date.now(),attempts:0,best:null}}));
+ await overlay(obs);await obs.goto('/obs/recording?battleAudio=1');await obs.locator('body').click({position:{x:10,y:10}});
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ const duplicate=await context.newPage();await fixture(duplicate,true);await audioProbe(duplicate);await overlay(duplicate);await duplicate.goto('/obs/shorts?battleAudio=1');await duplicate.locator('body').click({position:{x:10,y:10}});
+ const notes=noteGroups(catalog.find(e=>e.number===2001)!,'both');
+ for(const group of notes.slice(0,4)){await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),group.pitches);await page.waitForTimeout(180);}
+ await expect.poll(()=>audioStarts(obs)).toBeGreaterThan(0);
+ expect(await audioStarts(page)).toBe(0);expect(await audioStarts(duplicate)).toBe(0);
+ await duplicate.close();await obs.reload();await obs.locator('body').click({position:{x:10,y:10}});await page.waitForTimeout(1000);
+ const refreshed=await audioStarts(obs);await page.waitForTimeout(700);expect(await audioStarts(obs)).toBe(refreshed);
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),notes[4].pitches);
+ await expect.poll(()=>audioStarts(obs)).toBeGreaterThan(refreshed);
+ expect(await audioStarts(page)).toBe(0);expect(await obs.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
+ await obs.close();
 });

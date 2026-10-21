@@ -92,6 +92,15 @@ describe("Public PostgreSQL persistence with the original evaluator",()=>{
     const other=await service.command({...actor,id:b},{action:'gameState'}) as {settings:typeof defaultGameSettings};
     expect(other.settings.notationPreset).toBe('studio');
   });
+  it("saves player audio presets without changing the audience mix",async()=>{
+    const bossBattle={...defaultGameSettings.bossBattle,audioOutput:'obs' as const,soundEnabled:true,volume:.13};
+    for(const mode of ['focus','immersive','cinematic'] as const){
+      await service.command(actor,{action:'gameSettings',settings:{...defaultGameSettings,bossBattle,playerAudio:{mode,volume:.06}}});
+      const restored=await service.command(actor,{action:'gameState'}) as {settings:typeof defaultGameSettings};
+      expect(restored.settings.playerAudio).toEqual({mode,volume:.06});
+      expect(restored.settings.bossBattle).toEqual(bossBattle);
+    }
+  });
   it("uses actual mixed music and accounts for every loop without changing battle notes",()=>{
     const plan=exerciseChain([{exercise:catalog.find(e=>e.number===2001)!,loops:3},{exercise:catalog.find(e=>e.number===4001)!,loops:2}],"both");
     expect(plan.loops).toBe(5);expect(plan.notes).toBeGreaterThan(100);

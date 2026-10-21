@@ -1,9 +1,11 @@
+import {playerAudioSchema,defaultPlayerAudio,inheritedPlayerAudio} from './player-audio';
 import { cinematicSettingsSchema, defaultCinematicSettings } from './cinematic-config';
 import {shortsDisplaySchema,defaultShortsDisplay} from './shorts-display';
 import { z } from "zod";
 import { bossConfigSchema, defaultBossBattleConfig } from "./boss-config";
 import { defaultGameSettings, type GameSettings } from "./game-core";
 export const gameSettingsSchema = z.object({
+  playerAudio: playerAudioSchema.default(defaultPlayerAudio),
   notationPreset: z.enum(['classic','studio','slate','night']).default('studio'),
   shortsDisplay:shortsDisplaySchema.default(defaultShortsDisplay),
   cinematics: cinematicSettingsSchema.default(defaultCinematicSettings),
@@ -41,5 +43,7 @@ export const gameSettingsSchema = z.object({
 // without gameMode and crashes the V9 controls after the first API response.
 export function normalizeGameSettings(value: unknown): GameSettings {
   const saved = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  return gameSettingsSchema.parse({ ...defaultGameSettings, ...saved });
+  const merged=gameSettingsSchema.parse({ ...defaultGameSettings, ...saved });
+  if(!('playerAudio' in saved))merged.playerAudio=inheritedPlayerAudio(merged.bossBattle);
+  return merged;
 }

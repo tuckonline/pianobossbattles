@@ -17,6 +17,8 @@ import { BossBattlePanel } from "../hosted/boss-ui";
 import { battleLayout, type BossBattleLayoutConfig } from "../hosted/battle-layout";
 import { battleView } from "../hosted/boss-battle";
 import { usePracticeCinematicActive } from "../hosted/battle-cinematic-ui";
+import {BattleAudioSettings} from "./battle-audio-settings";
+import {playerAudioConfig} from "../hosted/player-audio";
 import { useBattleAudioOutput } from "../hosted/battle-audio-ui";
 import type { Exercise, Hand } from "../hosted/sight-library";
 import type { ChainEntry } from "../hosted/schmitt-chain";
@@ -79,7 +81,8 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const [authorizing,setAuthorizing]=useState(false);
   const [logoutBusy,setLogoutBusy]=useState(false);
   const settings=game.player.settings, config=settings.bossBattle;
-  useBattleAudioOutput(config,game.player.userId,"practice");
+  const localAudio=useMemo(()=>playerAudioConfig(config,settings.playerAudio),[config,settings.playerAudio]);
+  useBattleAudioOutput(localAudio,game.player.userId,"practice");
   const notationPreset=settings.notationPreset??defaultNotationPreset, palette=notationPresets[notationPreset];
   const notationStyle={'--notation-paper':palette.paper,'--notation-ink':palette.ink,'--notation-current':palette.current,'--notation-correct':palette.correct,'--notation-incorrect':palette.incorrect} as CSSProperties;
   const mode=config.enabled?config.gameMode:"practice", level=levelInfo(game.player.xp,game.player.curveVersion);
@@ -191,7 +194,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         <details className="setup-section history"><summary><Icon name="bars"/>Recent Battles</summary>{profileError&&<p role="alert">{profileError}</p>}{!history.length?<p>Your completed battles will appear here.</p>:<ul>{history.map(h=><li key={h.attemptId}><strong>{h.result.toUpperCase()}</strong><span>{h.accuracy.toFixed(1)}% accuracy · {h.bestCombo} best combo · {h.completed}/{h.total} pieces</span></li>)}</ul>}</details>
         <details className="setup-section history"><summary><Icon name="cup"/>Personal Bests</summary><p>{game.player.unlocks.length} achievements unlocked · Best note combo: {game.player.best}</p>{profileError&&<p role="alert">{profileError}</p>}{bests.length?<ul>{bests.map(b=><li key={b.exerciseNumber}><span>{catalog.find(e=>e.number===b.exerciseNumber)?.title??`Exercise ${b.exerciseNumber}`}</span><strong>{Number(b.accuracy).toFixed(1)}%</strong></li>)}</ul>:<p>Finish a piece to set your first personal best.</p>}</details>
       </div>
-      <details className="setup-section audio-settings" hidden={theatre}><summary>Battle sound settings</summary><label className="check"><input type="checkbox" checked={config.soundEnabled} onChange={e=>update({soundEnabled:e.target.checked})}/>Battle sounds</label><label>Output<select value={config.audioOutput} onChange={e=>update({audioOutput:e.target.value as "practice"|"obs"})}><option value="practice">This browser</option><option value="obs">Audience only (OBS)</option></select></label><label>Effects volume<input type="range" min={0} max={0.2} step={0.01} value={config.volume} onChange={e=>update({volume:Number(e.target.value)})}/></label></details>
+      <BattleAudioSettings settings={settings} hidden={theatre}/>
     </div>;
   };
   return <SightReading library={scoreLibrary} attempts={[]} practice hideHeading experience={{entries:queue,hand,canStart:connected&&queue.length>0&&!unavailable&&!libraryError&&game.ready&&!game.recoveryError,render}}/>;

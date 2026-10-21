@@ -1,3 +1,4 @@
+import {defaultPlayerAudio} from './player-audio';
 import {defaultShortsDisplay} from './shorts-display';
 import { defaultCinematicSettings } from './cinematic-config';
 import { assessPractice, type Exercise, type Hand } from "./sight-library";
@@ -437,6 +438,7 @@ export class CelebrationQueue {
   }
 }
 export const defaultGameSettings = {
+  playerAudio: defaultPlayerAudio,
   notationPreset: 'studio' as import('../src/components/music/notation-presets').NotationPreset,
   shortsDisplay: defaultShortsDisplay,
   cinematics: defaultCinematicSettings,

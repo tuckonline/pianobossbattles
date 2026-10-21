@@ -718,6 +718,10 @@ class GameClient {
     else if(!this.state.battle.pressure)this.beginPressure(null);
     await this.saveSettings(settings);
   }
+  async playerAudio(playerAudio:GameSettings['playerAudio'],routing?:Pick<GameSettings['bossBattle'],'soundEnabled'|'volume'|'audioOutput'>) {
+    // Audio preferences never configure damage, timers or the current battle.
+    await this.saveSettings({...this.state.player.settings,playerAudio,...(routing?{bossBattle:{...this.state.player.settings.bossBattle,...routing}}:{})});
+  }
   async notationAppearance(notationPreset:GameSettings['notationPreset']) {
     await this.saveSettings({...this.state.player.settings,notationPreset});
   }

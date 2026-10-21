@@ -1,3 +1,5 @@
+import {normalizeGameSettings} from '../hosted/game-settings';
+import {defaultPlayerAudio,inheritedPlayerAudio,playerAudioConfig,selectPlayerAudio} from '../hosted/player-audio';
 import {describe,it,expect,vi} from 'vitest';
 import {BattleAudioEngine,type BattleSound} from '../hosted/battle-audio';
 import {combatAudioCues} from '../hosted/battle-audio-cues';
@@ -131,4 +133,34 @@ it('restored results are silent; compact results sound only when cinematics are 
   expect(combatAudioCues(b,d.presentation,false)).toEqual([]);
   expect(combatAudioCues(b,{...d.presentation,finished:true,outcomeAt:1000},false)[0].kind).toBe('timeout');
   expect(combatAudioCues(b,{...d.presentation,finished:true,outcomeAt:1000},true)).toEqual([]);
+});
+
+
+describe('learner audio presets',()=>{
+ it('defaults new accounts to Focus and preserves old enabled, muted and OBS choices',()=>{
+  expect(normalizeGameSettings({}).playerAudio.mode).toBe('focus');
+  const old={...defaultBossBattleConfig,soundEnabled:true,volume:.17};
+  expect(normalizeGameSettings({bossBattle:old}).playerAudio).toEqual({mode:'cinematic',volume:.17});
+  expect(inheritedPlayerAudio({...old,soundEnabled:false}).mode).toBe('focus');
+  expect(normalizeGameSettings({bossBattle:{...old,audioOutput:'obs'}})).toMatchObject({playerAudio:{mode:'focus'},bossBattle:{soundEnabled:true,volume:.17,audioOutput:'obs'}});
+ });
+ it('presets affect only the local battle mix and never rewrite the OBS configuration',()=>{
+  const audience={...defaultBossBattleConfig,soundEnabled:true,volume:.13,audioOutput:'obs' as const};
+  for(const mode of ['focus','immersive','cinematic'] as const){
+   const preference=selectPlayerAudio(mode,defaultPlayerAudio);
+   expect(playerAudioConfig(audience,preference)).toMatchObject({soundEnabled:false,audioOutput:'obs'});
+   expect(audience).toMatchObject({soundEnabled:true,volume:.13,audioOutput:'obs'});
+  }
+  expect(selectPlayerAudio('immersive',defaultPlayerAudio).volume).toBe(.04);
+  expect(selectPlayerAudio('cinematic',defaultPlayerAudio).volume).toBe(.08);
+ });
+ it('Focus and zero volume silence the battle bus while Immersive and Cinematic use the existing engine',()=>{
+  const {engine,time,sources}=setup();
+  engine.configure(playerAudioConfig(defaultBossBattleConfig,defaultPlayerAudio));
+  expect(engine.play('heroImpact','focus')).toBe(false);
+  for(const mode of ['immersive','cinematic'] as const){time(mode==='immersive'?2000:3000);engine.configure(playerAudioConfig(defaultBossBattleConfig,selectPlayerAudio(mode,defaultPlayerAudio)));expect(engine.play('heroImpact',mode)).toBe(true);}
+  engine.configure(playerAudioConfig(defaultBossBattleConfig,{mode:'cinematic',volume:0}));
+  expect(engine.play('heroImpact','zero')).toBe(false);expect(sources).toHaveLength(2);
+  expect(sources.every(s=>s.stop.mock.calls.length>0)).toBe(true);
+ });
 });
