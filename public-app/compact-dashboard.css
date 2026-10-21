@@ -102,3 +102,9 @@
  .authenticated-app .v2-builder .battle-summary .start-button{min-height:34px;height:34px;font-size:14px}
  .authenticated-app .v2-builder .battle-summary .notation-appearance button{min-height:26px;height:26px;padding:3px}
 }
+/* Reclaim the removed step navigation for the inline appearance/start controls. */
+@media(min-width:1100px) and (min-height:768px){
+ .authenticated-app .v2-builder{--setup-height:calc(100svh - 204px)}
+ .authenticated-app .v2-builder .setlist-panel>fieldset:first-child{overflow:hidden}
+ .authenticated-app .v2-builder .battle-queue{flex-shrink:1;min-height:42px;overflow:auto}
+}

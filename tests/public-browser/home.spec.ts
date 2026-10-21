@@ -98,13 +98,13 @@ test('ordinary player cannot manage music and keeps unavailable saved queue entr
  await expect(page.getByRole('spinbutton',{name:'Loops'}).first()).toHaveValue('5');
  await expect(page.getByRole('button',{name:'Add Schmitt Op. 16 · Exercise 1 to queue',exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
  await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
- await page.getByRole('button',{name:'Edit Setup',exact:true}).click();
+
  await page.screenshot({path:'test-results/music-unavailable-queue.png',fullPage:true});
  await page.getByRole('button',{name:'Remove item 1',exact:true}).click();
  await expect(page.locator('.battle-queue li')).toHaveCount(1);
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
  await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
  expect(errors).toEqual([]);
 });
@@ -112,7 +112,7 @@ test('ordinary player cannot manage music and keeps unavailable saved queue entr
 test('a piece hidden after rendering is rejected at start without beginning MIDI evaluation',async({page})=>{
  await fixture(page,true);await page.goto('/');
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
  await page.route('**/api/music/authorize',r=>r.fulfill({status:403,json:{error:'A piece in your queue is unavailable. Refresh the library or remove it before starting.'}}));
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();
  await expect(page.getByRole('alert')).toContainText('unavailable');
@@ -128,8 +128,8 @@ test('republishing restores a saved unavailable piece without losing its loops',
  available=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await expect(page.locator('.battle-queue')).not.toContainText('Unavailable');
  await expect(page.getByRole('spinbutton',{name:'Loops'})).toHaveValue('5');
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
- await expect(page.locator('.sight-score svg').first()).toBeVisible();
+
+ await expect(page.locator('.sight-score svg').first()).toBeAttached();
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();
  await expect(page.locator('.in-theatre')).toBeVisible();
  await page.waitForTimeout(3500);
@@ -168,9 +168,9 @@ test("public logged-out page, registration, login and password reset use Supabas
   await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
   await expect(page.locator('.player-header .piano-mark')).toHaveAttribute('src','/branding/emblem-128.png');
   await expect.poll(()=>page.locator('.player-header .piano-mark').evaluate(e=>(e as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
-  await page.locator(".sight-score svg").first().waitFor();
-  await page.locator(".sight-score").scrollIntoViewIfNeeded();
+
+  await page.locator(".sight-score svg").first().waitFor({state:"attached"});
+
   await page.waitForTimeout(1000); // Capture the loaded notation and sprite art, not loading placeholders.
   await page.locator(".player-header").scrollIntoViewIfNeeded();
   await page.screenshot({path:"test-results/public-player-mobile.png",fullPage:true});
@@ -182,11 +182,11 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
   await fixture(page,true);await page.goto("/");
   await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
+
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
   await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeEnabled();
-  await page.getByRole("button",{name:"Edit Setup",exact:true}).click();
+
   await page.getByRole("button",{name:/Grinwick Fast claws/}).click();
   await page.getByLabel("Search pieces").fill("Schmitt Op. 16 · Exercise 2");
   await page.getByRole("button",{name:"Add Schmitt Op. 16 · Exercise 2 to queue",exact:true}).click();
@@ -196,8 +196,8 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   await expect(page.locator(".battle-queue li").first()).toContainText("Exercise 2");
   await page.getByRole("button",{name:"Move item 1 down"}).click();
   await page.screenshot({path:"test-results/public-player-queue.png",fullPage:true});
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
-  await page.locator(".sight-score svg").first().waitFor();
+
+  await page.locator(".sight-score svg").first().waitFor({state:"attached"});
   await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.mountCheck="same");
   await page.getByRole("button",{name:"Slate Focus",exact:true}).click();
   await page.getByRole("button",{name:"Start Battle",exact:true}).click();
@@ -232,17 +232,17 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   await expect(page.locator(".theatre-heading h2")).toHaveText("Schmitt Op. 16 · Exercise 2");
   await expect(page.locator("[data-battle-attempt]")).toHaveAttribute("data-battle-attempt",attempt!);
   await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(Number(before)-(pitches.length-2)-pitches.length-1);
-  await page.getByRole("button",{name:"Return to preview"}).click();
+  await page.getByRole("button",{name:"Back to setup"}).click();
   await expect(page.locator(".sight-score")).toHaveAttribute("data-mount-check","same");
-  await expect(page.getByRole("button",{name:"Edit Setup",exact:true})).toBeDisabled();
-  await expect(page.locator(".setup-columns")).toBeHidden();
+  await expect(page.getByRole("button",{name:/^Survival /})).toBeDisabled();
+  await expect(page.locator(".setup-columns")).toBeVisible();
   await page.getByRole("button",{name:"End Battle",exact:true}).click();
   expect(errors).toEqual([]);
   await page.waitForTimeout(600);
   for(const [path,width,height] of [["recording",1920,750],["shorts",1080,1920]] as const){
     await page.setViewportSize({width,height});await page.goto(`/obs/${path}`);
     await expect(page.getByRole("complementary",{name:"Boss battle"})).toBeVisible();
-    await page.locator(".sight-score svg").first().waitFor();
+    await page.locator(".sight-score svg").first().waitFor({state:"attached"});
     await page.waitForTimeout(800);
     await page.screenshot({path:`test-results/public-obs-${path}.png`});
     expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
@@ -255,7 +255,7 @@ test("Victory holds over the mounted score and a deliberate new attempt dismisse
   const exercise=catalog.find(e=>e.number===4001)!;
   await page.getByLabel("Search pieces").fill(exercise.title!);
   await page.getByRole("button",{name:`Add ${exercise.title} to queue`,exact:true}).click();
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
+
   await page.getByRole("button",{name:"Start Battle",exact:true}).click();
   await page.waitForTimeout(3500);
   await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(exercise,"both").flatMap(g=>g.pitches));
@@ -320,71 +320,22 @@ test("expired recovery links show a useful error without exposing a password for
   await expect(page.getByRole("heading",{name:"Choose a new password"})).toHaveCount(0);
 });
 
-test("V2 setup, preview, history navigation and reload preserve shared selections",async({page})=>{
-  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
-  await fixture(page,true);await page.setViewportSize({width:1672,height:1000});await page.goto("/");
-  await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
-  await expect(page.getByRole("region",{name:"Player profile"})).toContainText("Test Pianist");
-  await expect(page.locator(".music-list>div")).toHaveCount(403); // Existing catalog, excluding the deliberately archived piece.
-  for(const name of ["Practice","Survival","Ultimate Boss","Time Attack"]){
-    await page.getByRole("button",{name:new RegExp(`^${name} `)}).click();
-    await expect(page.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-pressed","true");
-  }
-  await page.getByRole("combobox",{name:"Time Pressure",exact:true}).selectOption("1.15");
-  await page.getByRole("combobox",{name:"Hands",exact:true}).selectOption("left");
-  await page.getByLabel("Target BPM",{exact:true}).fill("80");
-  await page.getByLabel("Easy → Normal → Hard → Expert across loops").check();
-  await page.getByRole("button",{name:/Grinwick Fast claws/}).click();
-  await page.getByLabel("Search pieces").fill("Schmitt Op. 16 · Exercise 2");
-  await page.getByRole("button",{name:"Add Schmitt Op. 16 · Exercise 2 to queue",exact:true}).click();
-  await page.getByRole("spinbutton",{name:"Loops"}).first().fill("3");
-  await page.getByRole("button",{name:"Move item 2 up"}).click();
-  await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
-  await expect(page.getByText("Your piano is connected",{exact:true})).toBeVisible();
-  await page.getByRole("heading",{name:"Build your battle."}).click();
-  await page.screenshot({path:"test-results/v2-setup.png",fullPage:true});
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
-  await expect(page).toHaveURL(/view=preview/);
-  for(const text of ["60 → 80 → 110 → 140 BPM","Tight","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
-  await page.getByText("Review full sequence",{exact:true}).click();
-  await expect(page.locator(".sequence-review li").first()).toContainText("Exercise 2");
-  await page.locator(".sight-score svg").first().waitFor();
-  await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.navigationCheck="mounted");
-  await expect(page.locator(".history[open]")).toHaveCount(0);
-  await page.getByRole("button",{name:"Edit Setup",exact:true}).click();
-  await expect(page.getByLabel("Target BPM",{exact:true})).toBeDisabled();
-  await page.getByLabel("Easy → Normal → Hard → Expert across loops").uncheck();
-  await expect(page.getByLabel("Target BPM",{exact:true})).toHaveValue("80");
-  await page.getByLabel("Easy → Normal → Hard → Expert across loops").check();
-  await expect(page.getByRole("combobox",{name:"Hands",exact:true})).toHaveValue("left");
-  await expect(page.locator(".battle-queue li").first()).toContainText("Exercise 2");
-  await expect(page.getByRole("spinbutton",{name:"Loops"}).nth(1)).toHaveValue("3");
-  await page.goBack();
-  await expect(page.locator(".battle-summary")).toBeVisible();
-  await expect(page.locator(".sight-score")).toHaveAttribute("data-navigation-check","mounted");
-  expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(1);
-  await expect(page.locator("[data-battle-status]")).not.toHaveAttribute("data-battle-status","active");
-  await page.reload();
-  for(const text of ["60 → 80 → 110 → 140 BPM","Tight","Left hand","4 total performances"])await expect(page.locator(".battle-summary")).toContainText(text);
-  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
-  await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
-  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeEnabled();
-  await page.getByRole("button",{name:"Edit Setup",exact:true}).click();
-  await page.getByRole("combobox",{name:"Hands",exact:true}).selectOption("both");
-  await page.getByRole("button",{name:/Crimson Colossus Brutal/}).click();
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
-  await page.locator(".sight-score svg").first().waitFor();
-  await page.waitForTimeout(1000);
-  await page.locator(".summary-heading .eyebrow").click();
-  await page.screenshot({path:"test-results/v2-preview.png",fullPage:true});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.setViewportSize({width:390,height:844});
-  await page.screenshot({path:"test-results/v2-preview-narrow.png",fullPage:true});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByRole("button",{name:"Edit Setup",exact:true}).click();
-  await page.screenshot({path:"test-results/v2-setup-narrow.png",fullPage:true});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  expect(errors).toEqual([]);
+test("single setup restores selections and launches one modal countdown without a preview",async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await fixture(page,true);
+ await page.goto('/?view=preview');await expect(page.getByRole('heading',{name:'Build your battle.'})).toBeVisible();
+ await expect(page).not.toHaveURL(/view=preview/);await expect(page.getByText('Preview & Start',{exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:/Ultimate Boss/}).click();await page.getByLabel('Target BPM',{exact:true}).fill('80');
+ await page.getByRole('combobox',{name:'Combat Difficulty',exact:true}).selectOption('6');
+ await page.getByRole('spinbutton',{name:'Loops'}).fill('5');await page.reload();
+ await expect(page.getByLabel('Target BPM',{exact:true})).toHaveValue('80');await expect(page.getByRole('spinbutton',{name:'Loops'})).toHaveValue('5');
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Battle arena'})).toBeVisible();await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();await expect(page.getByRole('progressbar',{name:'boss HP',exact:true})).toBeVisible();await expect(page.getByRole('progressbar',{name:'player HP',exact:true})).toBeVisible();
+ await page.waitForTimeout(3500);const attempt=await page.locator('[data-battle-attempt]').getAttribute('data-battle-attempt');
+ await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toBeHidden();await expect(page.getByRole('heading',{name:'Build your battle.'})).toBeVisible();
+ await page.getByRole('button',{name:'Resume Battle',exact:true}).click();
+ await expect(page.locator('[data-battle-attempt]')).toHaveAttribute('data-battle-attempt',attempt!);await expect(page.getByRole('status',{name:'Battle start countdown'})).toHaveCount(0);
+ await page.getByRole('button',{name:'End Battle',exact:true}).click();await expect(page.getByRole('dialog')).toBeHidden();expect(errors).toEqual([]);
 });
 
 test("V2 explains unsupported Web MIDI without a broken connect control",async({page})=>{
@@ -392,7 +343,7 @@ test("V2 explains unsupported Web MIDI without a broken connect control",async({
   await page.goto("/");
   await expect(page.getByText("Web MIDI is unavailable in this browser. Use desktop Chrome or Edge.")).toBeVisible();
   await expect(page.getByRole("button",{name:"Connect MIDI Piano"})).toHaveCount(0);
-  await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
+
   await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
 });
 
@@ -401,7 +352,7 @@ test("mode settings switch immediately, retain preferences, and summarize only a
   await fixture(page,true);await page.setViewportSize({width:1672,height:1000});await page.goto('/');
   const mode=(name:string)=>page.getByRole('button',{name:new RegExp(`^${name} `)});
   const controls=page.getByRole('group',{name:'Battle settings',exact:true});
-  const summary=page.locator('.battle-summary');
+  const summary=page.locator('.setup-columns');
   await mode('Survival').click();
   await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toBeVisible();
   await expect(controls.getByLabel('Target BPM',{exact:true})).toHaveCount(0);
@@ -423,21 +374,21 @@ test("mode settings switch immediately, retain preferences, and summarize only a
   await page.getByRole('spinbutton',{name:'Loops'}).first().fill('2');
   for(const name of ['Ultimate Boss','Practice','Survival','Time Attack']){
     await mode(name).click();
-    await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
-    await expect(summary.getByText('Both hands',{exact:true})).toBeVisible();
-    await expect(summary.getByText('Combat Difficulty',{exact:true})).toHaveCount(name==='Survival'||name==='Ultimate Boss'?1:0);
-    await expect(summary.getByText('Time Pressure',{exact:true})).toHaveCount(name==='Time Attack'||name==='Ultimate Boss'?1:0);
+
+    await expect(controls.getByRole('combobox',{name:'Hands',exact:true})).toHaveValue('both');
+    await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveCount(name==='Survival'||name==='Ultimate Boss'?1:0);
+    await expect(controls.getByRole('combobox',{name:'Time Pressure',exact:true})).toHaveCount(name==='Time Attack'||name==='Ultimate Boss'?1:0);
     if(name==='Ultimate Boss'){
-      await expect(summary).toContainText('80 BPM');await expect(summary).toContainText('Hard');await expect(summary).toContainText('Normal');
+      await expect(controls.getByLabel('Target BPM',{exact:true})).toHaveValue('80');await expect(controls.getByRole('combobox',{name:'Combat Difficulty',exact:true})).toHaveValue('6');
       const exercises=[2001,2002].map(n=>catalog.find(e=>e.number===n)!);
       const {battleMusicalBeats,countdownLabel}=await import('../../hosted/battle-modes');
       const seconds=Math.ceil((battleMusicalBeats(exercises[0],2)!+battleMusicalBeats(exercises[1])!)*60/80*1.3);
       await expect(summary).toContainText(countdownLabel(seconds*1000));
       await page.screenshot({path:'test-results/mode-ultimate-preview.png',fullPage:true});
     }
-    if(name==='Practice')await expect(summary).toContainText('Self-Paced');
+    if(name==='Practice')await expect(summary).toContainText('Self-paced');
     if(name==='Time Attack')await expect(summary).toContainText('First-loop allowance');
-    await page.getByRole('button',{name:'Edit Setup',exact:true}).click();
+
     if(name==='Practice'){
       await expect(controls.locator('select')).toHaveCount(1);
       await expect(controls.locator('input')).toHaveCount(0);
@@ -464,7 +415,7 @@ for(const mode of ['Practice','Survival','Time Attack','Ultimate Boss'])test(`${
     await page.getByRole('combobox',{name:'Time Pressure',exact:true}).selectOption('1.3');
   }
   await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
-  await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
   await page.getByRole('button',{name:'Start Battle',exact:true}).click();
   const intro=page.getByRole('status',{name:'Battle start countdown'}),panel=page.getByRole('complementary',{name:'Boss battle'});
   if(mode==='Practice'){
@@ -522,12 +473,12 @@ test('notation presets preserve engraving, feedback, saved preference and OBS st
  expect(samples.every(Boolean)).toBe(true);
  const captures:{label:string;image:string}[]=[];
  for(const sample of samples){
-  await page.goto('/?music='+sample.number+'&view=preview');
+  await page.goto('/?music='+sample.number);await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
   const svg=page.locator('.sight-score .notation > svg').first();await expect(svg).toBeVisible({timeout:15000});
   await page.waitForTimeout(300);
   const before=await svg.evaluate(el=>{el.setAttribute('data-theme-mount','same');return {box:el.getBoundingClientRect().toJSON(),notes:el.querySelectorAll('.note').length};});
   for(const [id,p] of Object.entries(notationPresets)){
-   await page.getByRole('button',{name:p.label,exact:true}).click();
+   await page.getByRole('button',{name:'Back to setup',exact:true}).click();await page.getByRole('button',{name:p.label,exact:true}).click();await page.getByRole('button',{name:'Resume Battle',exact:true}).click();
    await expect(page.locator('[data-notation-preset]')).toHaveAttribute('data-notation-preset',id);
    await expect(svg).toHaveAttribute('data-theme-mount','same');
    const actual=await svg.evaluate(el=>({box:el.getBoundingClientRect().toJSON(),notes:el.querySelectorAll('.note').length,filter:getComputedStyle(el).filter,ink:getComputedStyle(el.querySelector('.staff path')!).stroke}));
@@ -598,14 +549,13 @@ test('Battle Audio presets, test sound, volume and mute persist without affectin
  await expect(audio.getByRole('slider')).toHaveCount(0);
  await page.locator('.audio-disclosure > summary').click();
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
  const hp=page.locator('[data-authoritative-boss-hp]');const before=Number(await hp.getAttribute('data-authoritative-boss-hp'));
  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
  await expect.poll(async()=>Number(await hp.getAttribute('data-authoritative-boss-hp'))).toBe(before-2);
  await page.waitForTimeout(500);expect(await audioStarts(page)).toBe(0);
  await page.getByRole('button',{name:'End Battle',exact:true}).click();
- await page.getByRole('button',{name:'Return to preview',exact:true}).click();
  await page.locator('.audio-disclosure > summary').click();
  await audio.screenshot({path:'test-results/battle-audio-focus.png'});
  await page.setViewportSize({width:390,height:844});await audio.getByRole('button',{name:/Immersive Mode/}).click();
@@ -637,7 +587,7 @@ test('player presets leave the designated OBS source audible and a second source
   return r.fulfill({json:snapshot});
  });
  await overlay(obs);await obs.goto('/obs/recording?battleAudio=1');await expect(obs.getByRole('complementary',{name:'Boss battle',exact:true})).toBeVisible();await obs.locator('body').click({position:{x:10,y:10}});
- await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
  const duplicate=await context.newPage();await fixture(duplicate,true);await audioProbe(duplicate);await overlay(duplicate);await duplicate.goto('/obs/shorts?battleAudio=1');await duplicate.locator('body').click({position:{x:10,y:10}});
  const notes=noteGroups(catalog.find(e=>e.number===2001)!,'both');
@@ -694,11 +644,11 @@ test('lightweight catalog opens immediately and preloads the complete setlist be
  await expect.poll(()=>loads.length).toBe(2);
  expect(loads.sort()).toEqual([2007,2008]);
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+
  await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
  await expect(page.getByText('Preparing your selected sheet music...',{exact:true})).toBeVisible();
  release();
- await expect(page.locator('.sight-score svg').first()).toBeVisible();
+ await expect(page.locator('.sight-score svg').first()).toBeAttached();
  await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();
  await page.waitForTimeout(3500);
@@ -712,17 +662,19 @@ test('lightweight catalog opens immediately and preloads the complete setlist be
  await page.screenshot({path:'test-results/preloaded-chain-transition.png',fullPage:true});
 });
 
-for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])test(`compact setup and preview fit ${viewport.width}x${viewport.height}`,async({page})=>{
+for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])test(`compact setup and modal arena fit ${viewport.width}x${viewport.height}`,async({page})=>{
  await page.setViewportSize(viewport);await fixture(page,true);
  await page.addInitScript(id=>localStorage.setItem(`pbb:setup:v2:${id}`,JSON.stringify({hand:'both',entries:[{number:2001,loops:2},{number:2002,loops:2},{number:2003,loops:2}]})),id);
  await page.goto('/');await page.getByRole('button',{name:/Ultimate Boss/}).click();
+ const queueBox=await page.locator('.battle-queue').boundingBox(),appearanceBox=await page.locator('.notation-appearance').boundingBox();expect(appearanceBox!.y).toBeGreaterThanOrEqual(queueBox!.y+queueBox!.height);
  await page.screenshot({path:`test-results/compact-setup-${viewport.width}.png`});
  expect(await page.locator('.challenge-panel').evaluate(e=>Array.from(e.querySelectorAll('.boss-choice')).every(card=>card.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom))).toBe(true);
  expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
- await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
- await expect(page.locator('.sight-score svg').first()).toBeVisible();
- await page.screenshot({path:`test-results/compact-preview-${viewport.width}.png`});
+
+ await expect(page.locator('.sight-score svg').first()).toBeAttached();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await page.screenshot({path:`test-results/compact-arena-${viewport.width}.png`});
  expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
- expect(await page.locator('.battle-summary').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeInViewport();
+ expect(await page.locator('.battle-dialog').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
+ await expect(page.getByRole('button',{name:'Back to setup',exact:true})).toBeInViewport();
 });

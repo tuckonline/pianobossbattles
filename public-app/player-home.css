@@ -162,3 +162,23 @@ body:has(.authenticated-app)>.skip:not(:focus-visible){top:-100px}
 
 .authenticated-app .player-loading{min-height:240px;padding:36px 0}
 .authenticated-app .player-loading p{color:#a8c5da;margin-top:24px}
+/* One setup screen; the mounted game opens in the browser's modal top layer. */
+.authenticated-app .battle-dialog{padding:0;border:1px solid #246078;border-radius:14px;width:calc(100vw - 24px);height:calc(100dvh - 24px);max-width:1920px;max-height:none;background:#071523;color:#e5f5ff;overflow:hidden}
+.battle-dialog::backdrop{background:#020914ed}
+.authenticated-app .battle-dialog .theatre{height:100%;margin:0;border:0;border-radius:0;display:grid;grid-template-rows:86px minmax(0,1fr);position:relative}
+.authenticated-app .battle-dialog .theatre-heading{padding:10px 22px;gap:12px;flex-direction:row;border-bottom:1px solid #214558}
+.battle-dialog .theatre-heading h2{font-size:clamp(18px,2vw,30px);margin:2px 0}
+.battle-dialog .theatre-heading .eyebrow{font-size:9px}
+.authenticated-app .battle-dialog .theatre-stage{height:100%;min-height:0;grid-template-columns:1fr;grid-template-rows:66% minmax(0,1fr)}
+.authenticated-app .battle-dialog .theatre-stage[data-battle=false]{grid-template-rows:minmax(0,1fr)}
+.authenticated-app .battle-dialog .boss-battle-panel{height:100%;grid-template-columns:1fr 1fr;grid-template-rows:66px minmax(0,1fr)}
+.battle-dialog .battle-hud{grid-column:1;grid-row:1;border:0}
+.battle-dialog .battle-status{grid-column:2;grid-row:1;border:0}
+.battle-dialog .battle-stage{grid-column:1 / -1;grid-row:2}
+.authenticated-app .battle-dialog .sight-score{height:100%;min-height:0}
+.battle-dialog .arena-message{position:absolute;bottom:0;right:12px;font-size:11px;pointer-events:none;background:#071523c9;color:#bfe6f5;padding:3px 8px;margin:0}
+.setlist-panel .notation-appearance{margin:8px 0}.setup-time-preview{font-size:12px;margin:5px 0}
+@media(min-width:1001px){.authenticated-app .v2-builder{--setup-height:calc(100dvh - 190px)}.authenticated-app .v2-builder .setlist-panel .music-list{flex:1;min-height:80px}.authenticated-app .v2-builder .setlist-panel .notation-appearance>div{grid-template-columns:repeat(4,minmax(0,1fr))}.authenticated-app .v2-builder .setlist-panel .notation-appearance button{font-size:10px;padding:5px}.authenticated-app .v2-builder .setlist-panel .notation-appearance small{display:none}}
+@media(max-width:650px){.authenticated-app .battle-dialog{width:100vw;height:100dvh;border:0;border-radius:0}.authenticated-app .battle-dialog .theatre{grid-template-rows:112px minmax(0,1fr)}.authenticated-app .battle-dialog .theatre-heading{padding:8px;flex-wrap:wrap}.battle-dialog .theatre-controls{gap:6px}.battle-dialog .theatre-controls button{padding:7px 10px}.authenticated-app .battle-dialog .theatre-stage{grid-template-rows:58% minmax(0,1fr)}}
+.authenticated-app .battle-dialog .battle-status{display:flex;padding:8px 16px;text-align:left;color:#d8e9f6}
+.authenticated-app .v2-builder .setlist-panel>fieldset.notation-appearance{flex:0 0 auto}

@@ -134,3 +134,19 @@ closer normalized idle anchors keep both fighters prominent. Shorts retains its
 original fitting path. Complete notation is contained in the compact lower strip.
 Four Creator browser tests, 28 layout/contact/service tests, TypeScript, lint,
 and preview build passed; horizontal capture inspected before publishing preview.
+
+## Single-page player flow
+
+The public player UI now uses setup → Start Battle → modal arena, with no preview
+page or step navigation. Legacy ?view=preview links resolve to setup. The native
+dialog keeps focus inside the arena; Escape/Back to setup pauses the existing
+attempt, and Resume Battle reopens it without another countdown. End Battle
+returns to setup. The score remains mounted, and the original evaluator,
+authorization, countdown, loop handling, rewards, and audio owner logic are reused.
+Notation presets and time estimates are available directly on setup.
+
+Verification: all 28 player browser tests and four Creator tests passed. After
+final spacing/HP visibility fixes, the direct-start and three viewport tests
+passed again. Also passed 22 mode/layout/Worker tests, TypeScript, changed-file
+lint, production build, and preview Worker dry run. Screenshots inspected at
+1366×768, 1440×900, and 1920×1080. Production is not part of this release.
