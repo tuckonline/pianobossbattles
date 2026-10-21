@@ -45,6 +45,15 @@ describe('Protected publication with real SQL and separate authenticated identit
   expect((await request(b,'/api/admin/music',{kind:'piece',id:2001,published:false})).status).toBe(403);
   expect((await request(a,'/api/admin/music')).status).toBe(200);
  });
+ it('revalidates an unchanged catalog with two reads and no account/progression writes',async()=>{
+  const first=await request(b,'/api/music');
+  const query=vi.fn((sql:string,values?:unknown[])=>db.query(sql,values));
+  const observed={query} as unknown as Pool;
+  const response=await api(new Request('http://localhost/api/music',{headers:{cookie:`pbb_session=${token(b)}`,'if-none-match':first.headers.get('etag')!}}),observed);
+  expect(response.status).toBe(304);
+  expect(query).toHaveBeenCalledTimes(2);
+  expect(query.mock.calls.every(([sql])=>sql.startsWith('SELECT '))).toBe(true);
+ });
  it('keeps individual flags through collection toggles, protects content and direct battle starts, and allows admin preview',async()=>{
   const patch=(body:unknown)=>request(a,'/api/admin/music',body);
   expect((await patch({kind:'piece',id:2002,published:false})).status).toBe(200);

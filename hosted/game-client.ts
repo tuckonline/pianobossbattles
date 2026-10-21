@@ -667,6 +667,10 @@ class GameClient {
         this.persist();
       }
       for(const [id,receipt] of [...this.storyQueue]){
+        // MIDI can replace a checkpoint while its older version is in flight.
+        // Save that newer prefix before submitting the terminal story receipt;
+        // otherwise a healthy server must reject it with a transient 409.
+        if(receipt.passes.some(pass=>this.queue.has(pass.id)))continue;
         this.storyRecords=await command<StoryRecord[]>(receipt);
         this.storyQueue.delete(id);this.state.lastSaved=new Date().toISOString();this.persist();
       }

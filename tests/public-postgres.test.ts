@@ -135,4 +135,28 @@ describe("Public PostgreSQL persistence with the original evaluator",()=>{
     expect(await (await post()).json()).toEqual({accepted:false});
     expect((await (await handleOverlay(new Request("http://localhost/api/obs"),bridge.asD1(),a)).json()).snapshot).toEqual(snapshot);
   });
+  it('keeps live OBS checks immediate while reusing unchanged statistics only within one stream',async()=>{
+    const snapshot={exerciseNumber:2001,title:'Schmitt 1',hand:'both',status:'practicing',accuracy:100,mistakes:0,measure:1,totalMeasures:3,
+      game:{sessionId:'query-budget',preview:false,settings:defaultGameSettings,alerts:[],live:{attemptId:'',sessionId:'query-budget',combo:0,best:0,correct:0,incorrect:0,provisionalXP:0,status:'playing',sequence:0}}};
+    const sourceId=crypto.randomUUID();
+    const publish=(sequence:number)=>handleOverlay(new Request('http://localhost/api/obs',{method:'POST',body:JSON.stringify({sourceId,sequence,claim:true,snapshot})}),bridge.asD1(),a);
+    await publish(1);
+    let queries=0;
+    const observed={query:(sql:string,values?:unknown[])=>{queries++;return db.query(sql,values);}} as unknown as Pool;
+    const response=await handleOverlay(new Request('http://localhost/api/obs?stream=1'),new PostgresBridge(observed).asD1(),a);
+    const reader=response.body!.getReader();
+    const frame=async()=>{while(true){const chunk=await reader.read();if(chunk.done)throw Error('Stream ended early');const text=new TextDecoder().decode(chunk.value);if(text.startsWith('data: '))return JSON.parse(text.slice(6));}};
+    try{
+      await frame();const initial=queries;expect(initial).toBe(4);
+      await frame();expect(queries-initial).toBe(1); // Snapshot/ownership check only.
+      snapshot.measure=2;await publish(2);
+      const beforeChange=queries;expect((await frame()).snapshot.measure).toBe(2);
+      expect(queries-beforeChange).toBe(4); // Changed sequence is never delayed by caching.
+      const beforeExpiry=queries;
+      for(let i=0;i<4;i++)await frame();
+      expect(queries-beforeExpiry).toBe(7); // Four fresh snapshot reads + one durable refresh.
+      const other=await handleOverlay(new Request('http://localhost/api/obs'),bridge.asD1(),b);
+      expect((await other.json()).snapshot).toBeNull();
+    }finally{await reader.cancel();}
+  });
 });
