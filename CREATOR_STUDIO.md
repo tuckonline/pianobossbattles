@@ -1,5 +1,9 @@
 # Creator Studio V1
 
+> Current status and deployment procedure: [docs/project-handoff.md](docs/project-handoff.md).
+> This file includes chronological implementation notes. Earlier pending-approval,
+> deployment and layout statements are historical where superseded in the handoff.
+
 Branch: `feature/creator-studio-v1`. No production or preview deployment is part
 of this change until the owner approves it. The existing public navigation,
 Theatre Mode, legacy OBS routes, authentication, and audio preferences remain.

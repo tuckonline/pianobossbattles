@@ -1,5 +1,9 @@
 # Cloudflare preview
 
+> Current status and deployment procedure: [docs/project-handoff.md](docs/project-handoff.md).
+> This file includes chronological implementation notes. Earlier pending-approval
+> and deployment statements are historical where superseded in the handoff.
+
 This deployment uses a **Cloudflare Pages feature-branch preview** with an
 advanced-mode Worker backend, not a production deployment, Git integration, or
 the original ChatGPT-hosted app. The feature branch is

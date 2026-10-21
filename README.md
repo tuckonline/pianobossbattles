@@ -1,6 +1,11 @@
 # Piano Boss Battles — independent public application
 
-React/Vite frontend, Supabase Auth, Supabase PostgreSQL, and a small Node API.
+**Start here:** [Current project handoff](docs/project-handoff.md) and
+[agent instructions](AGENTS.md). The handoff distinguishes live production from
+the newer Creator Studio preview and supersedes historical operational statements.
+
+React/Vite frontend, Supabase Auth, Supabase PostgreSQL, and a shared API running
+locally in Node and on Cloudflare Workers in the deployed application.
 The original MIDI evaluator, battle engine, animation library, scoring, and OBS
 presentations are reused. The original ChatGPT-hosted app and D1 database remain
 independent and unchanged.
@@ -20,9 +25,11 @@ npm run dev
 
 Open http://localhost:5173. Starting requires a verified account, a connected
 MIDI device, and a compatible musical queue. Single-hand pieces must match the
-selected hands; loops are bounded to 1–100 per entry. Theatre Mode shares the
-same MIDI controller and mounted score as setup. Returning to setup during a
-battle leaves it running and locks queue/boss/mode changes until it ends.
+selected hands; loops are bounded to 1–100 per entry. On the current Creator branch,
+Start Battle opens the arena directly from setup. Theatre Mode shares the same
+MIDI controller and mounted score. Escape/Back to setup pauses the current attempt;
+Resume Battle continues without a new countdown. Queue/boss/mode changes remain
+locked while an attempt is active.
 
 ## Structure
 
@@ -56,7 +63,12 @@ live checks in the setup guide before release.
 
 ## Deployment status
 
-**Production deployment is disabled pending owner approval.** There is no Sites
-project identity, Cloudflare binding, GitHub Actions deployment, or domain setup
-in this repository. Pushing a feature branch only publishes source. Do not run
-legacy deployment helpers against the original application.
+Production is live at https://www.pianobossbattles.com in Cloudflare Pages project
+`pianobossbattles`. Current development is on `feature/creator-studio-v1`, deployed
+only to its alias in the separate `pianobossbattles-preview` Pages project. These
+projects share the independent public Supabase database/Hyperdrive connection;
+preview storage is **not disposable**. The original ChatGPT/D1 app is separate.
+
+Git push does not deploy either project. Read the target/configuration, approval
+boundaries, release commands, and incident status in the [handoff](docs/project-handoff.md)
+before publishing. Do not use legacy Sites deployment helpers for this public app.
