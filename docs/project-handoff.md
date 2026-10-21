@@ -6,6 +6,32 @@ Older reports preserve historical evidence; their pending-deployment statements
 and test counts must not be treated as current facts. Recheck Git and service state
 when work resumes. No functionality or deployment was changed for this handoff.
 
+## Hybrid battle layout published — 2026-10-21
+
+The owner approved publication after local review. Development commit `b9bdf48`
+was promoted selectively to release commit `2a9f941` on
+`feature/end-user-website-v1`. Creator Studio, its migration, OBS redesign, and
+server/database changes were excluded. No preview environment was recreated.
+
+Production: https://www.pianobossbattles.com/; deployment
+`d2d42ba1-2273-4e71-bb64-e8b0a768bac3`; client `index-2Uu52Qw3.js`;
+stylesheet `index-Dow57WRU.css`. Rollback:
+`0b2d7346-c0a5-490e-92d3-3037e5d9ae15` (`76f3752`).
+
+The exact production candidate passed 480 unit/database/network tests (66 suites),
+all 47 public browser cases, TypeScript, changed-file lint, production packaging,
+and a private-credential scan of 73 packaged files. Development totals of 486/52
+also include unreleased Creator features and should not be confused with these.
+
+Live checks confirmed matching assets, both OBS routes and branding returning 200,
+unsigned writes returning 401, and foreign-origin writes returning 403. The real
+signed-in production session reloaded with Level 3, 4,809 XP, All progress saved,
+and the direct Start Battle flow. Screenshot:
+`.local/hybrid-layout/production-dashboard.png` (ignored). Physical MIDI and native
+OBS recordings specifically on this release remain manual checks. Production
+bindings, original ChatGPT/D1, auth, DNS, SMTP and existing player data are intact.
+The earlier deployment-withheld notes below are superseded by this release.
+
 ## Local hybrid battle layout review — 2026-10-21
 
 The owner approved local implementation of the music-first active battle overlay,
