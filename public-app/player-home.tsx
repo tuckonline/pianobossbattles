@@ -15,9 +15,9 @@ import { levelInfo } from "../hosted/game-core";
 import { bossProfiles, type BossId } from "../hosted/boss-registry";
 import { type BossBattleConfig } from "../hosted/boss-config";
 import { BattleSettings, modeTimePreview } from "./battle-settings";
+import {battleLayoutPreferenceKey,readBattleLayout,defaultArenaPercent,minArenaPercent,maxArenaPercent,normalizeArenaPercent,arenaLayoutFor} from './battle-layout-presets';
 import { BattleCinematicSurface } from "../hosted/cinematic-controls";
 import { BossBattlePanel } from "../hosted/boss-ui";
-import { shortsBattleLayout } from "../hosted/shorts-layout";
 import { battleView } from "../hosted/boss-battle";
 import { usePracticeCinematicActive } from "../hosted/battle-cinematic-ui";
 import {BattleAudioSettings} from "./battle-audio-settings";
@@ -36,10 +36,6 @@ const modes = [
 ] as const;
 const title=(e:Exercise)=>e.title??`Exercise ${e.number}`;
 const hero="/battle/cinematics/hero-finish.png";
-const arenaLayout={...shortsBattleLayout,idleArrangement:'side-by-side' as const,
-  referenceArenaHeightPercent:77,characterScale:1.1,
-  heroIdleZone:{x:.08,y:.04,width:.41,height:.92},bossIdleZone:{x:.51,y:.04,width:.41,height:.92},
-  heroAnchor:{x:.34,y:.51},bossAnchor:{x:.66,y:.51}};
 const icons:Record<string,string>={
   clock:"M9 2h6M12 6v3m6-5 2 2M12 10v5l3 2M20 14a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z",
   bars:"M4 13h3v8H4zM11 4h3v17h-3zM18 9h3v12h-3z",
@@ -74,6 +70,9 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const [initialLibrary]=useState(catalog);
   const [cinematicSurface,setCinematicSurface]=useState<HTMLDivElement|null>(null);
   const [connected,setConnected]=useState(false),[theatre,setTheatre]=useState(false);
+  const [layoutPreference,setLayoutPreference]=useState(()=>{try{return readBattleLayout(localStorage,user.id);}catch{return defaultArenaPercent;}});
+  const [attemptLayout,setAttemptLayout]=useState(layoutPreference);
+  const [layoutPreview,setLayoutPreview]=useState(false),[layoutStorageError,setLayoutStorageError]=useState('');
   const [search,setSearch]=useState(""),[category,setCategory]=useState("");
   const [queueDraft,setQueue]=useState<ChainEntry[]>(draft.queue),[hand,setHand]=useState<Hand>(draft.hand),[notice,setNotice]=useState("");
   const {queue,ready:scoresReady,error:scoreError,retry:retryScores}=useQueueScores(queueDraft,catalog);
@@ -120,10 +119,12 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   function move(index:number,direction:number){setQueue(q=>{const next=[...q],at=index+direction;if(at<0||at>=q.length)return q;[next[index],next[at]]=[next[at],next[index]];return next;});}
   async function logout(){setLogoutBusy(true);try{gameClient.abandon();await supabase.auth.signOut();await syncServerSession();location.reload();}catch(e){setNotice((e as Error).message);setLogoutBusy(false);}}
   const render=(c:PracticeControls)=>{
+    const choosingLayout=theatre&&layoutPreview&&!c.running&&!cinematic;
+    const activeLayout=choosingLayout?layoutPreference:attemptLayout;
     const missing=!midiSupported?"Web MIDI is unavailable here. Open this page in Chrome or Edge on a computer.":!connected?"Connect your MIDI piano to begin.":libraryError?libraryError:unavailable?"Remove unavailable pieces from your queue before starting.":!queue.length?"Add a piece to your battle queue.":!scoresReady?scoreError||"Preparing your selected sheet music...":!game.ready?"Waiting for your saved progress connection.":game.recoveryError?"Recover unsaved progress before starting.":"";
     const start=async()=>{
-      if(authorizing||!scoresReady)return;setAuthorizing(true);setNotice("");
-      try{const r=await fetch("/api/music/authorize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:queue.map(e=>({number:e.exercise.number,loops:e.loops})),hand})});const data=await r.json();if(!r.ok)throw Error(data.error??"Music is unavailable.");c.start();if(gameClient.state.live.status==="playing"||gameClient.state.battle.countdown)setTheatre(true);}
+      if(authorizing||missing)return;setAuthorizing(true);setNotice("");
+      try{const r=await fetch("/api/music/authorize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:queue.map(e=>({number:e.exercise.number,loops:e.loops})),hand})});const data=await r.json();if(!r.ok)throw Error(data.error??"Music is unavailable.");setAttemptLayout(layoutPreference);c.start();if(gameClient.state.live.status==="playing"||gameClient.state.battle.countdown){setLayoutPreview(false);setTheatre(true);}}
       catch(e){setNotice((e as Error).message);void refreshLibrary().catch(()=>{});}finally{setAuthorizing(false);}
     };
     const leaveArena=()=>{if(c.running&&!c.paused)c.pause();setTheatre(false);};
@@ -138,7 +139,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         </section>
       </header>
       {scoreError&&<p role="alert" className="error">{scoreError} <button onClick={retryScores}>Retry sheet music</button></p>}
-      {notice&&<p role="alert" className="error">{notice}</p>}
+      {!theatre&&notice&&<p role="alert" className="error">{notice}</p>}
       {game.error&&<p role="alert" className="error">{game.error}</p>}
       <section className="midi-ribbon" hidden={theatre} aria-label="Piano connection">
         <span className={`connection-light ${connected?"connected":""}`}/><div><b>{connected?"Your piano is connected":"Connect your MIDI piano"}</b><small>{connected?"Ready to play. Your piano is the controller.":"USB MIDI · Chrome or Edge · allow access when asked"}</small></div>
@@ -165,20 +166,26 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         {draftError&&<p role="alert">{draftError}</p>}
           <fieldset className="notation-appearance" disabled={!game.ready}><legend>Notation Appearance</legend><div>{Object.entries(notationPresets).map(([id,p])=><button type="button" key={id} aria-pressed={notationPreset===id} onClick={()=>void gameClient.notationAppearance(id as NotationPreset)}><span aria-hidden="true" style={{background:p.paper,color:p.ink}}>♫</span>{p.label}</button>)}</div><small>Your display only. OBS appearance stays unchanged.</small></fieldset>
         {timePreview&&<p className="setup-time-preview">{timePreview.label}: <strong>{timePreview.value}</strong></p>}
-        {!c.running?<button className="primary continue-button" disabled={!!missing||c.saving||authorizing} onClick={start}><Icon name="swords"/>{authorizing?'Preparing battle…':'Start Battle'}<Icon name="arrow"/></button>:<><button className="primary continue-button" onClick={()=>{if(c.paused)c.pause();setTheatre(true);}}>Resume Battle</button><button onClick={c.stop}>End Battle</button></>}
-        <small role="status">{c.running?'Your battle is paused. Resume when ready.':missing||'Ready when you are.'}</small>
+        {!c.running?<button className="primary continue-button" disabled={!queue.length||!scoresReady||unavailable||!!libraryError} onClick={()=>{setNotice("");setLayoutPreview(true);setTheatre(true);}}><Icon name="swords"/>Preview Battle<Icon name="arrow"/></button>:<><button className="primary continue-button" onClick={()=>{if(c.paused)c.pause();setTheatre(true);}}>Resume Battle</button><button onClick={c.stop}>End Battle</button></>}
+        <small role="status">{c.running?'Your battle is paused. Resume when ready.':!scoresReady?(scoreError||'Preparing your selected sheet music...'):'Preview the arena and sheet music before starting.'}</small>
         </section>
       </div>
       <dialog ref={dialog} className="battle-dialog" aria-label="Battle arena" onCancel={e=>{e.preventDefault();leaveArena();}}>
         <section className="theatre" aria-label="Theatre Mode">
           <div className="theatre-heading"><div><span className="eyebrow">PIANO BOSS BATTLES</span><h2>{title(c.exercise)}</h2><small>Loop {c.pass}/{c.total}{!config.enabled&&<> · {game.live.combo} note combo · {game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0}% accuracy</>}</small></div>
+            {choosingLayout&&config.enabled&&<div className="battle-layout-selector" role="group" aria-label="Battle Layout"><label htmlFor="battle-arena-size">Battle Layout <span>{layoutPreference}% arena · {100-layoutPreference}% music</span></label><div className="battle-layout-options"><input id="battle-arena-size" aria-label="Arena size" type="range" min={minArenaPercent} max={maxArenaPercent} step="1" value={layoutPreference} aria-valuetext={`${layoutPreference}% arena, ${100-layoutPreference}% music`} disabled={authorizing} onChange={e=>{
+              const next=normalizeArenaPercent(Number(e.target.value));setLayoutPreference(next);
+              try{localStorage.setItem(battleLayoutPreferenceKey(user.id),String(next));setLayoutStorageError('');}catch{setLayoutStorageError('This browser could not save your layout preference.');}
+            }}/><button type="button" disabled={authorizing||layoutPreference===defaultArenaPercent} onClick={()=>{
+              setLayoutPreference(defaultArenaPercent);try{localStorage.setItem(battleLayoutPreferenceKey(user.id),String(defaultArenaPercent));setLayoutStorageError('');}catch{setLayoutStorageError('This browser could not save your layout preference.');}
+            }}>Reset</button></div></div>}
             <div className="theatre-controls">{!c.running?<button className="primary" disabled={!!missing||c.saving||authorizing} onClick={start}>Start Battle</button>:<><button onClick={c.pause}>{c.paused?'Resume':'Pause'}</button><button onClick={()=>{c.stop();setTheatre(false);}}>End Battle</button></>}<button onClick={leaveArena}>Back to setup</button></div>
           </div>
-          <BattleCinematicSurface.Provider value={cinematicSurface}><div ref={setCinematicSurface} className="theatre-stage" data-battle={config.enabled}>
-            {config.enabled&&<BossBattlePanel battle={battleView(game.battle)} combo={game.live.combo} hudVariant="music" accuracy={game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0} audioOutput="practice" suppressResult={cinematic} suspendAnimation={cinematic||!theatre} layoutOverride={arenaLayout}/>}
+          <BattleCinematicSurface.Provider value={cinematicSurface}><div ref={setCinematicSurface} className="theatre-stage" data-battle={config.enabled} data-arena-percent={activeLayout} style={{'--arena-share':activeLayout/100} as CSSProperties}>
+            {config.enabled&&<BossBattlePanel battle={battleView(game.battle)} combo={game.live.combo} hudVariant="music" accuracy={game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0} audioOutput="practice" suppressResult={cinematic} suspendAnimation={cinematic||!theatre} layoutOverride={arenaLayoutFor(activeLayout)}/>}
             {c.score}
           </div></BattleCinematicSurface.Provider>
-          {c.message&&<p className="arena-message" role="status">{c.message}</p>}
+          {theatre&&(notice?<p className="arena-message" role="alert">{notice}</p>:(c.message||!c.running)&&<p className="arena-message" role="status">{!c.running?(layoutStorageError||missing||"Preview only. Click Start Battle when you are ready."):c.message}</p>)}
         </section>
       </dialog>
       <div className="setup-extras" hidden={theatre}>

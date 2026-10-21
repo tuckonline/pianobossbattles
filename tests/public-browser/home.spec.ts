@@ -51,6 +51,13 @@ async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) 
   return {player,snapshot:()=>snapshot};
 }
 
+
+async function startBattle(page:Page) {
+ const arena=page.getByRole('dialog',{name:'Battle arena'});
+ if(!await arena.isVisible())await page.getByRole('button',{name:'Preview Battle',exact:true}).click();
+ await arena.getByRole('button',{name:'Start Battle',exact:true}).click();
+}
+
 test('music administrator toggles parent and piece publication and previews hidden music',async({page})=>{
  await fixture(page,true,true,true);
  await page.goto('/');
@@ -99,13 +106,13 @@ test('ordinary player cannot manage music and keeps unavailable saved queue entr
  await expect(page.getByRole('button',{name:'Add Schmitt Op. 16 · Exercise 1 to queue',exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
 
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
+ await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeDisabled();
 
  await page.screenshot({path:'test-results/music-unavailable-queue.png',fullPage:true});
  await page.getByRole('button',{name:'Remove item 1',exact:true}).click();
  await expect(page.locator('.battle-queue li')).toHaveCount(1);
 
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
+ await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeEnabled();
  expect(errors).toEqual([]);
 });
 
@@ -114,9 +121,10 @@ test('a piece hidden after rendering is rejected at start without beginning MIDI
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
 
  await page.route('**/api/music/authorize',r=>r.fulfill({status:403,json:{error:'A piece in your queue is unavailable. Refresh the library or remove it before starting.'}}));
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await startBattle(page);
  await expect(page.getByRole('alert')).toContainText('unavailable');
- await expect(page.locator('.in-theatre')).toHaveCount(0);
+ await expect(page.locator('.battle-intro')).toHaveCount(0);
+ await expect(page.locator('[data-battle-attempt]')).not.toHaveAttribute('data-battle-status','active');
 });
 
 test('republishing restores a saved unavailable piece without losing its loops',async({page})=>{
@@ -130,7 +138,7 @@ test('republishing restores a saved unavailable piece without losing its loops',
  await expect(page.getByRole('spinbutton',{name:'Loops'})).toHaveValue('5');
 
  await expect(page.locator('.sight-score svg').first()).toBeAttached();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await startBattle(page);
  await expect(page.locator('.in-theatre')).toBeVisible();
  await page.waitForTimeout(3500);
  const before=Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'));
@@ -183,9 +191,9 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   await fixture(page,true);await page.goto("/");
   await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
 
-  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
+  await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeDisabled();
   await page.getByRole("button",{name:"Connect MIDI Piano"}).click();
-  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeEnabled();
+  await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeEnabled();
 
   await page.getByRole("button",{name:/Grinwick Fast claws/}).click();
   await page.getByLabel("Search pieces").fill("Schmitt Op. 16 · Exercise 2");
@@ -200,7 +208,7 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
   await page.locator(".sight-score svg").first().waitFor({state:"attached"});
   await page.locator(".sight-score").evaluate(el=>(el as HTMLElement).dataset.mountCheck="same");
   await page.getByRole("button",{name:"Slate Focus",exact:true}).click();
-  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await startBattle(page);
   await expect(page.locator(".in-theatre")).toBeVisible();
   await expect(page.getByRole("button",{name:"Pause",exact:true})).toBeVisible();
   await page.waitForTimeout(3500);
@@ -267,7 +275,7 @@ test('battle summary waits for a newer MIDI checkpoint instead of showing a tran
   return route.fallback();
  });
  await page.goto('/');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await startBattle(page);await page.waitForTimeout(3500);
  const pitches=noteGroups(catalog.find(e=>e.number===2001)!,'both').flatMap(g=>g.pitches);
  hold=true;await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),pitches.slice(0,2));
  await expect.poll(()=>!!release).toBe(true);
@@ -287,7 +295,7 @@ test("Victory holds over the mounted score and a deliberate new attempt dismisse
   await page.getByLabel("Search pieces").fill(exercise.title!);
   await page.getByRole("button",{name:`Add ${exercise.title} to queue`,exact:true}).click();
 
-  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await startBattle(page);
   await page.waitForTimeout(3500);
   await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(exercise,"both").flatMap(g=>g.pitches));
   await expect(page.locator(".battle-cinematic")).toHaveAttribute("data-result","victory");
@@ -295,7 +303,7 @@ test("Victory holds over the mounted score and a deliberate new attempt dismisse
   await page.waitForTimeout(1000);
   await expect(page.locator(".sight-score svg").first()).toBeAttached();
   await page.screenshot({path:"test-results/public-victory.png",fullPage:true});
-  await page.getByRole("button",{name:"Start Battle",exact:true}).click();
+  await startBattle(page);
   await expect(page.locator(".battle-cinematic")).toHaveCount(0);
   await expect(page.getByRole("status",{name:"Battle start countdown"})).toBeVisible();
 });
@@ -351,7 +359,7 @@ test("expired recovery links show a useful error without exposing a password for
   await expect(page.getByRole("heading",{name:"Choose a new password"})).toHaveCount(0);
 });
 
-test("single setup restores selections and launches one modal countdown without a preview",async({page})=>{
+test("single setup restores selections and starts from the shared arena preview",async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await fixture(page,true);
  await page.goto('/?view=preview');await expect(page.getByRole('heading',{name:'Build your battle.'})).toBeVisible();
  await expect(page).not.toHaveURL(/view=preview/);await expect(page.getByText('Preview & Start',{exact:true})).toHaveCount(0);
@@ -359,8 +367,8 @@ test("single setup restores selections and launches one modal countdown without 
  await page.getByRole('combobox',{name:'Combat Difficulty',exact:true}).selectOption('6');
  await page.getByRole('spinbutton',{name:'Loops'}).fill('5');await page.reload();
  await expect(page.getByLabel('Target BPM',{exact:true})).toHaveValue('80');await expect(page.getByRole('spinbutton',{name:'Loops'})).toHaveValue('5');
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeDisabled();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await startBattle(page);
  await expect(page.getByRole('dialog',{name:'Battle arena'})).toBeVisible();await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();await expect(page.getByRole('progressbar',{name:'boss HP',exact:true})).toBeVisible();await expect(page.getByRole('progressbar',{name:'player HP',exact:true})).toBeVisible();
  await page.waitForTimeout(3500);const attempt=await page.locator('[data-battle-attempt]').getAttribute('data-battle-attempt');
  await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toBeHidden();await expect(page.getByRole('heading',{name:'Build your battle.'})).toBeVisible();
@@ -375,7 +383,7 @@ test("V2 explains unsupported Web MIDI without a broken connect control",async({
   await expect(page.getByText("Web MIDI is unavailable in this browser. Use desktop Chrome or Edge.")).toBeVisible();
   await expect(page.getByRole("button",{name:"Connect MIDI Piano"})).toHaveCount(0);
 
-  await expect(page.getByRole("button",{name:"Start Battle",exact:true})).toBeDisabled();
+  await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeDisabled();
 });
 
 test("mode settings switch immediately, retain preferences, and summarize only applicable rules",async({page})=>{
@@ -447,7 +455,7 @@ for(const mode of ['Practice','Survival','Time Attack','Ultimate Boss'])test(`${
   }
   await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
 
-  await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+  await startBattle(page);
   const intro=page.getByRole('status',{name:'Battle start countdown'}),panel=page.getByRole('complementary',{name:'Boss battle'});
   if(mode==='Practice'){
     await expect(intro).toHaveCount(0);await expect(panel).toHaveCount(0);
@@ -504,7 +512,7 @@ test('notation presets preserve engraving, feedback, saved preference and OBS st
  expect(samples.every(Boolean)).toBe(true);
  const captures:{label:string;image:string}[]=[];
  for(const sample of samples){
-  await page.goto('/?music='+sample.number);await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+  await page.goto('/?music='+sample.number);await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await startBattle(page);await page.waitForTimeout(3500);
   const svg=page.locator('.sight-score .notation > svg').first();await expect(svg).toBeVisible({timeout:15000});
   await page.waitForTimeout(300);
   const before=await svg.evaluate(el=>{el.setAttribute('data-theme-mount','same');return {box:el.getBoundingClientRect().toJSON(),notes:el.querySelectorAll('.note').length};});
@@ -526,7 +534,7 @@ test('notation presets preserve engraving, feedback, saved preference and OBS st
  }
  await page.reload();await expect(page.getByRole('button',{name:'Night Mode',exact:true})).toHaveAttribute('aria-pressed','true');
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await startBattle(page);
  await expect(page.locator('.in-theatre')).toHaveAttribute('data-notation-preset','night');
  await page.waitForTimeout(3500);
  const current=page.locator('.sight-score .practice-note-current').first();await expect(current).toBeVisible();
@@ -581,7 +589,7 @@ test('Battle Audio presets, test sound, volume and mute persist without affectin
  await page.locator('.audio-disclosure > summary').click();
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
 
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await startBattle(page);await page.waitForTimeout(3500);
  const hp=page.locator('[data-authoritative-boss-hp]');const before=Number(await hp.getAttribute('data-authoritative-boss-hp'));
  await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
  await expect.poll(async()=>Number(await hp.getAttribute('data-authoritative-boss-hp'))).toBe(before-2);
@@ -619,7 +627,7 @@ test('player presets leave the designated OBS source audible and a second source
  });
  await overlay(obs);await obs.goto('/obs/recording?battleAudio=1');await expect(obs.getByRole('complementary',{name:'Boss battle',exact:true})).toBeVisible();await obs.locator('body').click({position:{x:10,y:10}});
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await startBattle(page);await page.waitForTimeout(3500);
  const duplicate=await context.newPage();await fixture(duplicate,true);await audioProbe(duplicate);await overlay(duplicate);await duplicate.goto('/obs/shorts?battleAudio=1');await duplicate.locator('body').click({position:{x:10,y:10}});
  const notes=noteGroups(catalog.find(e=>e.number===2001)!,'both');
  for(const group of notes.slice(0,4)){await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),group.pitches);await page.waitForTimeout(180);}
@@ -676,12 +684,12 @@ test('lightweight catalog opens immediately and preloads the complete setlist be
  expect(loads.sort()).toEqual([2007,2008]);
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
 
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
+ await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeDisabled();
  await expect(page.getByText('Preparing your selected sheet music...',{exact:true})).toBeVisible();
  release();
  await expect(page.locator('.sight-score svg').first()).toBeAttached();
- await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.locator('.battle-dialog').getByRole('button',{name:'Start Battle',exact:true,includeHidden:true})).toBeEnabled();
+ await startBattle(page);
  await page.waitForTimeout(3500);
  const before=Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'));
  const pitches=noteGroups(catalog.find(e=>e.number===2007)!,'both').flatMap(g=>g.pitches);
@@ -703,7 +711,7 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
  expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
 
  await expect(page.locator('.sight-score svg').first()).toBeAttached();
- await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await startBattle(page);await page.waitForTimeout(3500);
  await page.screenshot({path:`test-results/compact-arena-${viewport.width}.png`});
  expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
  expect(await page.locator('.battle-dialog').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
@@ -717,7 +725,7 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
  if(boss==='grinwick')await page.getByRole('button',{name:/Grinwick Fast claws/}).click();
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
  await expect(page.locator('.sight-score .system').first()).toBeAttached();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3600);
+ await startBattle(page);await page.waitForTimeout(3600);
  const phase=process.env.HYBRID_CAPTURE??'after';
  await page.screenshot({path:`.local/hybrid-layout/${phase}-${boss}-${viewport.width}.png`});
  const dimensions=await page.locator('.theatre-stage').evaluate(el=>Object.fromEntries(['.battle-stage','.sight-score','.system'].map(selector=>[selector,el.querySelector(selector)!.getBoundingClientRect().toJSON()])));
@@ -742,7 +750,7 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
 for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])test(`hybrid Hanon grand staff fits ${viewport.width}`,async({page})=>{
  await page.setViewportSize(viewport);await fixture(page,true);await page.goto('/?music=1001');
  await page.getByRole('button',{name:/Survival Finish/}).click();
- await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await startBattle(page);
  await page.waitForTimeout(3600);
  const score=page.locator('.sight-score');const area=(await score.boundingBox())!;
  const ink=await score.locator('.system').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).visibility!=='hidden').map(n=>n.getBoundingClientRect().toJSON()));
@@ -753,7 +761,7 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
 for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])for(const result of ['victory','defeat','timeout'])test(`hybrid ${result} remains contained and holds ${viewport.width}`,async({page})=>{
  await page.setViewportSize(viewport);await fixture(page,true);await page.clock.install();await page.goto('/?music=4001');
  await page.getByRole('button',{name:result==='timeout'?/^Time Attack /:/^Survival /}).click();
- await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await startBattle(page);
  await expect(page.getByRole('status',{name:'Battle start countdown'})).toHaveCount(0,{timeout:7000});
  await page.locator('.sight-score').evaluate(e=>(e as HTMLElement).dataset.resultMount='retained');
  if(result==='victory')await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===4001)!,'both').flatMap(g=>g.pitches));
@@ -770,7 +778,7 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
  await page.screenshot({path:`.local/hybrid-layout/${result}-${viewport.width}.png`});
  await page.clock.fastForward(60000);await expect(scene).toHaveAttribute('data-phase','holding');
  if(result!=='victory')await page.getByRole('button',{name:'End Battle',exact:true}).click();
- await page.getByRole('button',{name:'Start Battle',exact:true}).click();await expect(scene).toHaveCount(0);
+ await startBattle(page);await expect(scene).toHaveCount(0);
  await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();
 });
 
@@ -783,10 +791,11 @@ for(const temporaryFailure of [false,true])test(`expired save session recovers w
  await page.route('**/api/auth/session',async route=>{if(rejected)renewed=true;return route.fulfill({json:{signedIn:true}});});
  await page.route('**/api/platform',async route=>{
   const c=route.request().postDataJSON();if(c.action!=='gameSync')return route.fallback();
-  if(!renewed){rejected=true;failedBody=c;return route.fulfill({status:401,json:{error:'Your session expired. Sign in again to save queued progress.'}});}
-  saved++;acceptedBody=c;return route.fulfill({json:player()});
+  if(!c.played.length)return route.fulfill({json:player()});
+  if(!renewed){rejected=true;failedBody??=c;return route.fulfill({status:401,json:{error:'Your session expired. Sign in again to save queued progress.'}});}
+  saved++;acceptedBody??=c;return route.fulfill({json:player()});
  });
- await page.goto('/');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ await page.goto('/');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await startBattle(page);await page.waitForTimeout(3500);
  const attempt=await page.locator('[data-battle-attempt]').getAttribute('data-battle-attempt');
  await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
  if(temporaryFailure){
@@ -799,4 +808,94 @@ for(const temporaryFailure of [false,true])test(`expired save session recovers w
  if(!temporaryFailure)expect(refreshes).toBe(1);
  await expect(page.getByText(/Progress save pending:/)).toHaveCount(0);await expect(page.locator('.player-xp [role="status"]')).toHaveText('All progress saved');
  await expect(page.locator('[data-battle-attempt]')).toHaveAttribute('data-battle-attempt',attempt!);await expect(page.locator('.battle-metrics')).toContainText('2 note combo');await expect(page.locator('.battle-intro')).toHaveCount(0);
+});
+
+for(const boss of ['Crimson Colossus','Grinwick'])test(`arena preview is inert until Start Battle (${boss})`,async({page})=>{
+ await fixture(page,true);let checkpoints=0;
+ await page.route('**/api/platform',async route=>{if(route.request().postDataJSON().action==='gameSync')checkpoints++;return route.fallback();});
+ await page.setViewportSize({width:1366,height:768});await page.goto('/?music=2007');
+ await page.getByRole('button',{name:new RegExp('^'+boss+' ')}).click();
+ await expect(page.getByRole('button',{name:'Preview Battle',exact:true})).toBeEnabled();
+ await page.locator('.sight-score').evaluate(e=>(e as HTMLElement).dataset.previewMount='same');
+ await page.getByRole('button',{name:'Preview Battle',exact:true}).click();
+ const arena=page.getByRole('dialog',{name:'Battle arena'});await expect(arena).toBeVisible();
+ await expect(arena.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
+ await expect(arena.locator('.sight-score svg').first()).toBeVisible();
+ await expect(arena.locator('.battle-stage')).toHaveAttribute('data-boss',boss==='Grinwick'?'grinwick':'crimson_musical_colossus');
+ expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
+ await expect(page.locator('.battle-intro')).toHaveCount(0);expect(checkpoints).toBe(0);
+ await page.keyboard.press('Escape');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:'Preview Battle',exact:true}).click();
+ const before=await arena.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp');
+ const pitches=noteGroups(catalog.find(e=>e.number===2007)!,'both')[0].pitches;
+ await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),pitches);
+ await page.waitForTimeout(3500);await expect(page.locator('.battle-intro')).toHaveCount(0);
+ await expect(arena.locator('[data-authoritative-boss-hp]')).toHaveAttribute('data-authoritative-boss-hp',before!);
+ await expect(arena.locator('.battle-metrics')).toContainText('0 note combo');expect(checkpoints).toBe(0);
+ await page.screenshot({path:`.local/hybrid-layout/preview-${boss==='Grinwick'?'grinwick':'crimson'}.png`});
+ await arena.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();
+ await expect(page.getByRole('status',{name:'Battle start countdown'})).toHaveCount(0,{timeout:6000});
+ await expect(arena.locator('.sight-score')).toHaveAttribute('data-preview-mount','same');
+ await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),pitches);
+ await expect(arena.locator('.battle-metrics')).toContainText('2 note combo');
+ const attempt=await arena.locator('[data-battle-attempt]').getAttribute('data-battle-attempt');
+ await page.getByRole('button',{name:'Back to setup',exact:true}).click();await page.getByRole('button',{name:'Resume Battle',exact:true}).click();
+ await expect(arena.locator('[data-battle-attempt]')).toHaveAttribute('data-battle-attempt',attempt!);await expect(page.locator('.battle-intro')).toHaveCount(0);
+});
+
+for(const [v,viewport] of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}].entries())for(const preset of [30,40,70])test(`layout size ${preset} fits and stays locked ${viewport.width}`,async({page})=>{
+ await fixture(page,true);await page.clock.install();await page.setViewportSize(viewport);
+ const sample=v===1?1001:2007,boss=v===1?'Grinwick':'Crimson Colossus',result=['victory','defeat','timeout'][v];
+ await page.goto('/?music='+sample);await page.getByRole('button',{name:new RegExp('^'+(v===2?'Time Attack':'Survival')+' ')}).click();
+ await page.getByRole('button',{name:new RegExp('^'+boss+' ')}).click();
+ await expect(page.getByRole('group',{name:'Battle Layout',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Preview Battle',exact:true}).click();
+ const select=page.getByRole('group',{name:'Battle Layout',exact:true}),slider=select.getByRole('slider',{name:'Arena size'});await expect(slider).toHaveValue('40');
+ await expect(page.locator('.sight-score svg').first()).toBeVisible();
+ await page.locator('.sight-score').evaluate(e=>(e as HTMLElement).dataset.presetMount='retained');
+
+ await slider.fill('55');await slider.fill(String(preset));await page.waitForTimeout(200);
+ const dimensions=async()=>page.locator('.theatre-stage').evaluate(e=>({stage:e.getBoundingClientRect().toJSON(),arena:e.querySelector('.battle-stage')!.getBoundingClientRect().toJSON(),score:e.querySelector('.sight-score')!.getBoundingClientRect().toJSON()}));
+ const before=await dimensions();
+ expect(before.arena.height/(before.stage.height-52)).toBeCloseTo(preset/100,2);
+ expect(await page.evaluate(id=>localStorage.getItem(`pbb:battle-layout:v2:${id}`),id)).toBe(String(preset));
+ const ink=await page.locator('.sight-score .system').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).visibility!=='hidden').map(n=>n.getBoundingClientRect().toJSON()));
+ for(const b of ink){expect(b.top).toBeGreaterThanOrEqual(before.score.top+15);expect(b.bottom).toBeLessThanOrEqual(before.score.bottom-15);expect(b.left).toBeGreaterThanOrEqual(before.score.left+15);expect(b.right).toBeLessThanOrEqual(before.score.right-15);}
+ await page.screenshot({path:`.local/layout-presets/${preset}-${viewport.width}-preview.png`});
+ await startBattle(page);await expect(select).toHaveCount(0);
+ await expect(page.locator('.battle-intro')).toHaveCount(0,{timeout:6000});
+ const area=(await dimensions()).score;expect(area.height).toBe(before.score.height);expect(area.top).toBe(before.score.top);
+ await page.evaluate(id=>localStorage.setItem(`pbb:battle-layout:v2:${id}`,'40'),id);
+ const exercise=catalog.find(e=>e.number===sample)!;
+ await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),noteGroups(exercise,'both')[0].pitches);
+ await expect(page.locator('.battle-metrics')).toContainText('2 note combo');
+ await page.waitForTimeout(100);
+ const geometry=await page.locator('.battle-fighter-player').evaluate(e=>({error:(e as HTMLElement).dataset.contactError,separation:(e as HTMLElement).dataset.bodySeparation,rect:e.getBoundingClientRect().toJSON()}));
+ console.log(JSON.stringify({preset,viewport,geometry}));
+ expect(Number(geometry.error)).toBeLessThan(1);
+ await expect(page.locator('.theatre-stage')).toHaveAttribute('data-arena-percent',String(preset));
+ await page.screenshot({path:`.local/layout-presets/${preset}-${viewport.width}-attack.png`});
+ if(result==='victory')await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),noteGroups(exercise,'both').slice(1).flatMap(g=>g.pitches));
+ else if(result==='defeat')for(let i=0;i<9;i++)await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes([p]),i+1);
+ else await page.clock.fastForward(180000);
+ const scene=page.locator('.theatre-stage > .battle-cinematic');await expect(scene).toHaveAttribute('data-result',result);await expect(scene).toHaveAttribute('data-fallback','false');
+ await page.clock.fastForward(20000);await expect(scene).toHaveAttribute('data-phase','holding');
+ const outer=(await scene.boundingBox())!;
+ for(const selector of ['.cinematic-copy h2','.cinematic-stats','.cinematic-story-summary'])for(const node of await scene.locator(selector).all()){
+  const b=(await node.boundingBox())!;expect(b.x).toBeGreaterThanOrEqual(outer.x);expect(b.y).toBeGreaterThanOrEqual(outer.y);expect(b.x+b.width).toBeLessThanOrEqual(outer.x+outer.width+1);expect(b.y+b.height).toBeLessThanOrEqual(outer.y+outer.height+1);
+ }
+ await expect(page.locator('.theatre-stage')).toHaveAttribute('data-arena-percent',String(preset));await expect(select).toHaveCount(0);await expect(page.locator('.sight-score')).toHaveAttribute('data-preset-mount','retained');
+ expect((await dimensions()).score).toEqual(area);
+ await page.screenshot({path:`.local/layout-presets/${preset}-${viewport.width}-${result}.png`});
+});
+
+test('Battle Layout preference survives refresh without writing account settings',async({page})=>{
+ await fixture(page,true);let settingsWrites=0;
+ await page.route('**/api/platform',async r=>{if(r.request().postDataJSON().action==='gameSettings')settingsWrites++;return r.fallback();});
+ await page.goto('/');await page.getByRole('button',{name:'Preview Battle',exact:true}).click();
+ const select=page.getByRole('group',{name:'Battle Layout',exact:true}),slider=select.getByRole('slider',{name:'Arena size'});await expect(slider).toHaveValue('40');
+ await slider.fill('65');await select.getByRole('button',{name:'Reset',exact:true}).click();await expect(slider).toHaveValue('40');await slider.fill('57');await page.reload();
+ await page.getByRole('button',{name:'Preview Battle',exact:true}).click();await expect(slider).toHaveValue('57');
+ expect(settingsWrites).toBe(0);await expect(page.locator('.theatre-stage')).toHaveAttribute('data-arena-percent','57');
 });
