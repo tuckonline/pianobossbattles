@@ -6,7 +6,7 @@ export const creatorPreferencesSchema=z.object({
  characterScale:z.number().min(80).max(140).multipleOf(5).default(110),
  cameraPercent:z.number().min(15).max(35).default(25),
  arenaPercent:z.number().min(30).max(50).default(40),
- horizontalArenaHeightPercent:z.number().min(40).max(65).default(55),
+ horizontalActionPercent:z.number().min(55).max(75).default(68),
  hudScale:z.number().min(90).max(120).default(100),
  soundEnabled:z.boolean().default(true),volume:z.number().min(0).max(.2).default(.08),
  audioOwner:z.enum(['horizontal','vertical']).default('horizontal'),

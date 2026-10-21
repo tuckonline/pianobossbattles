@@ -126,3 +126,11 @@ notation, with player/boss HUDs side by side. Horizontal arena height defaults
 55% of content and is adjustable 40–65%; older width preferences are ignored.
 Vertical framing and camera allocation are unchanged. Four Creator browser tests,
 five service tests, TypeScript, changed-file lint, and preview build passed.
+
+Action-first horizontal refinement: compact 7% title band, 60px HUD, and 68%
+content allocation to the arena (adjustable 55–75%). A new horizontal-only
+side-by-side fitting option removes the legacy combined-height constraint;
+closer normalized idle anchors keep both fighters prominent. Shorts retains its
+original fitting path. Complete notation is contained in the compact lower strip.
+Four Creator browser tests, 28 layout/contact/service tests, TypeScript, lint,
+and preview build passed; horizontal capture inspected before publishing preview.

@@ -13,8 +13,10 @@ main.creator-output{width:100%;height:100%;max-width:none;margin:0;padding:0}
 
 /* Horizontal recording: wide confrontation above full-width notation. */
 .creator-horizontal .creator-output-content{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--creator-arena) minmax(0,1fr)}
-.creator-horizontal .creator-arena .boss-battle-panel{grid-template-columns:1fr 1fr;grid-template-rows:76px minmax(0,1fr)}
+.creator-horizontal .creator-arena .boss-battle-panel{grid-template-columns:1fr 1fr;grid-template-rows:60px minmax(0,1fr)}
 .creator-horizontal .battle-hud{grid-column:1;grid-row:1;padding:8px 28px;border:0}
 .creator-horizontal .battle-status{grid-column:2;grid-row:1;padding:8px 28px;border:0}
 .creator-horizontal .battle-stage{grid-column:1 / -1;grid-row:2}
 .creator-horizontal .creator-score{border-top:1px solid #215670}
+
+.creator-horizontal{grid-template-rows:7% 93%}
