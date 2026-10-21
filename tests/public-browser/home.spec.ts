@@ -141,6 +141,9 @@ test("public logged-out page, registration, login and password reset use Supabas
   await fixture(page);
   await page.goto("/");
   await expect(page.getByRole("heading",{name:/Turn every note/})).toBeVisible();
+  await expect(page.locator('.public-header .brand-mark')).toHaveAttribute('src','/branding/emblem-128.png');
+  await expect.poll(()=>page.locator('.brand-mark').evaluate(e=>(e as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  expect((await page.locator('.public-header').boundingBox())?.height).toBe(86);
   await page.screenshot({path:"test-results/public-home-desktop.png",fullPage:true});
   await page.getByRole("button",{name:"Create account",exact:true}).click();
   await page.getByLabel("Player name").fill("New Pianist");await page.getByLabel("Email",{exact:true}).fill("new@example.test");await page.getByLabel("Password",{exact:true}).fill("Long-Test-Password-123");
@@ -163,6 +166,8 @@ test("public logged-out page, registration, login and password reset use Supabas
   await page.getByLabel("Password",{exact:true}).fill("Long-Test-Password-123");
   await page.getByRole("button",{name:"Log in",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Build your battle."})).toBeVisible();
+  await expect(page.locator('.player-header .piano-mark')).toHaveAttribute('src','/branding/emblem-128.png');
+  await expect.poll(()=>page.locator('.player-header .piano-mark').evaluate(e=>(e as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await page.getByRole("button",{name:/Continue to Battle Preview/}).click();
   await page.locator(".sight-score svg").first().waitFor();
   await page.locator(".sight-score").scrollIntoViewIfNeeded();

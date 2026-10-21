@@ -6,7 +6,7 @@
 .authenticated-app .player-header{display:flex;align-items:center;justify-content:space-between;gap:28px;min-height:100px;border-bottom:1px solid var(--line);margin:0 -32px;padding:14px 32px;background:linear-gradient(110deg,#071426b0,#0b294644,#03101de0)}
 .authenticated-app .player-brand{display:flex;align-items:center;gap:18px;text-decoration:none;color:#f4f6ff;flex-shrink:0;font:700 clamp(22px,2.1vw,34px)/1.1 Georgia,serif;letter-spacing:-.6px}
 .authenticated-app .player-brand small{font:10px/2 system-ui,sans-serif;letter-spacing:2.5px;color:#9ecce6;margin-top:4px}
-.authenticated-app .piano-mark{width:46px;height:46px;filter:drop-shadow(0 0 7px #00cfff35)}
+.authenticated-app .piano-mark{width:46px;height:46px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 7px #00cfff35)}
 .authenticated-app .player-strip{padding:0;display:flex;align-items:center;gap:20px;min-width:0}
 .authenticated-app .player-avatar{width:48px;height:48px;border:1px solid #4284ad;border-radius:50%;object-fit:cover;object-position:center 15%;background:radial-gradient(circle,#1b5275,#071325)}
 .authenticated-app .player-identity>b{font-size:16px}

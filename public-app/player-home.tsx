@@ -6,6 +6,7 @@ import "./notation-appearance.css";
 import { supabase, syncServerSession } from "./supabase";
 import { useMusicCatalog, type CatalogExercise } from "./catalog";
 import { useQueueScores } from "./queue-scores";
+import { BrandEmblem } from "./brand-emblem";
 import { collectionName } from "./music-labels";
 import { MidiSetup } from "../src/components/midi/setup";
 import { SightReading, type PracticeControls } from "../hosted/sight-reading";
@@ -50,7 +51,7 @@ const icons:Record<string,string>={
   check:"m5 12 4 4L19 6",arrow:"M4 12h16m-6-6 6 6-6 6",cup:"M7 3h10v7a5 5 0 0 1-10 0ZM7 5H3v3c0 3 2 4 5 4m9-7h4v3c0 3-2 4-5 4M12 15v6m-4 0h8"
 };
 function Icon({name}:{name:string}){return <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={icons[name]??icons.music}/></svg>;}
-function PianoMark(){return <svg className="piano-mark" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="piano-cyan" x2="0" y2="1"><stop stopColor="#7eeeff"/><stop offset="1" stopColor="#04bde9"/></linearGradient></defs><path fill="url(#piano-cyan)" d="M3 8h7v33H3zm9-4h7v37h-7zm9-3h7v40h-7zm9 3h7v37h-7zm9 4h6v33h-6z"/><path fill="#061323" d="M8 1h5v24H8zm9 0h5v24h-5zm18 0h5v24h-5z"/></svg>;}
+function PianoMark(){return <BrandEmblem className="piano-mark"/>;}
 type Draft={hand:Hand;entries:{number:number;loops:number}[]};
 function readDraft(userId:string,catalog:CatalogExercise[]):{hand:Hand;queue:ChainEntry[]}{
   const requested=catalog.find(e=>e.number===Number(new URLSearchParams(location.search).get("music"))&&e.available);

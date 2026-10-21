@@ -5,6 +5,7 @@ import { bossProfiles } from "../hosted/boss-registry";
 import { ObsOverlay } from "../hosted/obs";
 import { AdminMusic } from "./admin-music";
 import { PlayerHome } from "./player-home";
+import { BrandEmblem } from "./brand-emblem";
 import "./public.css";
 import "./player-home.css";
 const hero="/battle/cinematics/hero-finish.png";
@@ -21,7 +22,7 @@ export function PublicApp() {
     unified={location.pathname==="/obs/recording"} shorts={location.pathname==="/obs/shorts"}
     scoreOnly={location.pathname==="/obs/score"} streaksOnly={location.pathname==="/obs/streaks"}
     celebrationsOnly={location.pathname==="/obs/celebrations"}/>:
-    <div className={`public-app ${account.session&&!account.recovery?"authenticated-app":""}`}>{(!account.session||account.recovery)&&<header className="public-header"><a href="/" className="brand"><span className="brand-mark">Ⅱ</span>Piano Boss Battles</a><span className="header-caption">PLAY MUSIC. BECOME THE HERO.</span></header>}
+    <div className={`public-app ${account.session&&!account.recovery?"authenticated-app":""}`}>{(!account.session||account.recovery)&&<header className="public-header"><a href="/" className="brand"><BrandEmblem className="brand-mark"/>Piano Boss Battles</a><span className="header-caption">PLAY MUSIC. BECOME THE HERO.</span></header>}
       <main id="main">
         {!account.ready?<p role="status">Connecting your account…</p>:account.recovery?<AccountForm recovery onRecovered={account.finishRecovery}/>:
         account.session?(location.pathname==="/admin/music"?<AdminMusic/>:<PlayerHome user={account.session.user}/>):
