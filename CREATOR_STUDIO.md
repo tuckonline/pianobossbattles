@@ -110,3 +110,13 @@ the unused additive creator tables may safely remain, with no player data loss.
 - Browser tests use disposable/mocked state and MIDI events. Live Supabase creator
   activation, physical MIDI, native OBS/Aitum recordings, and hardware 60 FPS
   performance remain unverified. No deployment or live migration was performed.
+
+## Preview activation authorization
+
+Owner authorized the additive migration and isolated preview on 2026-10-20.
+Supabase CLI confirmed project huxmltjtovpxxxupuxdg and only migration
+202610200005 pending, then applied it successfully. Creator preview uses the
+explicit public-app/creator-preview/wrangler.jsonc configuration and branch
+feature/creator-studio-v1 in pianobossbattles-preview. This provides its exact
+APP_ORIGIN with the existing secure Hyperdrive binding. No production settings,
+DNS, SMTP, or authentication configuration changes are required.
