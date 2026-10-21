@@ -67,9 +67,10 @@ verification limits, and release procedures. Update it when decisions change.
   Public browser tests need the local API and Vite servers already running.
 - Distinguish fixture tests, owner confirmations, and real live/OBS verification.
   Mocked browser responses and `/api/health` do not prove DB access or physical MIDI.
-- Hyperdrive's daily quota was exhausted at handoff. Read incident notes before
-  probing; avoid rapid live polls/load tests. Billing upgrades require approval.
-  Failure retries now back off, but successful polling still needs optimization.
+- Hyperdrive previously exhausted the Free daily quota. Workers Paid is now active
+  and real player-storage reads/writes have been confirmed. Read the incident update;
+  do not ask the owner to upgrade again. Avoid unnecessary live polls/load tests.
+  Any further billing changes require approval; keep query usage efficient.
 - The owner requested production-only hosting. The preview Pages project was
   deleted; do not recreate it or run retained preview deployment helpers/configs.
   `build:preview` only packages assets and is still used for production builds.

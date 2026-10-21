@@ -20,13 +20,72 @@ All preview availability and deployment instructions below are historical where
 they conflict with this update. `build:preview` only packages assets; it remains
 part of the production build process despite its name.
 
+### Workers Paid and storage recovery — 2026-10-21
+
+The owner explicitly authorized Workers Paid and completed Cloudflare's agreement
+checkboxes/Activate step. The dashboard displayed **Purchase complete; subscription
+active**, Workers Paid **$5/month base plus usage overages**. Do not describe the
+account as Free or ask the owner to purchase it again. Hyperdrive's Free-plan
+100,000-query daily cap no longer applies; other service limits still do.
+
+The owner confirmed production login and saved progress. The signed-in dashboard
+was observed at Level 3, 4,468 XP, “All progress saved.” Subsequent read-only SQL
+confirmed two newly completed Schmitt 6 attempts: 34 correct notes, and 34 correct
+plus 2 incorrect notes. These establish actual reads and new persisted note writes,
+not just a configured health endpoint. New-result refresh/re-login and native OBS
+recording checks must still be distinguished from those observations.
+
+The owner reported a short-lived “Waiting for battle note checkpoint” warning,
+which cleared after a few seconds. This is a separate save-ordering race: while
+an older note checkpoint is in flight, MIDI can queue a newer terminal prefix;
+the flush then submits the story summary before that newer checkpoint is sent.
+The server correctly returns 409. The client fix defers a story receipt while
+any of its pass checkpoints remain queued, preserving all server validation and
+the local outbox. It also avoids premature summary SQL/retry traffic.
+
+Related query optimizations remove account-initialization transactions from
+already authenticated catalog/OBS/Shorts requests (their own fresh owner/role
+checks remain). Unchanged catalog revalidation goes from eight SQL statements
+to two. An OBS SSE stream still reads the live snapshot at its existing cadence;
+only unchanged durable statistics are reused, within that one stream, for at most
+two seconds. Any source/sequence/content change bypasses reuse immediately.
+No cross-user cache, schema, MIDI, damage, audio-timing or UI-layout change is needed.
+The owner separately approved the production-only release. These fixes are now
+live as commit `76f3752`, deployment `0b2d7346-c0a5-490e-92d3-3037e5d9ae15`.
+Only three runtime files and their tests were promoted from the Creator branch;
+the unreleased Creator/layout changes were not included. The retained release
+checkout is `.local/production-query-fix` on `feature/end-user-website-v1`.
+The current development branch carries the same fixes in `32ed15b`.
+
+Verification: 486 unit/database/network tests and 34 browser cases passed on the
+development branch. The production-only candidate passed 30 focused SQL/service
+tests, TypeScript, changed-file lint, build, and all 29 browser cases across its
+full run and one unchanged origin-test recheck. That test initially used the
+other local server's APP_ORIGIN; matching the candidate proxy/API origins fixed
+the harness, without changing assertions or production security. An optional
+compiled Node server launch was policy-blocked; verification used the permitted
+Vite development server plus local API. A scan of 73 built files found no local
+DB URL/password. Removing the checkpoint guard temporarily reproduced the original
+premature 409 in the delayed-MIDI browser regression; restoring it passed.
+
+Live checks: production serves matching client `index-WHhsOz83.js`; health is
+configured, unsigned writes return 401, foreign-origin writes 403, and both OBS
+routes return 200. More importantly, the real signed-in account was refreshed on
+the new build and showed **4,809 XP, 5 bosses defeated, 12 pieces practiced, All
+progress saved**, with no alert. This confirms retained newly earned progress
+after a real physical-MIDI exercise and subsequent reload. Native OBS recordings
+and an additional physical-MIDI performance specifically on this new build remain
+manual checks. Prior deployment `e4854b83-8382-40a7-a416-d6a88b49eb47` is the rollback
+target for this release. No preview hosting was recreated; no schema, DNS, SMTP,
+Supabase auth or original D1 changes were made.
+
 ## 1. Open the correct project
 
 - Repository: https://github.com/tuckonline/pianobossbattles
 - Local root: `C:\Users\aaron\Documents\Codex\2026-09-18\what-are-the-most-popular-online\outputs\pianobossbattles-public`
 - Current development branch: `feature/creator-studio-v1`.
-- Latest application commit at handoff: `ab63a2f` (storage-outage backoff).
-- Public release branch: `feature/end-user-website-v1`, at `f27932a`.
+- Latest development application commit: `32ed15b` (query/save-order fixes).
+- Public release branch: `feature/end-user-website-v1`, at `76f3752`.
 - The containing workspace has other projects, including the original application.
   Do not run Git/build/deploy commands from the parent directory by accident.
 
@@ -186,7 +245,7 @@ success here means Cloudflare accepted the artifact, not that every live feature
 
 | Target | Project / branch | Latest deployment at handoff |
 | --- | --- | --- |
-| Public production | Pages `pianobossbattles`, deployment branch `production` | `e4854b83-8382-40a7-a416-d6a88b49eb47`, source `f27932a` |
+| Public production | Pages `pianobossbattles`, deployment branch `production` | `0b2d7346-c0a5-490e-92d3-3037e5d9ae15`, source `76f3752` |
 | Creator preview — removed | Deleted project `pianobossbattles-preview` | Historical: `4266857e-bb7d-45d9-ba93-dc654381ef02`, source `ab63a2f` |
 | Older public preview — removed | Deleted with the same project | No active preview alias |
 
@@ -346,7 +405,7 @@ preview and original app during releases/rollbacks.
 
 ## 8. Current incident and outstanding work
 
-### Immediate: Hyperdrive quota exhaustion
+### Historical incident: Hyperdrive quota exhaustion (Paid now active)
 
 Owner received Cloudflare email confirming the **100,000 queries/day** limit was
 exhausted. Requests failed with `Connection terminated unexpectedly`; UI showed
@@ -354,7 +413,8 @@ exhausted. Requests failed with `Connection terminated unexpectedly`; UI showed
 Direct Supabase `SELECT 1` succeeded during investigation. Quota exhaustion, not
 proven data loss or incorrect auth, explains that observed outage. Production and
 preview share the binding, so both may be affected. Recovery has **not been
-live-verified since the quota reset**. No paid plan was approved or changed.
+live-verified since the quota reset** at the time of that report. This is historical:
+Workers Paid and actual production storage recovery are now confirmed above.
 
 Cloudflare documents reset at 00:00 UTC (5 p.m. Pacific during daylight saving;
 4 p.m. standard time). Recheck current account usage/plan before further diagnosis:
@@ -366,20 +426,22 @@ Successful live timing is unchanged. The fix was deployed only to the now-delete
 Creator preview and remains in source; it is **not live in production** and cannot
 lift the quota block. Close unused OBS sources and avoid load probes.
 
-Next engineering task: audit/reduce **successful** background SQL traffic, not just
+The original next task was to audit/reduce **successful** background SQL traffic, not just
 failure retries. Catalog checks every 2s, Creator cloud reads roughly every 500ms,
 publisher/signaling and legacy SSE also generate queries; multiple layouts/tabs can
 multiply them. Cached Hyperdrive queries still count toward the limit. Consider
 less frequent recoverable snapshots/authorization checks with immediate peer data,
 event-driven publication refresh, and measured query budgets. Preserve revocation,
 privacy, reconnect reliability and frame-accurate MIDI/audio; do not blindly slow
-the game loop or enable stale caches for auth/permissions. This is not implemented.
-Any paid plan change requires owner approval.
+the game loop or enable stale caches for auth/permissions. The targeted account-write
+and unchanged-OBS-stat optimizations are described above; broader event-driven
+transport redesign remains future work. Any further paid-service change requires approval.
 
 ### Remaining validation/operations
 
-- Verify real dashboard/storage recovery after reset, retained pending changes,
-  then a newly earned physical-MIDI result across logout/login on the current build.
+- Production dashboard recovery and new saved note checkpoints were confirmed after
+  upgrading. Still verify a newly earned result across refresh/logout/login on the
+  next released build; preserve retained pending changes.
 - Creator native OBS/Aitum: record both outputs, check one audio owner, Monitor Off,
   shared track inclusion, no duplicate sounds, reconnect/holding scenes, sustained
   performance. Fixture screenshots/audio starts are not completed recordings.
