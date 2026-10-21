@@ -6,6 +6,29 @@ Older reports preserve historical evidence; their pending-deployment statements
 and test counts must not be treated as current facts. Recheck Git and service state
 when work resumes. No functionality or deployment was changed for this handoff.
 
+## Pending save-session recovery fix — 2026-10-21
+
+Owner reported the live "Your session expired. Verify your email and sign in"
+save warning. It was observed in the real production UI. The exact provider-side
+reason for that rejection was not captured. Code inspection established that
+platform commands retried the rejected HttpOnly session cookie without renewing
+it; provider outages were also mislabeled as expired/unconfirmed accounts.
+
+The local fix registers a public-only session recovery adapter. A platform 401
+renews the same Supabase user's session, synchronizes the server cookie, and
+retries the identical command once. Concurrent failures share recovery; failed
+recovery leaves the outbox intact. Legacy/Sites calls have no adapter and remain
+unchanged. Provider throttling/unavailability now returns 503; rejected sessions
+and unconfirmed emails remain authenticated failures with distinct messages.
+No auth configuration, email verification, database or gameplay rules change.
+
+Verification: 495 unit/database/network tests, TypeScript, changed-file lint,
+production build and seven focused browser cases passed, including expired save
+recovery, queued MIDI during a temporary provider outage, unchanged checkpoint
+identity, retained battle/countdown, and password-recovery regressions. This fix
+is local and not deployed; explicit approval is required for a new production
+release. Do not clear browser storage or discard queued progress as a workaround.
+
 ## Hybrid battle layout published — 2026-10-21
 
 The owner approved publication after local review. Development commit `b9bdf48`
