@@ -1,3 +1,4 @@
+import {overlayEndpoint} from './obs-endpoint';
 import { z } from "zod";
 import {battleAudio,isObsAudioSource} from './battle-audio';
 import { overlaySnapshot, type OverlaySnapshot, type OverlayState } from "./obs-state";
@@ -43,7 +44,7 @@ async function signal(sourceId:string,viewerId?:string,body?:{type:"offer"|"answ
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5000);
   try {
     const query=new URLSearchParams({rtc:"1",sourceId,...(viewerId?{viewerId}:{})});
-    const response=await fetch(`/api/obs?${query}`,{method:body?"POST":"GET",cache:"no-store",signal:controller.signal,
+    const response=await fetch(`${overlayEndpoint()}?${query}`,{method:body?"POST":"GET",cache:"no-store",signal:controller.signal,
       ...(body?{headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,sourceId,viewerId})}:{})});
     if(!response.ok) throw new Error("Direct score handshake unavailable");
     return await response.json() as {active:boolean;answer?:string|null;offers?:{viewerId:string;sdp:string}[]};

@@ -13,7 +13,7 @@ import type {ShortsDisplay} from './shorts-display';
 // while the current exercise plays. MIDI/cursor transport stays unchanged.
 const scoreCache=new Map<number,Promise<{exercise:Exercise;xml:string}>>();
 function loadScore(number:number){
- if(!scoreCache.has(number))scoreCache.set(number,command<Exercise>({action:'practiceExercise',exerciseNumber:number}).then(async exercise=>{
+ if(!scoreCache.has(number))scoreCache.set(number,(location.pathname.startsWith('/creator/obs/')?fetch(`/api/creator/view/score?number=${number}`).then(async r=>{if(!r.ok)throw Error('Score access unavailable');return r.json() as Promise<Exercise>;}):command<Exercise>({action:'practiceExercise',exerciseNumber:number})).then(async exercise=>{
   let xml=exercise.notationXml;
   if(!xml&&exercise.notationUrl){const r=await fetch(exercise.notationUrl);if(!r.ok)throw new Error('Unable to load score');xml=await r.text();}
   return {exercise,xml:xml??musicXml(exercise)};

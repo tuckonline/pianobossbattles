@@ -1,3 +1,6 @@
+import {normalizeGameSettings,gameSettingsSchema} from '../hosted/game-settings';
+import {defaultBossBattleConfig} from '../hosted/boss-config';
+import {handleCreatorControl,handleCreatorView,creatorBattleConfig} from './creator-service';
 import { types, type Pool } from "pg";
 import { createClient, type User } from "@supabase/supabase-js";
 import { D1Platform } from "../hosted/service";
@@ -48,10 +51,15 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
         "Set-Cookie": `pbb_session=${accessToken ?? ""}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${accessToken ? 3600 : 0}${secure ? "; Secure" : ""}`,
       } });
     }
+    if(url.pathname.startsWith('/api/creator/view')){
+      if(!pool)throw new DomainError('Creator storage unavailable',503);
+      return await handleCreatorView(request,pool);
+    }
     const token = request.headers.get("cookie")?.split(";").map(s => s.trim()).find(s => s.startsWith("pbb_session="))?.slice(12);
     if (!token) throw new DomainError("Sign in to Piano Boss Battles.", 401);
     const user = await verifiedUser(token);
     if (!pool) throw new DomainError("Player storage is not configured yet. Follow SUPABASE_SETUP.md before starting a battle.", 503);
+    if(url.pathname==='/api/creator'||url.pathname==='/api/creator/stream')return await handleCreatorControl(request,pool,user.id);
     const db = new PostgresBridge(pool, undefined, user.id).asD1();
     const service = new D1Platform(db);
     const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
@@ -67,12 +75,16 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
       practiced: await service.one("SELECT COUNT(DISTINCT exercise_number) AS count FROM game_attempts WHERE user_id=? AND json_extract(result,'$.correct')>0",user.id),
       bests: await service.all("SELECT exercise_number,MAX(json_extract(result,'$.accuracy')) AS accuracy FROM game_attempts WHERE user_id=? AND status='completed' GROUP BY exercise_number ORDER BY accuracy DESC LIMIT 6",user.id),
     });
-    if (url.pathname === "/api/platform" && request.method === "POST") {
+    if ((url.pathname === "/api/platform" || url.pathname === "/api/creator/game") && request.method === "POST") {
       const input = await request.json();
       if (!actions.has(input?.action)) throw new DomainError("Command unavailable in the public application.", 403);
+      const creatorGame=url.pathname === "/api/creator/game";
+      const creatorConfig=creatorGame?await creatorBattleConfig(pool,user.id,defaultBossBattleConfig,input.action==="gameSettings"?gameSettingsSchema.parse(input.settings).bossBattle:undefined):undefined;
       await authorizeMusicCommand(pool,user.id,input);
       if(input.action === "practiceExercise")return Response.json(await readMusicExercise(pool,z.number().int().positive().parse(input.exerciseNumber)));
-      return Response.json(await service.command(actor, input));
+      const result=await service.command(actor,creatorGame&&input.action==='gameSettings'?{action:'gameState'}:input);
+      if(creatorConfig&&result&&typeof result==='object'&&'settings' in result)return Response.json({...result,settings:{...normalizeGameSettings(result.settings),bossBattle:creatorConfig}});
+      return Response.json(result);
     }
     throw new DomainError("Not found",404);
   } catch (error) {

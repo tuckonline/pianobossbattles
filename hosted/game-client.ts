@@ -65,7 +65,8 @@ const emptyPlayer: GameState = {
 // Also tolerate an older API response during a deployment or reconnect. Never
 // expose incomplete saved settings to React, including recovery/refresh paths.
 async function gameCommand<T extends GameState>(input: Parameters<typeof command>[0]): Promise<T> {
-  const player = await command<T>(input);
+  const creator=typeof location!=='undefined'&&location.pathname==='/creator';
+  const player = creator?await fetch('/api/creator/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}).then(async r=>{const result=await r.json();if(!r.ok)throw Error(result.error??'Creator game connection unavailable');return result as T;}):await command<T>(input);
   return { ...player, settings: normalizeGameSettings(player.settings) };
 }
 class GameClient {

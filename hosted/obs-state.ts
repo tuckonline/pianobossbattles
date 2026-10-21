@@ -39,6 +39,8 @@ export const overlaySnapshot = z
   .refine((s) => s.measure <= s.totalMeasures, "Invalid measure");
 export type OverlaySnapshot = z.infer<typeof overlaySnapshot>;
 export type OverlayState = {
+  creator?:import('../public-app/creator-config').CreatorPreferences;
+  viewerKey?:string;
   sourceId?: string;
   sequence?: number;
   snapshot: OverlaySnapshot | null;

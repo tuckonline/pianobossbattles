@@ -1,3 +1,5 @@
+import {CreatorStudio} from './creator-studio';
+import {CreatorViewer} from './creator-view';
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element -- Independent Vite SPA. */
 import { useEffect } from "react";
 import { useAccount, AccountForm } from "./auth";
@@ -10,7 +12,8 @@ import "./public.css";
 import "./player-home.css";
 import "./compact-dashboard.css";
 const hero="/battle/cinematics/hero-finish.png";
-export function PublicApp() {
+export function PublicApp(){return location.pathname.startsWith("/creator/obs/")?<CreatorViewer/>:<AccountApp/>;}
+function AccountApp() {
   const account=useAccount();
   const obs=location.pathname.startsWith("/obs");
   useEffect(()=>{
@@ -26,7 +29,7 @@ export function PublicApp() {
     <div className={`public-app ${account.session&&!account.recovery?"authenticated-app":""}`}>{(!account.session||account.recovery)&&<header className="public-header"><a href="/" className="brand"><BrandEmblem className="brand-mark"/>Piano Boss Battles</a><span className="header-caption">PLAY MUSIC. BECOME THE HERO.</span></header>}
       <main id="main">
         {!account.ready?<p role="status">Connecting your account…</p>:account.recovery?<AccountForm recovery onRecovered={account.finishRecovery}/>:
-        account.session?(location.pathname==="/admin/music"?<AdminMusic/>:<PlayerHome user={account.session.user}/>):
+        account.session?(location.pathname==="/creator"?<CreatorStudio user={account.session.user}/>:location.pathname==="/admin/music"?<AdminMusic/>:<PlayerHome user={account.session.user}/>):
         <><section className="welcome"><div><span className="eyebrow">YOUR PIANO. YOUR POWER.</span><h1>Turn every note<br/>into a <em>battle cry.</em></h1><p>Connect your piano, choose your challenge, and let the music do the fighting. Your next great performance starts here.</p><div className="welcome-fighters"><img src={hero} alt="Piano Blade, the cyan sword-wielding pianist"/><span>VS</span><img src={bossProfiles.grinwick.portrait} alt="Grinwick, the chaos gremlin"/></div></div><AccountForm/></section>
         <div className="public-steps"><p><b>01</b> Connect your MIDI piano</p><p><b>02</b> Choose your musical challenge</p><p><b>03</b> Play. Battle. Level up.</p></div></>}
         {account.error&&<p role="alert" className="error">{account.error} <a href="/">Return to sign in</a></p>}

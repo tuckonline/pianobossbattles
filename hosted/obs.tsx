@@ -1,3 +1,7 @@
+import {CreatorPresentation} from '../public-app/creator-view';
+import {useBattleAudioOutput} from './battle-audio-ui';
+import {isObsAudioSource} from './battle-audio';
+import {overlayEndpoint} from './obs-endpoint';
 import {chainScoreSnapshot} from "./obs-score-state";
 import {shortsRecorder} from './shorts-recorder';
 import {ShortsPresentation} from './shorts-view';
@@ -30,7 +34,7 @@ export function useOverlayPublisher(snapshot: OverlaySnapshot, enabled: boolean)
       if(busy||!pending||Date.now()<retryAt)return;
       const next=pending;busy=true;
       try {
-        const response=await fetch("/api/obs",{method:"POST",headers:{"Content-Type":"application/json"},
+        const response=await fetch(overlayEndpoint(),{method:"POST",headers:{"Content-Type":"application/json"},
           // Keepalive has a shared 64 KiB budget. Reserve it for the final
           // page-exit snapshot; ordinary live frames must not consume it.
           body:JSON.stringify(next),keepalive:disposed,signal:AbortSignal.timeout(8000)});
@@ -43,6 +47,7 @@ export function useOverlayPublisher(snapshot: OverlaySnapshot, enabled: boolean)
     };
     const capture=()=>{
       clearTimeout(captureTimer);captureTimer=undefined;
+      if(overlayEndpoint()==='/api/creator/stream'&&current.current.totalMeasures<1)return;
       const next={...chainScoreSnapshot(current.current,gameClient.overlay()),shorts:shortsRecorder.broadcast(),...(disposed?{status:"stopped" as const}:{})};
       lastPresentation=next.score?.presentationId??"";
       const value=JSON.stringify(next),changed=value!==serialized;
@@ -76,13 +81,13 @@ const handNames = {
   left: "Left hand",
   right: "Right hand",
 };
-export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=false,unified=false,shorts=false}: {celebrationsOnly?:boolean;scoreOnly?:boolean;streaksOnly?:boolean;unified?:boolean;shorts?:boolean}) {
+export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=false,unified=false,shorts=false,creator=false,vertical=false}: {celebrationsOnly?:boolean;scoreOnly?:boolean;streaksOnly?:boolean;unified?:boolean;shorts?:boolean;creator?:boolean;vertical?:boolean}) {
   const [data, setData] = useState<OverlayState | null>(null);
   const [connection, setConnection] = useState("Connecting");
   const [transport,setTransport]=useState<"direct"|"cloud">("cloud");
   const [now, setNow] = useState(()=>Date.now());
   useEffect(() => {
-    document.title = shorts ? "Learn Piano Fast · Shorts" : unified ? "@Learnpianofast · OBS Recording" : streaksOnly ? "@Learnpianofast · OBS Streaks" : scoreOnly ? "@Learnpianofast · OBS Score" : celebrationsOnly ? "@Learnpianofast · OBS Celebrations" : "@Learnpianofast · OBS Overlay";
+    document.title = creator ? `Piano Boss Battles · ${vertical?"Vertical":"Horizontal"} OBS` : shorts ? "Learn Piano Fast · Shorts" : unified ? "@Learnpianofast · OBS Recording" : streaksOnly ? "@Learnpianofast · OBS Streaks" : scoreOnly ? "@Learnpianofast · OBS Score" : celebrationsOnly ? "@Learnpianofast · OBS Celebrations" : "@Learnpianofast · OBS Overlay";
     let disposed = false;
     let timer: ReturnType<typeof setTimeout>;
     let controller: AbortController | undefined;
@@ -102,8 +107,8 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
     };
     const refreshMs=scoreOnly?OVERLAY_SCORE_REFRESH_MS:OVERLAY_REFRESH_MS;
     const scoreQuery=scoreOnly?"&score=1":"";
-    const stream = new EventSource(`/api/obs?stream=1${scoreQuery}`);
-    stream.onmessage = (event) => {
+    const stream = creator?undefined:new EventSource(`${overlayEndpoint()}?stream=1${scoreQuery}`);
+    if(stream)stream.onmessage = (event) => {
       if (disposed) return;
       try {
         const next = JSON.parse(event.data) as OverlayState;
@@ -127,7 +132,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
       // OBS can embed an older Chromium without AbortSignal.any/timeout.
       const timeout = setTimeout(() => controller?.abort(), 8000);
       try {
-        const response = await fetch(`/api/obs?refresh=${Date.now()}${scoreQuery}`, {
+        const response = await fetch(`${overlayEndpoint()}?refresh=${Date.now()}${scoreQuery}`, {
           cache: "no-store",
           credentials: "same-origin",
           signal: controller.signal,
@@ -135,9 +140,11 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
         if (disposed || Date.now() - lastStreamEvent < OVERLAY_STALL_MS) return;
         if (!response.ok) {
           if (response.status === 401) {
+            if(creator){direct?.close();setData(null);setConnection("Viewing link expired or revoked");return;}
             location.replace(`/?return_to=${encodeURIComponent(location.pathname)}`);
             return;
           }
+          if(creator){direct?.close();setData(null);}
           if(!directConnected)setConnection(
             response.status === 401
               ? "Sign in through OBS Interact"
@@ -151,6 +158,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
           }
         }
       } catch {
+        if(creator&&!disposed){direct?.close();setData(null);setConnection("Reconnecting");}
         if (!disposed&&!directConnected) setConnection("Reconnecting");
       } finally {
         clearTimeout(timeout);
@@ -161,7 +169,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
         }
       }
     };
-    stream.onerror = () => {
+    if(stream)stream.onerror = () => {
       if (disposed) return;
       lastStreamEvent = 0;
       void poll();
@@ -175,7 +183,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
     return () => {
       disposed = true;
       controller?.abort();
-      stream.close();
+      stream?.close();
       direct?.close();
       clearTimeout(timer);
       window.removeEventListener("online", refresh);
@@ -183,7 +191,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [celebrationsOnly,scoreOnly,streaksOnly,unified,shorts]);
+  }, [celebrationsOnly,scoreOnly,streaksOnly,unified,shorts,creator,vertical]);
   const s = data?.snapshot;
   const stale = !data?.updatedAt || now - data.updatedAt > 30000;
   const active =
@@ -204,8 +212,10 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
             }[s.status];
   const cinematic=useBattleCinematic({battle:s?.game?.battle,exerciseId:s?.exerciseNumber??0,bestCombo:s?.game?.live.attemptBest??s?.game?.live.best??0,
     settings:s?.game?.settings.cinematics??defaultCinematicSettings,enabled:(unified||shorts)&&(s?.game?.settings.cinematics?.enabled??true),
-      offline:stale||connection!=="Connected",dismissedId:s?.game?.cinematicDismissedId},`${new URLSearchParams(location.search).has('displayPreview')?'display-preview':'recording'}:${data?.gamePlayer?.userId??'waiting'}`,true);
-  useObsAudioOutput(s?.game?.settings.bossBattle,data?.gamePlayer?.userId,(unified||shorts)&&!new URLSearchParams(location.search).has('displayPreview'));
+      offline:stale||connection!=="Connected",dismissedId:s?.game?.cinematicDismissedId},`${new URLSearchParams(location.search).has('displayPreview')?'display-preview':'recording'}:${data?.viewerKey??data?.gamePlayer?.userId??'waiting'}`,true);
+  useObsAudioOutput(creator?undefined:s?.game?.settings.bossBattle,creator?undefined:data?.gamePlayer?.userId,!creator&&(unified||shorts)&&!new URLSearchParams(location.search).has('displayPreview'));
+  useBattleAudioOutput(creator&&s?.game?{...s.game.settings.bossBattle,audioOutput:'obs',soundEnabled:data?.creator?.soundEnabled??false,volume:data?.creator?.volume??0}:undefined,creator?data?.viewerKey:undefined,'obs',creator&&isObsAudioSource()&&data?.creator?.audioOwner===(vertical?'vertical':'horizontal'));
+  if(creator)return <CreatorPresentation data={data} offline={stale||connection!=="Connected"} transport={transport} cinematic={cinematic} vertical={vertical}/>;
   if(shorts) return <ShortsPresentation data={data} transport={transport} offline={stale||connection!=="Connected"} cinematic={cinematic}/>;
   if(scoreOnly) return s ? <ObsScore snapshot={s} transport={transport} offline={stale || connection!=="Connected"} /> : <main className="obs-score-canvas" aria-label="OBS score only" />;
   if(streaksOnly) return <StreakOverlay game={s?.game} stale={stale} userId={data?.gamePlayer?.userId} />;

@@ -20,7 +20,7 @@ export function BattleHealthBar({label,hp,max,side}:{label:string;hp:number;max:
     <div role="progressbar" aria-label={`${side} HP`} aria-valuemin={0} aria-valuemax={max} aria-valuenow={hp} className="battle-hp-track"><span style={{width:`${100*hp/max}%`}} /></div>
   </div>;
 }
-export const BossBattlePanel = memo(function BossBattlePanel({battle:b,offline=false,combo=0,debug=false,recording=false,suppressResult=false,suspendAnimation=false,audioOutput,layoutOverride}:{battle:BattleView;offline?:boolean;combo?:number;debug?:boolean;recording?:boolean;suppressResult?:boolean;suspendAnimation?:boolean;audioOutput?:AudioOutput;layoutOverride?:BossBattleLayoutConfig}) {
+export const BossBattlePanel = memo(function BossBattlePanel({battle:b,offline=false,combo=0,debug=false,recording=false,suppressResult=false,suspendAnimation=false,audioOutput,layoutOverride,authoritativeHud=false}:{battle:BattleView;offline?:boolean;combo?:number;debug?:boolean;recording?:boolean;suppressResult?:boolean;suspendAnimation?:boolean;audioOutput?:AudioOutput;layoutOverride?:BossBattleLayoutConfig;authoritativeHud?:boolean}) {
   const mode=gameModeRegistry[b.config.gameMode];
   const [modeNotice,setModeNotice]=useState<{key:string;text:string}>();
   const noticed=useRef({attempt:b.attemptId,phase:b.phase,shields:b.shields});
@@ -73,7 +73,7 @@ export const BossBattlePanel = memo(function BossBattlePanel({battle:b,offline=f
   } as CSSProperties}>
     <header className="battle-hud">{!recording&&<div className="battle-brand"><span className="battle-emblem">LPF</span><span>BOSS BATTLE</span></div>}
       <div className="battle-player-row">
-        {mode.health&&<BattleHealthBar label={battleCharacters[b.config.playerId].shortName} hp={presentation.displayHp?.player??b.playerHp} max={b.config.playerMaxHp} side="player"/>}
+        {mode.health&&<BattleHealthBar label={battleCharacters[b.config.playerId].shortName} hp={authoritativeHud?b.playerHp:presentation.displayHp?.player??b.playerHp} max={b.config.playerMaxHp} side="player"/>}
         {!mode.health&&<span className="battle-player-name">{battleCharacters[b.config.playerId].shortName}</span>}
         {mode.timed&&b.timer&&<div className="battle-clock-shields"><BattleCountdown timer={b.timer} paused={offline}/></div>}
       </div>
@@ -88,7 +88,7 @@ export const BossBattlePanel = memo(function BossBattlePanel({battle:b,offline=f
       {debug&&<output className="battle-debug-readout">{presentation.phase} · {metrics.pending} queued (max {metrics.maxQueue})<br/>Contact latency avg {Math.round(metrics.averageLatencyMs)} / max {Math.round(metrics.maxLatencyMs)} ms<br/>{metrics.damageEvents} damage events · {metrics.visualStrikes} strikes · {metrics.coalescedEffects} merges · {metrics.skippedVisualHits} skipped visuals</output>}
     </BattleStage>
     <footer className="battle-status">
-      <BattleHealthBar label={battleCharacters[b.config.bossId].shortName} hp={presentation.displayHp?.boss??b.bossHp} max={presentation.roundEnding?.bossMaxHp??b.bossMaxHp} side="boss"/>
+      <BattleHealthBar label={battleCharacters[b.config.bossId].shortName} hp={authoritativeHud?b.bossHp:presentation.displayHp?.boss??b.bossHp} max={presentation.roundEnding?.bossMaxHp??b.bossMaxHp} side="boss"/>
       {suppressResult?null:storyEvent?<BattleStoryNotice event={storyEvent}/>:showResult?<div className={`battle-result ${terminal?`battle-result-${b.status}`:""}`} role="status"><strong>{label}</strong></div>:
         <span className="battle-difficulty">{mode.health?`${bossDifficultyLabel(b.config.bossDamagePerMistake)} · −${Math.min(b.config.playerMaxHp,Math.ceil(b.config.bossDamagePerMistake*(mode.enrage?enrageMultipliers[b.phase??'normal']:1)))} HP / mistake`:'TIME ATTACK'}{mode.enrage&&b.phase!=='normal'?` · ${b.phase?.toUpperCase()}`:''}</span>}
 
