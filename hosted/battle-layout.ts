@@ -9,6 +9,7 @@ export interface BossBattleLayoutConfig {
   hudHeightPercent:number; arenaHeightPercent:number; statusHeightPercent:number;
   heroScale:number; bossScale:number;
   characterScale?:number;
+  idleArrangement?:"stacked"|"side-by-side";
   heroVisibleScale?:number; referenceArenaHeightPercent?:number;
   referencePanelWidthPercent?:number;
   idleContactX?:{heroWeapon:number;heroTarget:number;bossWeapon:number;bossTarget:number};
@@ -80,7 +81,7 @@ export function arenaPlacement(width:number,height:number,heroAspect:number,boss
   const widthBasis=(config.referencePanelWidthPercent??config.panelWidthPercent)/config.panelWidthPercent;
   let unit=Math.min(referenceHeight*config.heroIdleZone.height/config.heroScale,heroZone.width*widthBasis/(heroAspect*config.heroScale),
     referenceHeight*config.bossIdleZone.height/config.bossScale,bossZone.width*widthBasis/(bossAspect*config.bossScale),
-    (referenceHeight-gap)/(config.heroScale+config.bossScale));
+    (referenceHeight-gap)/(config.idleArrangement==="side-by-side"?Math.max(config.heroScale*(config.heroVisibleScale??1),config.bossScale):config.heroScale+config.bossScale));
   const baseUnit=unit;
   if(config.characterScale!==undefined&&unit>0){
     const hero=config.heroScale*(config.heroVisibleScale??1),boss=config.bossScale;
