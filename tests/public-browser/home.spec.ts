@@ -461,7 +461,7 @@ for(const mode of ['Practice','Survival','Time Attack','Ultimate Boss'])test(`${
   const pitches=noteGroups(catalog.find(e=>e.number===2001)!,'both').flatMap(g=>g.pitches);
   const before=mode==='Practice'?0:Number(await panel.getAttribute('data-authoritative-boss-hp'));
   await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),[1,...pitches.slice(0,2)]);
-  await expect(page.locator('.theatre-heading')).toContainText('2 note combo');
+  await expect(page.locator(mode==='Practice'?'.theatre-heading':'.battle-metrics')).toContainText('2 note combo');
   if(mode!=='Practice'){
     await expect(panel).toHaveAttribute('data-authoritative-boss-hp',String(before-2));
     await expect(panel).toHaveAttribute('data-authoritative-player-hp',mode==='Time Attack'?'30':'20');
@@ -708,4 +708,68 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
  expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
  expect(await page.locator('.battle-dialog').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
  await expect(page.getByRole('button',{name:'Back to setup',exact:true})).toBeInViewport();
+});
+
+for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])for(const boss of ['crimson','grinwick'])test(`hybrid arena ${boss} ${viewport.width}x${viewport.height}`,async({page})=>{
+ await page.setViewportSize(viewport);await fixture(page,true);
+ await page.goto('/?music=2007');
+ await page.getByRole('button',{name:/Survival Finish/}).click();
+ if(boss==='grinwick')await page.getByRole('button',{name:/Grinwick Fast claws/}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await expect(page.locator('.sight-score .system').first()).toBeAttached();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3600);
+ const phase=process.env.HYBRID_CAPTURE??'after';
+ await page.screenshot({path:`.local/hybrid-layout/${phase}-${boss}-${viewport.width}.png`});
+ const dimensions=await page.locator('.theatre-stage').evaluate(el=>Object.fromEntries(['.battle-stage','.sight-score','.system'].map(selector=>[selector,el.querySelector(selector)!.getBoundingClientRect().toJSON()])));
+ console.log(JSON.stringify({phase,boss,viewport,dimensions}));
+ if(phase==='before')return;
+ const area=dimensions['.sight-score'],ink=dimensions['.system'];
+ expect(area.height).toBeGreaterThanOrEqual(viewport.height*.35);
+ expect(ink.top).toBeGreaterThanOrEqual(area.top+15);expect(ink.bottom).toBeLessThanOrEqual(area.bottom-15);
+ expect(ink.height).toBeGreaterThan(viewport.height*.22);
+ expect(await page.locator('.battle-dialog').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
+ await page.locator('.sight-score').evaluate(e=>(e as HTMLElement).dataset.hybridMount='retained');
+ const sample=catalog.find(e=>e.number===2007)!;
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(sample,'both')[0].pitches);
+ await expect(page.locator('.battle-metrics')).toContainText('2 note combo');
+ await page.waitForTimeout(120);await page.screenshot({path:`.local/hybrid-layout/attack-${boss}-${viewport.width}.png`});
+ const after=await page.locator('.sight-score').boundingBox();expect(after?.height).toBe(area.height);expect(after?.y).toBe(area.y);
+ await expect(page.locator('.sight-score')).toHaveAttribute('data-hybrid-mount','retained');
+ await page.getByRole('button',{name:'Back to setup',exact:true}).click();await page.getByRole('button',{name:'Resume Battle',exact:true}).click();
+ await expect(page.locator('.battle-intro')).toHaveCount(0);
+});
+
+for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])test(`hybrid Hanon grand staff fits ${viewport.width}`,async({page})=>{
+ await page.setViewportSize(viewport);await fixture(page,true);await page.goto('/?music=1001');
+ await page.getByRole('button',{name:/Survival Finish/}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await page.waitForTimeout(3600);
+ const score=page.locator('.sight-score');const area=(await score.boundingBox())!;
+ const ink=await score.locator('.system').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).visibility!=='hidden').map(n=>n.getBoundingClientRect().toJSON()));
+ expect(ink.length).toBeGreaterThan(0);for(const b of ink){expect(b.top).toBeGreaterThanOrEqual(area.y+15);expect(b.bottom).toBeLessThanOrEqual(area.y+area.height-15);expect(b.left).toBeGreaterThanOrEqual(area.x+15);expect(b.right).toBeLessThanOrEqual(area.x+area.width-15);}
+ await page.screenshot({path:`.local/hybrid-layout/hanon-${viewport.width}.png`});
+});
+
+for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])for(const result of ['victory','defeat','timeout'])test(`hybrid ${result} remains contained and holds ${viewport.width}`,async({page})=>{
+ await page.setViewportSize(viewport);await fixture(page,true);await page.clock.install();await page.goto('/?music=4001');
+ await page.getByRole('button',{name:result==='timeout'?/^Time Attack /:/^Survival /}).click();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await expect(page.getByRole('status',{name:'Battle start countdown'})).toHaveCount(0,{timeout:7000});
+ await page.locator('.sight-score').evaluate(e=>(e as HTMLElement).dataset.resultMount='retained');
+ if(result==='victory')await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===4001)!,'both').flatMap(g=>g.pitches));
+ else if(result==='defeat')for(let i=0;i<9;i++)await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes([p]),i+1);
+ else {await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===4001)!,'both')[0].pitches);await page.clock.fastForward(180000);}
+ const scene=page.locator('.theatre-stage > .battle-cinematic');await expect(scene).toHaveAttribute('data-result',result);
+ await expect(scene).toHaveAttribute('data-fallback','false');await page.clock.fastForward(20000);
+ await expect(scene).toHaveAttribute('data-phase','holding');
+ const outer=(await scene.boundingBox())!;
+ for(const selector of ['.cinematic-copy h2','.cinematic-stats','.cinematic-story-summary'])for(const node of await scene.locator(selector).all()){
+  const box=(await node.boundingBox())!;expect(box.x).toBeGreaterThanOrEqual(outer.x);expect(box.y).toBeGreaterThanOrEqual(outer.y);expect(box.x+box.width).toBeLessThanOrEqual(outer.x+outer.width+1);expect(box.y+box.height).toBeLessThanOrEqual(outer.y+outer.height+1);
+ }
+ await expect(page.locator('.sight-score')).toHaveAttribute('data-result-mount','retained');
+ await page.screenshot({path:`.local/hybrid-layout/${result}-${viewport.width}.png`});
+ await page.clock.fastForward(60000);await expect(scene).toHaveAttribute('data-phase','holding');
+ if(result!=='victory')await page.getByRole('button',{name:'End Battle',exact:true}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();await expect(scene).toHaveCount(0);
+ await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();
 });

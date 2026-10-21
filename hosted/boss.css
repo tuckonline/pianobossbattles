@@ -188,3 +188,19 @@
 .boss-selector{display:flex;gap:12px;flex-wrap:wrap;border:1px solid #cbd5e1;border-radius:8px;padding:12px}.boss-selector label{display:flex;align-items:center;gap:8px;padding:8px;border:2px solid transparent;border-radius:6px;cursor:pointer}.boss-selector label.selected{border-color:#3c83c9;background:#e8f2fa}.boss-selector img{width:64px;height:72px;object-fit:contain;background:#102030;border-radius:5px}.boss-selector strong,.boss-selector small{display:block}.boss-selector:disabled{opacity:.7}
 
 .battle-stage[data-boss="grinwick"] .battle-light-crimson{background:radial-gradient(ellipse,#90dc4529,transparent 65%)}.battle-stage[data-boss="grinwick"] .battle-impact-boss{color:#b5f36b}.battle-stage[data-boss="grinwick"] .battle-impact[data-signature-impact="crush"] .battle-signature-contact{fill:#8dd93088;stroke:#e8ffb0}
+
+/* Opt-in public music-first HUD. Existing OBS/Shorts HUDs keep their layout. */
+.boss-battle-panel[data-hud-variant="music"]{position:relative;inset:auto;width:100%;border-right:0}
+.battle-music-hud{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.8fr) minmax(0,1fr);gap:24px;align-items:center;padding:6px 16px;box-sizing:border-box;background:linear-gradient(110deg,#111e31,#0b1423);z-index:10;border-bottom:1px solid #253a50}
+.battle-music-hud>div{min-width:0}
+.battle-metrics{display:flex;justify-content:center;gap:18px;font-size:11px;color:#aac9de;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.battle-metrics strong{font-size:18px;color:#effaff}
+.battle-music-hud .battle-health>div:first-child{font-size:11px;margin-bottom:4px}
+.battle-music-hud .battle-health strong{font-size:16px}
+.battle-music-hud .battle-hp-track{height:6px}
+.battle-music-clock{position:absolute;top:62px;left:50%;transform:translateX(-50%);padding:4px 12px;background:#081525d9;border:1px solid #25495b;border-radius:5px}
+.battle-music-hud .battle-music-clock .battle-clock-label{flex-direction:row;font-size:10px}
+.battle-music-hud .battle-music-clock .battle-countdown strong{font-size:32px}
+.battle-music-notice{position:absolute;bottom:8px;left:15%;right:15%;text-align:center;z-index:11;pointer-events:none}
+.battle-music-shields{position:absolute;top:64px;left:16px}
+@media(max-width:650px){.battle-music-hud{gap:10px;padding:5px 8px;grid-template-columns:minmax(0,1fr) minmax(115px,.85fr) minmax(0,1fr)}.battle-metrics{gap:7px;font-size:8px}.battle-metrics strong{font-size:14px}.battle-music-hud .battle-health>div:first-child{font-size:8px}.battle-music-hud .battle-health strong{font-size:12px}}

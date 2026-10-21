@@ -15,6 +15,7 @@ import { levelInfo } from "../hosted/game-core";
 import { bossProfiles, type BossId } from "../hosted/boss-registry";
 import { type BossBattleConfig } from "../hosted/boss-config";
 import { BattleSettings, modeTimePreview } from "./battle-settings";
+import { BattleCinematicSurface } from "../hosted/cinematic-controls";
 import { BossBattlePanel } from "../hosted/boss-ui";
 import { shortsBattleLayout } from "../hosted/shorts-layout";
 import { battleView } from "../hosted/boss-battle";
@@ -71,6 +72,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const game=useGame();
   const [draft]=useState(()=>readDraft(user.id,catalog));
   const [initialLibrary]=useState(catalog);
+  const [cinematicSurface,setCinematicSurface]=useState<HTMLDivElement|null>(null);
   const [connected,setConnected]=useState(false),[theatre,setTheatre]=useState(false);
   const [search,setSearch]=useState(""),[category,setCategory]=useState("");
   const [queueDraft,setQueue]=useState<ChainEntry[]>(draft.queue),[hand,setHand]=useState<Hand>(draft.hand),[notice,setNotice]=useState("");
@@ -169,13 +171,13 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
       </div>
       <dialog ref={dialog} className="battle-dialog" aria-label="Battle arena" onCancel={e=>{e.preventDefault();leaveArena();}}>
         <section className="theatre" aria-label="Theatre Mode">
-          <div className="theatre-heading"><div><span className="eyebrow">PIANO BOSS BATTLES</span><h2>{title(c.exercise)}</h2><small>Loop {c.pass}/{c.total} · {game.live.combo} note combo · {game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0}% accuracy</small></div>
+          <div className="theatre-heading"><div><span className="eyebrow">PIANO BOSS BATTLES</span><h2>{title(c.exercise)}</h2><small>Loop {c.pass}/{c.total}{!config.enabled&&<> · {game.live.combo} note combo · {game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0}% accuracy</>}</small></div>
             <div className="theatre-controls">{!c.running?<button className="primary" disabled={!!missing||c.saving||authorizing} onClick={start}>Start Battle</button>:<><button onClick={c.pause}>{c.paused?'Resume':'Pause'}</button><button onClick={()=>{c.stop();setTheatre(false);}}>End Battle</button></>}<button onClick={leaveArena}>Back to setup</button></div>
           </div>
-          <div className="theatre-stage" data-battle={config.enabled}>
-            {config.enabled&&<BossBattlePanel battle={battleView(game.battle)} combo={game.live.combo} audioOutput="practice" suppressResult={cinematic} suspendAnimation={cinematic||!theatre} layoutOverride={arenaLayout}/>}
+          <BattleCinematicSurface.Provider value={cinematicSurface}><div ref={setCinematicSurface} className="theatre-stage" data-battle={config.enabled}>
+            {config.enabled&&<BossBattlePanel battle={battleView(game.battle)} combo={game.live.combo} hudVariant="music" accuracy={game.live.correct+game.live.incorrect?Math.round(100*game.live.correct/(game.live.correct+game.live.incorrect)):0} audioOutput="practice" suppressResult={cinematic} suspendAnimation={cinematic||!theatre} layoutOverride={arenaLayout}/>}
             {c.score}
-          </div>
+          </div></BattleCinematicSurface.Provider>
           {c.message&&<p className="arena-message" role="status">{c.message}</p>}
         </section>
       </dialog>

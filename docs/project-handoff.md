@@ -6,6 +6,46 @@ Older reports preserve historical evidence; their pending-deployment statements
 and test counts must not be treated as current facts. Recheck Git and service state
 when work resumes. No functionality or deployment was changed for this handoff.
 
+## Local hybrid battle layout review — 2026-10-21
+
+The owner approved local implementation of the music-first active battle overlay,
+with production deployment explicitly withheld. The removed preview must not be
+recreated. The current working-tree changes are on `feature/creator-studio-v1`.
+
+The public dialog now uses a 48px title/control strip and a 52px, opt-in music HUD:
+player HP left, combo/accuracy and Combo Power center, boss HP right. Timed modes
+keep their existing clock prominent over the action stage; shields and story
+notices remain visible. Other `BossBattlePanel` callers retain their default HUD.
+Reclaimed chrome gives notation 52px more height without changing the existing
+fighter canvas height, layout configuration, sprite scale, grounding, or weapon
+contact solver. The score uses its existing full-ink contain fit, not stretching.
+Measured Schmitt 7 grand-staff height increases from 175 to 227px at 1366×768 and
+220 to 272px at 1440×900. The score allocation is responsive, not a rigid 45%.
+
+`BattleCinematicSurface` is an optional React context: only this dialog supplies
+its content surface as a portal target. Results cover the arena and notation,
+while the same score and cinematic controller stay mounted. Original assets,
+timelines, audio cues and holding/dismissal logic are unchanged. Dialog-scoped CSS
+restores original cinematic title sizes against the generic public h2 rule and
+keeps result text within the overlay. OBS/Shorts do not supply this context and
+retain their existing composition and routing.
+
+Runtime files: `public-app/player-home.tsx`, `public-app/player-home.css`,
+`hosted/boss-ui.tsx`, `hosted/boss.css`, `hosted/cinematic-controls.tsx`.
+Browser regressions: `tests/public-browser/home.spec.ts`. Local before/after,
+attack, Hanon, and terminal-scene captures are in ignored `.local/hybrid-layout/`.
+These are fixture browser tests, not a new physical-MIDI/OBS recording validation.
+No auth, SQL, database, MIDI evaluator, gameplay, recording-layout or asset edits
+are part of this change. Review locally at http://localhost:5173/ before requesting
+any production release. Verification: all 486 unit/database/network tests (68
+suites), all 52 public browser cases, TypeScript, changed-file ESLint, production
+build, and diff whitespace checks passed. Browser coverage includes all three
+requested desktop sizes, both bosses, Schmitt/Hanon grand staffs, attacks, retained
+score identity, pause/resume without countdown replay, and all three result types
+held and contained at each viewport. Existing build warnings about future Vite
+config loading and Verovio browser externalization remain unchanged. No deployment
+was performed.
+
 ## Hosting decision update — 2026-10-21
 
 The owner requested **public production only**. Cloudflare Pages project

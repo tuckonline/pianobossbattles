@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+// Only the public battle dialog supplies a surface; OBS and legacy practice retain their bounds.
+export const BattleCinematicSurface=createContext<HTMLElement|null>(null);
 import { gameClient, useGame } from './game-client';
 import type { GameSettings } from './game-core';
 import { defaultCinematicSettings, type CinematicSettings } from './cinematic-config';
@@ -21,10 +25,12 @@ export function CinematicControls({settings,onChange}:{settings:GameSettings;onC
 }
 
 export function PracticeCinematic({exerciseNumber,force=false}:{exerciseNumber:number;force?:boolean}) {
+  const surface=useContext(BattleCinematicSurface);
   const game=useGame(),s=game.player.settings.cinematics??defaultCinematicSettings;
   const frame=useBattleCinematic({battle:game.battle,exerciseId:exerciseNumber,bestCombo:game.live.attemptBest??game.live.best,
     settings:s,enabled:s.enabled&&(s.practice||force),dismissedId:gameClient.overlay().cinematicDismissedId},`practice:${game.player.userId}`,false);
-  return <><BattleCinematicOverlay playback={frame.playback} onAudioCue={practiceCinematicAudio}/>{frame.playback&&<button type="button" style={{position:'absolute',right:12,top:12,zIndex:31}} onClick={()=>gameClient.dismissCinematic(frame.playback!.id)}>Skip cinematic</button>}</>;
+  const overlay=<><BattleCinematicOverlay playback={frame.playback} onAudioCue={practiceCinematicAudio}/>{frame.playback&&<button type="button" style={{position:'absolute',right:12,top:12,zIndex:31}} onClick={()=>gameClient.dismissCinematic(frame.playback!.id)}>Skip cinematic</button>}</>;
+  return surface?createPortal(overlay,surface):overlay;
 }
 
 /** Explicit developer opt-in on the practice URL. Never mounted in OBS. */
