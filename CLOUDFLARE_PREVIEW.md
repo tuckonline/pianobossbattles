@@ -251,3 +251,17 @@ The owner must still confirm that the patched production dashboard opens and
 shows saved progress. Earlier production deployments b8e83290 and 89529576 are
 not verified rollback targets: the former lacked bindings and the latter has the
 catalog CPU issue. Preserve the preview and original application unchanged.
+
+Production verification after the fix: deployed commit `c941f68` as Pages
+`51fe80d9-83b4-4d66-9ad9-c962e6f832d3`. The www domain serves the matching built
+client hash; `/api/health` returns 200/configured, private unsigned endpoints
+return 401, and both OBS routes return 200. Three focused browser regressions
+passed against the deployed assets (two use mocked account/data responses; the
+unsigned/cross-origin test uses the real API). The owner refreshed their real
+signed-in production page and confirmed: "Dashboard opens and saved progress
+appears." This verifies real production authentication and progress retrieval,
+not a newly completed physical-MIDI battle on this release. Preview deployment
+and configuration were compared with the pre-cutover snapshot and are unchanged.
+Original hosted application, D1, SMTP and existing email DNS were not modified.
+The post-fix tail did not deliver events during the observation window, so no
+claim is made that production logs were exhaustively verified as error-free.
