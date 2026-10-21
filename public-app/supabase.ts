@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { configurePlatformSessionRecovery } from "../src/lib/platform-request";
 const env = import.meta.env;
 // Capture only callback metadata before the SDK consumes a successful auth code.
 // Never retain or log the code/token itself for diagnostics.
@@ -19,3 +20,13 @@ export async function syncServerSession(accessToken?: string) {
   });
   if (!response.ok) throw new Error("Could not establish your secure game session. Please sign in again.");
 }
+
+configurePlatformSessionRecovery(async () => {
+  const current = await supabase.auth.getSession();
+  if (current.error || !current.data.session) return false;
+  const owner = current.data.session.user.id;
+  const refreshed = await supabase.auth.refreshSession();
+  if (refreshed.error || !refreshed.data.session || refreshed.data.session.user.id !== owner) return false;
+  await syncServerSession(refreshed.data.session.access_token);
+  return true;
+});

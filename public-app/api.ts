@@ -23,7 +23,12 @@ async function verifiedUser(token:string) {
   const cached=verified.get(token);
   if(cached&&cached.until>Date.now())return cached.user;
   const {data,error}=await auth.auth.getUser(token);
-  if(error||!data.user?.email_confirmed_at)throw new DomainError("Your session expired. Verify your email and sign in.",401);
+  if(error) {
+    if(!error.status || error.status>=500 || error.status===429)
+      throw new DomainError("Account verification is temporarily unavailable. Your progress remains queued.",503);
+    throw new DomainError("Your session expired. Sign in again to save queued progress.",401);
+  }
+  if(!data.user?.email_confirmed_at)throw new DomainError("Confirm your email and sign in to save queued progress.",401);
   const claims=JSON.parse(Buffer.from(token.split(".")[1],"base64url").toString());
   const until=Math.min(Date.now()+60000,Number(claims.exp)*1000);
   if(!Number.isFinite(until)||until<=Date.now())throw new DomainError("Your session expired. Sign in again.",401);

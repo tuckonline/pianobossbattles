@@ -773,3 +773,30 @@ for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:19
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();await expect(scene).toHaveCount(0);
  await expect(page.getByRole('status',{name:'Battle start countdown'})).toBeVisible();
 });
+
+for(const temporaryFailure of [false,true])test(`expired save session recovers without losing queued MIDI (${temporaryFailure?'offline first':'immediate'})`,async({page})=>{
+ const {player}=await fixture(page,true);let rejected=false,renewed=false,refreshes=0,saved=0,failedBody:unknown,acceptedBody:unknown,offline=temporaryFailure;
+ await page.route('https://huxmltjtovpxxxupuxdg.supabase.co/auth/v1/token**',async route=>{
+  refreshes++;if(offline)return route.fulfill({status:503,json:{message:'Temporary provider outage'}});
+  return route.fulfill({json:session});
+ });
+ await page.route('**/api/auth/session',async route=>{if(rejected)renewed=true;return route.fulfill({json:{signedIn:true}});});
+ await page.route('**/api/platform',async route=>{
+  const c=route.request().postDataJSON();if(c.action!=='gameSync')return route.fallback();
+  if(!renewed){rejected=true;failedBody=c;return route.fulfill({status:401,json:{error:'Your session expired. Sign in again to save queued progress.'}});}
+  saved++;acceptedBody=c;return route.fulfill({json:player()});
+ });
+ await page.goto('/');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ const attempt=await page.locator('[data-battle-attempt]').getAttribute('data-battle-attempt');
+ await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),noteGroups(catalog.find(e=>e.number===2001)!,'both')[0].pitches);
+ if(temporaryFailure){
+  await expect.poll(()=>refreshes).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>Object.entries(localStorage).filter(([key])=>key.startsWith('pianopath-game-outbox:')).some(([,raw])=>JSON.parse(raw).pending.length>0))).toBe(true);
+  offline=false;
+ }
+ await expect.poll(()=>saved,{timeout:15000}).toBeGreaterThan(0);
+ expect(acceptedBody).toEqual(failedBody);expect(refreshes).toBeGreaterThan(0);
+ if(!temporaryFailure)expect(refreshes).toBe(1);
+ await expect(page.getByText(/Progress save pending:/)).toHaveCount(0);await expect(page.locator('.player-xp [role="status"]')).toHaveText('All progress saved');
+ await expect(page.locator('[data-battle-attempt]')).toHaveAttribute('data-battle-attempt',attempt!);await expect(page.locator('.battle-metrics')).toContainText('2 note combo');await expect(page.locator('.battle-intro')).toHaveCount(0);
+});

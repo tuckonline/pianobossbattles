@@ -1,12 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { platformRequest } from "../../lib/platform-request";
 export async function command<T = unknown>(data: unknown): Promise<T> {
-  const response = await fetch("/api/platform", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  const response = await platformRequest(data);
   const result = await response.json();
   if (!response.ok) throw new Error(result.error ?? "Request failed");
   return result;
