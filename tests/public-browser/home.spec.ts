@@ -577,6 +577,7 @@ const audioStarts=(page:Page)=>page.evaluate(()=>(window as unknown as {battleAu
 
 test('Battle Audio presets, test sound, volume and mute persist without affecting MIDI',async({page})=>{
  await fixture(page,true);await audioProbe(page);await page.goto('/');
+ await page.locator('.audio-disclosure > summary').click();
  const audio=page.getByRole('region',{name:'Battle Audio',exact:true});
  await expect(audio.getByRole('button',{name:/Focus Mode/})).toHaveAttribute('aria-pressed','true');
  await expect(audio.getByRole('slider')).toHaveCount(0);
@@ -589,12 +590,13 @@ test('Battle Audio presets, test sound, volume and mute persist without affectin
  await expect(audio.getByRole('slider',{name:/^Effects volume/})).toHaveValue('40');
  await audio.getByRole('slider',{name:/^Effects volume/}).fill('65');
  await expect(page.getByRole('status').filter({hasText:'All progress saved'})).toBeVisible();
- await page.reload();await expect(audio.getByRole('button',{name:/Cinematic Mode/})).toHaveAttribute('aria-pressed','true');
+ await page.reload();await page.locator('.audio-disclosure > summary').click();await expect(audio.getByRole('button',{name:/Cinematic Mode/})).toHaveAttribute('aria-pressed','true');
  await expect(audio.getByRole('slider',{name:/^Effects volume/})).toHaveValue('65');
  await audio.getByRole('slider',{name:/^Effects volume/}).fill('0');
  await expect(audio.getByRole('button',{name:'Test Sound',exact:true})).toBeDisabled();
  await audio.getByRole('button',{name:/Focus Mode/}).click();
  await expect(audio.getByRole('slider')).toHaveCount(0);
+ await page.locator('.audio-disclosure > summary').click();
  await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
  await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
  await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
@@ -604,6 +606,7 @@ test('Battle Audio presets, test sound, volume and mute persist without affectin
  await page.waitForTimeout(500);expect(await audioStarts(page)).toBe(0);
  await page.getByRole('button',{name:'End Battle',exact:true}).click();
  await page.getByRole('button',{name:'Return to preview',exact:true}).click();
+ await page.locator('.audio-disclosure > summary').click();
  await audio.screenshot({path:'test-results/battle-audio-focus.png'});
  await page.setViewportSize({width:390,height:844});await audio.getByRole('button',{name:/Immersive Mode/}).click();
  await audio.screenshot({path:'test-results/battle-audio-mobile.png'});
@@ -613,6 +616,7 @@ test('Battle Audio presets, test sound, volume and mute persist without affectin
 test('player presets leave the designated OBS source audible and a second source silent',async({page,context})=>{
  test.setTimeout(90000);
  const state=await fixture(page,true);await audioProbe(page);await page.goto('/');
+ await page.locator('.audio-disclosure > summary').click();
  const audio=page.getByRole('region',{name:'Battle Audio',exact:true});
  await audio.getByText('Advanced audio settings',{exact:true}).click();
  await audio.getByLabel('Combat audio output').selectOption('obs');
@@ -622,6 +626,7 @@ test('player presets leave the designated OBS source audible and a second source
   await audio.getByRole('button',{name:new RegExp(name)}).click();
   expect(state.player().settings.bossBattle).toMatchObject({audioOutput:'obs',soundEnabled:true,volume:.13});
  }
+ await page.locator('.audio-disclosure > summary').click();
  const obs=await context.newPage();await fixture(obs,true);await audioProbe(obs);
  const overlay=(p:Page)=>p.route('**/api/obs**',r=>{
   const url=new URL(r.request().url()),snapshot={snapshot:state.snapshot(),gamePlayer:state.player(),updatedAt:Date.now(),attempts:0,best:null};
@@ -705,4 +710,19 @@ test('lightweight catalog opens immediately and preloads the complete setlist be
  await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(before-pitches.length-next.length);
  expect(loads.sort()).toEqual([2007,2008]);
  await page.screenshot({path:'test-results/preloaded-chain-transition.png',fullPage:true});
+});
+
+for(const viewport of [{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080}])test(`compact setup and preview fit ${viewport.width}x${viewport.height}`,async({page})=>{
+ await page.setViewportSize(viewport);await fixture(page,true);
+ await page.addInitScript(id=>localStorage.setItem(`pbb:setup:v2:${id}`,JSON.stringify({hand:'both',entries:[{number:2001,loops:2},{number:2002,loops:2},{number:2003,loops:2}]})),id);
+ await page.goto('/');await page.getByRole('button',{name:/Ultimate Boss/}).click();
+ await page.screenshot({path:`test-results/compact-setup-${viewport.width}.png`});
+ expect(await page.locator('.challenge-panel').evaluate(e=>Array.from(e.querySelectorAll('.boss-choice')).every(card=>card.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom))).toBe(true);
+ expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await expect(page.locator('.sight-score svg').first()).toBeVisible();
+ await page.screenshot({path:`test-results/compact-preview-${viewport.width}.png`});
+ expect(await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}))).toEqual({height:viewport.height,width:viewport.width});
+ expect(await page.locator('.battle-summary').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeInViewport();
 });

@@ -1,7 +1,7 @@
-// Mechanical derivatives of the owner's approved artwork; no redrawing.
+// Mechanical derivatives of the transparent reference-style revision.
 import sharp from 'sharp';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
-const source='design/branding/approved-emblem.png';
+const source='design/branding/emblem-transparent-v2.png';
 const output='hosted/public';
 await mkdir(`${output}/branding`,{recursive:true});
 for(const size of [128,256])await sharp(source).resize(size,size).png({compressionLevel:9,palette:true,colours:256,effort:10}).toFile(`${output}/branding/emblem-${size}.png`);

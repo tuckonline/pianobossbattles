@@ -31,3 +31,12 @@ it('preserves the exact approved source and emits correctly sized icons and shar
   expect(await sharp(ico.subarray(offset,offset+length)).metadata()).toMatchObject({format:'png',width:[16,32,48][i],height:[16,32,48][i]});
  }
 });
+
+it('emblem and favicon have transparent backgrounds and visible artwork',async()=>{
+ for(const name of ['branding/emblem-128.png','branding/favicon-32.png']){
+  const {data,info}=await sharp(`hosted/public/${name}`).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  const alpha=Array.from(data).filter((_,i)=>i%info.channels===3);
+  expect(alpha.filter(a=>a===0).length).toBeGreaterThan(alpha.length*.1);
+  expect(alpha.filter(a=>a>200).length).toBeGreaterThan(alpha.length*.1);
+ }
+});

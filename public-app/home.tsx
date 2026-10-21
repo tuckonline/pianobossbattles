@@ -8,6 +8,7 @@ import { PlayerHome } from "./player-home";
 import { BrandEmblem } from "./brand-emblem";
 import "./public.css";
 import "./player-home.css";
+import "./compact-dashboard.css";
 const hero="/battle/cinematics/hero-finish.png";
 export function PublicApp() {
   const account=useAccount();

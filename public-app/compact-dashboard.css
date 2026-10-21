@@ -1,0 +1,104 @@
+/* Optional settings stay one click away instead of adding a full panel below
+   every setup screen. Narrow/short viewports retain ordinary page scrolling. */
+.authenticated-app .setup-extras{display:flex;align-items:start;gap:12px;margin-top:10px}
+.authenticated-app .setup-extras .progress-disclosures{flex:1;margin:0}
+.authenticated-app .audio-disclosure{position:relative;margin-left:auto;border:1px solid #20536f;border-radius:8px;background:#081e30;min-width:215px}
+.authenticated-app .audio-disclosure>summary{padding:12px 14px;cursor:pointer;font-size:13px;font-weight:600}
+.authenticated-app .audio-disclosure>summary small{display:inline;margin-left:10px;font-size:11px;color:#9fc5df}
+.authenticated-app .audio-disclosure>.battle-audio-settings{position:absolute;right:0;bottom:calc(100% + 8px);width:min(580px,calc(100vw - 32px));max-height:75svh;overflow:auto;margin:0;background:#081c30;z-index:40;box-shadow:0 12px 35px #0009}
+@media(max-width:750px){
+ .authenticated-app .setup-extras{flex-direction:column}
+ .authenticated-app .setup-extras .progress-disclosures,.authenticated-app .audio-disclosure{width:100%}
+ .authenticated-app .audio-disclosure>.battle-audio-settings{position:static;width:auto;max-height:none;box-shadow:none}
+}
+@media(min-width:1100px) and (min-height:768px){
+ .public-app.authenticated-app main:has(.v2-builder){padding:0 24px 10px}
+ .authenticated-app .v2-builder{--setup-height:calc(100svh - 264px)}
+ .authenticated-app .v2-builder .player-header{min-height:68px;padding:8px 24px;margin:0 -24px;gap:16px}
+ .authenticated-app .v2-builder .player-brand{font-size:26px;gap:12px}
+ .authenticated-app .v2-builder .player-strip{gap:14px}
+ .authenticated-app .v2-builder .player-avatar{width:40px;height:40px}
+ .authenticated-app .v2-builder .player-brand small{font-size:9px}
+ .authenticated-app .v2-builder .builder-steps{padding:8px 0}
+ .authenticated-app .v2-builder .step-orb{width:34px;height:34px;font-size:18px}
+ .authenticated-app .v2-builder .builder-steps small{font-size:11px}
+ .authenticated-app .v2-builder .midi-ribbon{padding:5px 12px;margin-bottom:10px;min-height:44px}
+ .authenticated-app .v2-builder .midi-ribbon button{padding:7px 12px}
+ .authenticated-app .v2-builder .setup-columns{gap:14px;height:var(--setup-height);min-height:0}
+ .authenticated-app .v2-builder .challenge-panel,.authenticated-app .v2-builder .setlist-panel{padding:14px;min-height:0}
+ .authenticated-app .v2-builder .panel-title{gap:12px;margin-bottom:10px}
+ .authenticated-app .v2-builder .panel-title>.ui-icon{width:36px;height:36px}
+ .authenticated-app .v2-builder .panel-title h1{font-size:32px}
+ .authenticated-app .v2-builder .panel-title p{font-size:12px}
+ .authenticated-app .v2-builder .challenge-panel legend{margin-bottom:8px;min-height:30px;font-size:13px;padding-left:38px}
+ .authenticated-app .v2-builder .section-number{width:27px;height:27px;font-size:14px}
+ .authenticated-app .v2-builder .mode-grid{gap:8px;margin-bottom:12px}
+ .authenticated-app .v2-builder .mode-grid button{min-height:98px;padding:8px}
+ .authenticated-app .v2-builder .mode-grid .ui-icon{width:24px;height:24px;margin-bottom:5px}
+ .authenticated-app .v2-builder .mode-grid b{font-size:13px}
+ .authenticated-app .v2-builder .mode-grid small{font-size:11px;line-height:1.3;margin-top:4px}
+ .authenticated-app .v2-builder .settings-row{gap:10px}
+ .authenticated-app .v2-builder .section-label{padding-left:38px;min-width:140px;font-size:12px}
+ .authenticated-app .v2-builder .compact-fields{gap:8px}
+ .authenticated-app .v2-builder input,.authenticated-app .v2-builder select{padding:7px 9px;font-size:12px}
+ .authenticated-app .v2-builder .tempo-help,.authenticated-app .v2-builder .tempo-progression{margin:4px 0 8px}
+ .authenticated-app .v2-builder .boss-label{margin-bottom:8px}
+ .authenticated-app .v2-builder .boss-choice{height:clamp(110px,calc(100svh - 650px),260px)}
+ .authenticated-app .v2-builder .boss-choice>div{padding:18px 12px 10px}
+ .authenticated-app .v2-builder .boss-choice b{font-size:17px}
+ .authenticated-app .v2-builder .boss-choice small{font-size:11px}
+ .authenticated-app .v2-builder .setlist-panel>fieldset{display:flex;flex-direction:column;min-height:0}
+ .authenticated-app .v2-builder .setlist-title{gap:10px;margin-bottom:8px;flex-wrap:nowrap}
+ .authenticated-app .v2-builder .setlist-title h2{font-size:19px}
+ .authenticated-app .v2-builder .setlist-title small{font-size:11px}
+ .authenticated-app .v2-builder .setlist-title label{width:145px;max-width:38%;font-size:11px}
+ .authenticated-app .v2-builder .music-list{height:auto;flex:1;min-height:80px}
+ .authenticated-app .v2-builder .music-list>div{min-height:46px;padding:6px 10px}
+ .authenticated-app .v2-builder .queue-heading{margin-top:8px;padding-top:4px}
+ .authenticated-app .v2-builder .queue-heading h3{font-size:13px;margin:5px 0}
+ .authenticated-app .v2-builder .battle-queue{margin:4px 0 6px;max-height:144px;flex-shrink:0}
+ .authenticated-app .v2-builder .battle-queue li{padding:5px;margin-bottom:4px}
+ .authenticated-app .v2-builder .battle-queue input{padding:3px;width:46px}
+ .authenticated-app .v2-builder .continue-button{margin-top:8px;padding:10px}
+ .authenticated-app .v2-builder .preview-columns{height:var(--setup-height);gap:14px;align-items:stretch;grid-template-columns:minmax(0,3fr) minmax(300px,1fr)}
+ .authenticated-app .v2-builder .battle-preview .theatre-stage{height:calc(var(--setup-height) - 2px);grid-template-rows:60% 40%;padding:0 12px 12px}
+ .authenticated-app .v2-builder .battle-preview .theatre-stage>.boss-battle-panel{margin:0 -12px}
+ .authenticated-app .v2-builder .battle-preview .theatre-heading{padding:12px 16px}
+ .authenticated-app .v2-builder .battle-preview h2{font-size:26px;margin:5px 0 7px}
+ .authenticated-app .v2-builder .preview-meta{font-size:11px;gap:8px}
+ .authenticated-app .v2-builder .battle-preview .battle-stage{top:78px;height:calc(100% - 78px)}
+ .authenticated-app .v2-builder .preview-versus{top:36%;font-size:42px}
+ .authenticated-app .v2-builder .score-caption{top:calc(60% - 22px);left:20px;right:20px;font-size:8px}
+ .authenticated-app .v2-builder .battle-summary{min-height:0;padding:12px;overflow:auto}
+ .authenticated-app .v2-builder .summary-heading button{padding:6px 8px;font-size:11px}
+ .authenticated-app .v2-builder .battle-summary dl{margin:8px 0;padding:0 9px}
+ .authenticated-app .v2-builder .battle-summary dl>div{min-height:30px;padding:6px 0}
+ .authenticated-app .v2-builder .battle-summary dd{font-size:12px}
+ .authenticated-app .v2-builder .battle-summary dd small{display:none}
+ .authenticated-app .v2-builder .battle-summary dt img{width:22px;height:24px}
+ .authenticated-app .v2-builder .battle-summary dt .ui-icon{width:19px;height:19px}
+ .authenticated-app .v2-builder .notation-appearance{margin:9px 0}
+ .authenticated-app .v2-builder .notation-appearance legend{margin-bottom:5px;font-size:12px}
+ .authenticated-app .v2-builder .notation-appearance button{padding:5px;font-size:11px}
+ .authenticated-app .v2-builder .notation-appearance button span{width:20px;height:20px;font-size:17px}
+ .authenticated-app .v2-builder .notation-appearance>small{font-size:10px;margin-top:4px}
+ .authenticated-app .v2-builder .start-button{padding:8px}
+ .authenticated-app .v2-builder .readiness{padding:7px;margin-top:7px;font-size:10px;line-height:1.35}
+ .authenticated-app .v2-builder .history{padding:11px 14px}
+ .authenticated-app .v2-builder .history summary{font-size:12px;gap:9px}
+}
+
+@media(min-width:1100px) and (min-height:768px) and (max-height:820px){
+ .authenticated-app .v2-builder .battle-summary dl>div{min-height:23px;padding:3px 0}
+ .authenticated-app .v2-builder .battle-summary dt img{height:18px}
+ .authenticated-app .v2-builder .battle-summary .sequence-review{margin:4px 0;font-size:11px}
+ .authenticated-app .v2-builder .battle-summary .readiness{margin-top:6px;padding:5px}
+ .authenticated-app .v2-builder .battle-summary .start-button{padding:5px}
+ .authenticated-app .v2-builder .battle-summary .start-button>.ui-icon:first-child{height:22px;width:22px}
+}
+@media(min-width:1100px) and (min-height:768px) and (max-height:820px){
+ .authenticated-app .v2-builder .battle-summary dl>div{min-height:20px;padding:2px 0;line-height:1.3}
+ .authenticated-app .v2-builder .battle-summary dt .ui-icon{width:16px;height:16px}
+ .authenticated-app .v2-builder .battle-summary .start-button{min-height:34px;height:34px;font-size:14px}
+ .authenticated-app .v2-builder .battle-summary .notation-appearance button{min-height:26px;height:26px;padding:3px}
+}

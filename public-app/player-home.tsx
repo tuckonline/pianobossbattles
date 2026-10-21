@@ -193,11 +193,13 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
           <p className="readiness" role="status">{c.running?"Your battle is paused here. Return when you’re ready.":missing||"Everything looks good. Start Battle when you’re ready."}</p>
         </aside>
       </div>
-      <div className="progress-disclosures" hidden={theatre||!preview}>
+      <div className="setup-extras" hidden={theatre}>
+      <div className="progress-disclosures" hidden={!preview}>
         <details className="setup-section history"><summary><Icon name="bars"/>Recent Battles</summary>{profileError&&<p role="alert">{profileError}</p>}{!history.length?<p>Your completed battles will appear here.</p>:<ul>{history.map(h=><li key={h.attemptId}><strong>{h.result.toUpperCase()}</strong><span>{h.accuracy.toFixed(1)}% accuracy · {h.bestCombo} best combo · {h.completed}/{h.total} pieces</span></li>)}</ul>}</details>
         <details className="setup-section history"><summary><Icon name="cup"/>Personal Bests</summary><p>{game.player.unlocks.length} achievements unlocked · Best note combo: {game.player.best}</p>{profileError&&<p role="alert">{profileError}</p>}{bests.length?<ul>{bests.map(b=><li key={b.exerciseNumber}><span>{catalog.find(e=>e.number===b.exerciseNumber)?.title??`Exercise ${b.exerciseNumber}`}</span><strong>{Number(b.accuracy).toFixed(1)}%</strong></li>)}</ul>:<p>Finish a piece to set your first personal best.</p>}</details>
       </div>
-      <BattleAudioSettings settings={settings} hidden={theatre}/>
+      <details className="audio-disclosure"><summary>Battle Audio <small>{settings.playerAudio.mode==='focus'?'Focus Mode':settings.playerAudio.mode==='immersive'?'Immersive Mode':'Cinematic Mode'}</small></summary><BattleAudioSettings settings={settings}/></details>
+      </div>
     </div>;
   };
   return <SightReading library={scoreLibrary} attempts={[]} practice hideHeading experience={{entries:queue,hand,canStart:scoresReady&&connected&&queue.length>0&&!unavailable&&!libraryError&&game.ready&&!game.recoveryError,render}}/>;
