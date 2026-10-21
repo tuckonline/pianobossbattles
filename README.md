@@ -1,8 +1,8 @@
 # Piano Boss Battles — independent public application
 
 **Start here:** [Current project handoff](docs/project-handoff.md) and
-[agent instructions](AGENTS.md). The handoff distinguishes live production from
-the newer Creator Studio preview and supersedes historical operational statements.
+[agent instructions](AGENTS.md). The handoff records live production, retained
+Creator Studio development, retired preview hosting, and supersedes historical notes.
 
 React/Vite frontend, Supabase Auth, Supabase PostgreSQL, and a shared API running
 locally in Node and on Cloudflare Workers in the deployed application.
@@ -64,11 +64,12 @@ live checks in the setup guide before release.
 ## Deployment status
 
 Production is live at https://www.pianobossbattles.com in Cloudflare Pages project
-`pianobossbattles`. Current development is on `feature/creator-studio-v1`, deployed
-only to its alias in the separate `pianobossbattles-preview` Pages project. These
-projects share the independent public Supabase database/Hyperdrive connection;
-preview storage is **not disposable**. The original ChatGPT/D1 app is separate.
+`pianobossbattles`. The owner requested production-only hosting; the separate
+`pianobossbattles-preview` project and its aliases have been deleted. Creator Studio
+source remains on `feature/creator-studio-v1` and has not been promoted to production.
+Production's Supabase database and Hyperdrive resource remain intact. The original
+ChatGPT/D1 app is separate. Test locally before an authorized production release.
 
-Git push does not deploy either project. Read the target/configuration, approval
+Git push does not deploy production. Read the target/configuration, approval
 boundaries, release commands, and incident status in the [handoff](docs/project-handoff.md)
 before publishing. Do not use legacy Sites deployment helpers for this public app.

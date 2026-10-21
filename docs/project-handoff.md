@@ -6,6 +6,20 @@ Older reports preserve historical evidence; their pending-deployment statements
 and test counts must not be treated as current facts. Recheck Git and service state
 when work resumes. No functionality or deployment was changed for this handoff.
 
+## Hosting decision update — 2026-10-21
+
+The owner requested **public production only**. Cloudflare Pages project
+`pianobossbattles-preview` was deleted, including its Creator and older public
+preview deployments/aliases. Production project `pianobossbattles`, its domain,
+and deployment `e4854b83-8382-40a7-a416-d6a88b49eb47` were verified unchanged.
+The shared Hyperdrive resource, Supabase DB, source branches and Creator code were
+not deleted. No new application release was made. Local testing remains available.
+Do not recreate a preview project or run historical preview deployment commands
+without a new request. Creator branch changes are still not live in production.
+All preview availability and deployment instructions below are historical where
+they conflict with this update. `build:preview` only packages assets; it remains
+part of the production build process despite its name.
+
 ## 1. Open the correct project
 
 - Repository: https://github.com/tuckonline/pianobossbattles
@@ -173,20 +187,20 @@ success here means Cloudflare accepted the artifact, not that every live feature
 | Target | Project / branch | Latest deployment at handoff |
 | --- | --- | --- |
 | Public production | Pages `pianobossbattles`, deployment branch `production` | `e4854b83-8382-40a7-a416-d6a88b49eb47`, source `f27932a` |
-| Creator preview | Pages `pianobossbattles-preview`, `feature/creator-studio-v1` | `4266857e-bb7d-45d9-ba93-dc654381ef02`, source `ab63a2f` |
-| Older public preview | Same preview project, `feature/end-user-website-v1` alias | Preserved; not the current Creator build |
+| Creator preview — removed | Deleted project `pianobossbattles-preview` | Historical: `4266857e-bb7d-45d9-ba93-dc654381ef02`, source `ab63a2f` |
+| Older public preview — removed | Deleted with the same project | No active preview alias |
 
 - Public: https://www.pianobossbattles.com/
-- Current preview: https://feature-creator-studio-v1.pianobossbattles-preview.pages.dev/
-- Older preview: https://feature-end-user-website-v1.pianobossbattles-preview.pages.dev/
+- Retired Creator URL: https://feature-creator-studio-v1.pianobossbattles-preview.pages.dev/
+- Retired older preview URL: https://feature-end-user-website-v1.pianobossbattles-preview.pages.dev/
 - GitHub integration: **none on either Pages project**. Git pushes do not deploy.
 - Preview project reserves `main` as production branch; do not deploy there accidentally.
 - Cloudflare account ID: `c5fd2cb61b7bd05dac120e8f23d303a6`.
 - Public Supabase project: `huxmltjtovpxxxupuxdg`,
   `https://huxmltjtovpxxxupuxdg.supabase.co`.
 - Hyperdrive: `pianobossbattles-preview`, ID `f4dddfd90fcf4d7c9ac1d748fd77eeef`.
-  Despite its name, **production and preview share this connection and public DB**.
-  Never treat preview data as disposable or change this binding casually.
+  Despite its name, this resource serves **production** and must remain in place.
+  The deleted preview used the same public DB; its deletion did not delete player data.
 - Original ChatGPT-hosted PianoPath/Learn Piano Fast and D1 remain separate.
 - Migrations `202610200001` through `202610200005` were applied with authorization.
   Initial players/catalog, music publication/visibility, then Creator tables.
@@ -270,7 +284,10 @@ server; `build:preview` additionally bundles the Worker and writes `_worker.js`,
 `_headers`, `_routes.json`. Only `/api/*` enters the Worker. No private music or
 DB secrets may enter static assets. `/api/health` checks configuration only, not DB.
 
-### Current Creator preview
+### Historical Creator preview — retired, do not run
+
+The project below no longer exists. Retained configuration/scripts are historical;
+do not run this workflow or the ignored Creator upload helper without a new request.
 
 Use the dedicated config `public-app/creator-preview/wrangler.jsonc`, which binds
 the exact Creator alias origin. The generic `npm run deploy:preview` rejects this
@@ -345,8 +362,9 @@ https://developers.cloudflare.com/hyperdrive/platform/pricing/
 
 `ab63a2f` adds exponential failure backoff (3s, 6s, 12s, 24s, 48s, capped 60s)
 for overlay cloud requests, publisher handshake and automatic catalog refresh.
-Successful live timing is unchanged. The fix is deployed **only to Creator preview**
-and cannot lift the quota block. Close unused OBS sources and avoid load probes.
+Successful live timing is unchanged. The fix was deployed only to the now-deleted
+Creator preview and remains in source; it is **not live in production** and cannot
+lift the quota block. Close unused OBS sources and avoid load probes.
 
 Next engineering task: audit/reduce **successful** background SQL traffic, not just
 failure retries. Catalog checks every 2s, Creator cloud reads roughly every 500ms,
@@ -395,12 +413,13 @@ Suggested first message:
 
 > Continue Piano Boss Battles in this repository. Read AGENTS.md and
 > docs/project-handoff.md first, inspect Git status and branch, and summarize the
-> current production/Creator-preview state and Hyperdrive incident before editing.
+> current production state, retired preview hosting and Hyperdrive incident before editing.
 > Preserve the original ChatGPT/D1 app and all existing gameplay. Work on
 > feature/creator-studio-v1. Do not deploy or change infrastructure until I request
 > the specific release. My next task is: [describe task].
 
-When a release is wanted, specify **Creator preview** or **public production**.
+When a release is wanted, explicitly authorize **public production** after local testing.
+Preview hosting has been removed; do not recreate it without a new request.
 The new agent can use the runbook and existing CLI authorization, or request secure
 interactive login. Past production approvals are not standing permission for all
 future changes. If infrastructure/network approval blocks execution, report the

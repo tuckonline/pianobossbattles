@@ -70,9 +70,12 @@ verification limits, and release procedures. Update it when decisions change.
 - Hyperdrive's daily quota was exhausted at handoff. Read incident notes before
   probing; avoid rapid live polls/load tests. Billing upgrades require approval.
   Failure retries now back off, but successful polling still needs optimization.
-- Generic preview/production scripts only accept `feature/end-user-website-v1`.
-  Creator preview uses its explicit config; follow the handoff. Do not silently
-  bypass a target/branch/security guard.
+- The owner requested production-only hosting. The preview Pages project was
+  deleted; do not recreate it or run retained preview deployment helpers/configs.
+  `build:preview` only packages assets and is still used for production builds.
+  The production helper accepts `feature/end-user-website-v1`; current Creator
+  branch changes are not automatically approved for production. Follow the handoff
+  and do not silently bypass a target/branch/security guard.
 - The generated Next.js block below applies to retained Next.js code only. It is
   not an instruction to migrate the public Vite app.
 

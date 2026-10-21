@@ -1,5 +1,9 @@
 # Creator Studio V1
 
+> Hosting update, 2026-10-21: the owner requested production only. The preview
+> Pages project was deleted. Creator source is preserved but not promoted to
+> production. Preview commands and activation notes below are historical.
+
 > Current status and deployment procedure: [docs/project-handoff.md](docs/project-handoff.md).
 > This file includes chronological implementation notes. Earlier pending-approval,
 > deployment and layout statements are historical where superseded in the handoff.

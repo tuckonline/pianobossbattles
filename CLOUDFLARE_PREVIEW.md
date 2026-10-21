@@ -1,5 +1,10 @@
 # Cloudflare preview
 
+> Retired, 2026-10-21: the owner requested production-only hosting. The separate
+> preview Pages project and all its deployments were deleted. Do not run the
+> historical preview commands below or recreate hosting without a new request.
+> Public production and shared database resources remain intact.
+
 > Current status and deployment procedure: [docs/project-handoff.md](docs/project-handoff.md).
 > This file includes chronological implementation notes. Earlier pending-approval
 > and deployment statements are historical where superseded in the handoff.
