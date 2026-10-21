@@ -248,6 +248,38 @@ test("queue, MIDI gate, Theatre, immediate note scoring, continuous loops, pause
     expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(0);
   }
 });
+test('battle summary waits for a newer MIDI checkpoint instead of showing a transient save failure',async({page})=>{
+ const {player}=await fixture(page,true);
+ const saved=new Map<string,number>();let release:(()=>void)|undefined,hold=false,failed=0,summaries=0;
+ await page.route('**/api/platform',async route=>{
+  const c=route.request().postDataJSON();
+  if(c.action==='gameSync'){
+   if(hold&&c.played.length===2){hold=false;await new Promise<void>(resolve=>{release=resolve;});}
+   saved.set(c.attemptId,c.played.length);
+   return route.fulfill({json:player()});
+  }
+  if(c.action==='battleStorySave'){
+   if(c.passes.some((p:{id:string;notes:number})=>(saved.get(p.id)??0)<p.notes)){
+    failed++;return route.fulfill({status:409,json:{error:'Waiting for battle note checkpoint'}});
+   }
+   summaries++;return route.fulfill({json:[]});
+  }
+  return route.fallback();
+ });
+ await page.goto('/');await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();await page.waitForTimeout(3500);
+ const pitches=noteGroups(catalog.find(e=>e.number===2001)!,'both').flatMap(g=>g.pitches);
+ hold=true;await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),pitches.slice(0,2));
+ await expect.poll(()=>!!release).toBe(true);
+ await page.evaluate(p=>(window as unknown as {playNotes:(n:number[])=>void}).playNotes(p),pitches.slice(2));
+ release!();
+ await expect.poll(()=>summaries).toBe(1);
+ expect(failed).toBe(0);
+ await expect(page.getByText(/Progress save pending:/)).toHaveCount(0);
+ await expect(page.locator('.player-xp [role="status"]')).toHaveText('All progress saved');
+});
+
 test("Victory holds over the mounted score and a deliberate new attempt dismisses it",async({page})=>{
   await fixture(page,true);await page.goto("/");
   await page.getByRole("button",{name:"Connect MIDI Piano"}).click();

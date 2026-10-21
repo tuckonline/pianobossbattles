@@ -52,13 +52,16 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
     if (!token) throw new DomainError("Sign in to Piano Boss Battles.", 401);
     const user = await verifiedUser(token);
     if (!pool) throw new DomainError("Player storage is not configured yet. Follow SUPABASE_SETUP.md before starting a battle.", 503);
+    // Auth's profile trigger creates public users. Catalog/recording requests
+    // already enforce their own owner/role checks; they must not upsert the
+    // account and take a progression transaction lock on every background poll.
+    if (url.pathname === "/api/music" || url.pathname === "/api/music/authorize" || url.pathname === "/api/admin/music") return await handleMusic(request,pool,user.id);
     const db = new PostgresBridge(pool, undefined, user.id).asD1();
     const service = new D1Platform(db);
-    const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
-    if (url.pathname === "/api/music" || url.pathname === "/api/music/authorize" || url.pathname === "/api/admin/music") return await handleMusic(request,pool,user.id);
     if (url.pathname === "/api/obs") return url.searchParams.get("rtc") === "1"
       ? handleScoreSignaling(request, db, user.id) : handleOverlay(request, db, user.id);
     if (url.pathname === "/api/shorts") return handleShorts(request, db, user.id);
+    const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
     if (url.pathname === "/api/profile" && request.method === "GET") return Response.json({
       actor,
       history: await service.all("SELECT challenge,result FROM battle_story_attempts WHERE user_id=? ORDER BY json_extract(result,'$.finishedAt') DESC LIMIT 12",user.id),

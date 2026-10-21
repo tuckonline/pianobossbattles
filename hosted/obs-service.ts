@@ -11,15 +11,22 @@ import {
 } from "./obs-state";
 import { DomainError } from "../src/domains/auth/permissions";
 
+// Request-local only: never share player records, sockets or promises between
+// users/Workers requests. Poll the live snapshot at the existing cadence, but
+// bound repeat durable-stat reads while its source/sequence/content are unchanged.
+type OverlayReadCache = { key?: string; serialized?: string; value?: OverlayState; readAt?: number };
 async function readOverlay(
   db: D1Database,
   userId: string,
   scoreOnly = false,
+  cache?: OverlayReadCache,
 ): Promise<OverlayState> {
   const row = await db
     .prepare(`SELECT snapshot, updated_at, source_id, sequence FROM obs_sessions WHERE user_id=?`)
     .bind(userId)
     .first<{ snapshot: string; updated_at: number; source_id:string; sequence:number }>();
+  const cacheKey = JSON.stringify([row?.source_id,row?.sequence,row?.updated_at]);
+  if(!scoreOnly&&cache?.value&&cache.key===cacheKey&&cache.serialized===row?.snapshot&&Date.now()-(cache.readAt??0)<2000)return cache.value;
   const snapshot = row ? (JSON.parse(row.snapshot) as OverlaySnapshot) : null;
   if(scoreOnly) return {snapshot,sourceId:row?.source_id,sequence:row?.sequence,updatedAt:row?.updated_at??null,best:null,attempts:0};
   const stats = snapshot
@@ -45,6 +52,7 @@ async function readOverlay(
     snapshot.game.settings=gameSettingsSchema.parse(result.gamePlayer.settings);
     if(snapshot.game.summary) snapshot.game.summary=result.gamePlayer.summary;
   }
+  if(cache){cache.key=cacheKey;cache.serialized=row?.snapshot;cache.value=result;cache.readAt=Date.now();}
   return result;
 }
 
@@ -59,7 +67,8 @@ export async function handleOverlay(
     const refreshMs=scoreOnly?OVERLAY_SCORE_REFRESH_MS:OVERLAY_REFRESH_MS;
     if (new URL(request.url).searchParams.get("stream") === "1") {
       // Network events keep the banner current without background-tab timers.
-      const initial = await readOverlay(db, userId, scoreOnly);
+      const cache: OverlayReadCache = {};
+      const initial = await readOverlay(db, userId, scoreOnly, cache);
       const encoder = new TextEncoder();
       let cancelled = false;
       let wake: (() => void) | undefined;
@@ -76,7 +85,7 @@ export async function handleOverlay(
             controller.enqueue(encoder.encode(`retry: ${OVERLAY_RECONNECT_MS}\n\n`));
             // Rotate connections to bound D1 subrequests; EventSource reconnects.
             for (let i = 0; i < (scoreOnly ? 40 : initial.snapshot?.game?.summary ? 4 : 10) && !cancelled; i++) {
-              const value = i === 0 ? initial : await readOverlay(db, userId, scoreOnly);
+              const value = i === 0 ? initial : await readOverlay(db, userId, scoreOnly, cache);
               if (cancelled) break;
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify(value)}\n\n`),
