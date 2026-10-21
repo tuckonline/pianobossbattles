@@ -6,7 +6,22 @@ Older reports preserve historical evidence; their pending-deployment statements
 and test counts must not be treated as current facts. Recheck Git and service state
 when work resumes. No functionality or deployment was changed for this handoff.
 
-## Pending save-session recovery fix — 2026-10-21
+## Save-session recovery published — 2026-10-21
+
+Owner explicitly approved this release with "YES DEPLOY". Runtime/tests from
+`704efc8` were promoted selectively to release commit `e499e13` and deployed using
+the guarded production helper. Deployment:
+`b6ba6b74-7727-4912-9493-f1e4ce0228d0`; client `index-CSq6jZ42.js`.
+Rollback: `d2d42ba1-2273-4e71-bb64-e8b0a768bac3` (`2a9f941`).
+
+The exact production candidate passed 489 unit/database/network tests (68 suites),
+seven focused browser regressions, TypeScript, changed-file lint, build packaging,
+and the 73-file private-credential scan. Live HTML/client/CSS matched; both OBS
+routes returned 200, unsigned writes 401, and foreign-origin writes 403. The
+verification browser showed the login page, so authenticated saved progress and
+actual expiration recovery on this release remain owner verification steps.
+No auth settings, DNS, schema, layout, gameplay or removed preview were changed.
+The earlier local-only status below is historical and superseded by this release.
 
 Owner reported the live "Your session expired. Verify your email and sign in"
 save warning. It was observed in the real production UI. The exact provider-side
@@ -26,8 +41,8 @@ Verification: 495 unit/database/network tests, TypeScript, changed-file lint,
 production build and seven focused browser cases passed, including expired save
 recovery, queued MIDI during a temporary provider outage, unchanged checkpoint
 identity, retained battle/countdown, and password-recovery regressions. This fix
-is local and not deployed; explicit approval is required for a new production
-release. Do not clear browser storage or discard queued progress as a workaround.
+was initially local, then approved and released as recorded above. Do not clear
+browser storage or discard queued progress as a workaround.
 
 ## Hybrid battle layout published — 2026-10-21
 
