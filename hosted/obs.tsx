@@ -1,3 +1,4 @@
+import {RequestBackoff} from './request-backoff';
 import {CreatorPresentation} from '../public-app/creator-view';
 import {useBattleAudioOutput} from './battle-audio-ui';
 import {isObsAudioSource} from './battle-audio';
@@ -27,11 +28,12 @@ export function useOverlayPublisher(snapshot: OverlaySnapshot, enabled: boolean)
   useEffect(()=>{
     if(!enabled)return;
     const sourceId=crypto.randomUUID(),direct=new DirectScorePublisher(sourceId);
-    let sequence=0,serialized="",lastCreated=0,busy=false,disposed=false,retryAt=0,lastPresentation="";
+    let sequence=0,serialized="",lastCreated=0,busy=false,disposed=false,lastPresentation="";
     let pending:(ScoreFrame & {claim:boolean})|undefined;
     let captureTimer:ReturnType<typeof setTimeout>|undefined;
+    const retry=new RequestBackoff();
     const flush=async()=>{
-      if(busy||!pending||Date.now()<retryAt)return;
+      if(busy||!pending||retry.remaining()>0)return;
       const next=pending;busy=true;
       try {
         const response=await fetch(overlayEndpoint(),{method:"POST",headers:{"Content-Type":"application/json"},
@@ -40,9 +42,10 @@ export function useOverlayPublisher(snapshot: OverlaySnapshot, enabled: boolean)
           body:JSON.stringify(next),keepalive:disposed,signal:AbortSignal.timeout(8000)});
         await response.text(); // Drain the response, including final keepalives.
         if(!response.ok)throw new Error("Overlay sync failed");
+        retry.succeeded();
         if(pending===next)pending=undefined;
         if(!disposed)setError(false);
-      } catch {retryAt=Date.now()+3000;if(!disposed)setError(true);}
+      } catch {retry.failed();if(!disposed)setError(true);}
       finally {busy=false;if(pending && pending!==next)void flush();}
     };
     const capture=()=>{
@@ -94,6 +97,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
     let busy = false;
     let lastStreamEvent = 0;
     let directConnected=false;
+    const retry=new RequestBackoff();
     const receiver=new OverlayReceiver();
     // One receiver feeds the whole composition. Full cloud snapshots provide
     // authoritative XP/PBs; the existing peer connection supplies live notes.
@@ -123,6 +127,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
     const poll = async () => {
       if (disposed || busy) return;
       clearTimeout(timer);
+      if(retry.remaining()>0){timer=setTimeout(poll,retry.remaining());return;}
       if (Date.now() - lastStreamEvent < OVERLAY_STALL_MS) {
         timer = setTimeout(poll, refreshMs);
         return;
@@ -139,6 +144,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
         });
         if (disposed || Date.now() - lastStreamEvent < OVERLAY_STALL_MS) return;
         if (!response.ok) {
+          retry.failed();
           if (response.status === 401) {
             if(creator){direct?.close();setData(null);setConnection("Viewing link expired or revoked");return;}
             location.replace(`/?return_to=${encodeURIComponent(location.pathname)}`);
@@ -152,12 +158,14 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
           );
         } else {
           const next = (await response.json()) as OverlayState;
+          retry.succeeded();
           if (!disposed) {
             accept(next);
             setConnection("Connected");
           }
         }
       } catch {
+        retry.failed();
         if(creator&&!disposed){direct?.close();setData(null);setConnection("Reconnecting");}
         if (!disposed&&!directConnected) setConnection("Reconnecting");
       } finally {
@@ -165,7 +173,7 @@ export function ObsOverlay({celebrationsOnly=false,scoreOnly=false,streaksOnly=f
         busy = false;
         if (!disposed) {
           setNow(Date.now());
-          timer = setTimeout(poll, refreshMs);
+          timer = setTimeout(poll, Math.max(refreshMs,retry.remaining()));
         }
       }
     };

@@ -1,3 +1,4 @@
+import {RequestBackoff} from './request-backoff';
 import {overlayEndpoint} from './obs-endpoint';
 import { z } from "zod";
 import {battleAudio,isObsAudioSource} from './battle-audio';
@@ -69,6 +70,7 @@ export class DirectScorePublisher {
   private latest="";
   private disposed=false;
   private polling=false;
+  private backoff=new RequestBackoff();
   private timer:ReturnType<typeof setInterval>;
   private heartbeat:ReturnType<typeof setInterval>;
   constructor(private sourceId:string) {
@@ -110,15 +112,16 @@ export class DirectScorePublisher {
     } catch {peer.pc.close();this.peers.delete(offer.viewerId);}
   }
   private async poll() {
-    if(this.disposed||this.polling||typeof RTCPeerConnection==="undefined")return;
+    if(this.disposed||this.polling||this.backoff.remaining()>0||typeof RTCPeerConnection==="undefined")return;
     this.polling=true;
     try {
       const result=await signal(this.sourceId);
+      this.backoff.succeeded();
       if(this.disposed)return;
       if(!result.active){for(const p of this.peers.values())p.pc.close();this.peers.clear();return;}
       for(const [id,p] of this.peers)if(p.pc.connectionState==="failed" || (p.channel?.readyState!=="open"&&Date.now()-p.createdAt>15000)){p.pc.close();this.peers.delete(id);}
       for(const offer of result.offers??[])if(!this.peers.has(offer.viewerId)&&this.peers.size<8)void this.answer(offer).catch(()=>{});
-    } catch { /* The existing authenticated cloud path is the fallback. */ }
+    } catch { this.backoff.failed(); /* Keep peer frames flowing during a cloud outage. */ }
     finally {this.polling=false;}
   }
   close() {this.disposed=true;clearInterval(this.timer);clearInterval(this.heartbeat);for(const p of this.peers.values())p.pc.close();this.peers.clear();}

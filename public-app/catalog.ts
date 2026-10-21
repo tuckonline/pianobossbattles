@@ -1,3 +1,4 @@
+import {RequestBackoff} from '../hosted/request-backoff';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {watchMusicPublication} from './music-updates';
 import type {Exercise} from '../hosted/sight-library';
@@ -31,6 +32,6 @@ export function useMusicCatalog(userId:string){
   const task=run();pending.current=task;
   try{await task;}finally{if(pending.current===task)pending.current=null;}
  },[userId]);
- useEffect(()=>{let active=true;const load=()=>{if(active)void refresh().catch(e=>{if(active)setError(e.name==='TimeoutError'?'Loading your dashboard took too long. Please retry.':e.message);});};load();const stop=watchMusicPublication(load);return()=>{active=false;stop();};},[refresh]);
+ useEffect(()=>{let active=true;const retry=new RequestBackoff();const load=()=>{if(active&&retry.remaining()===0)void refresh().then(()=>retry.succeeded()).catch(e=>{retry.failed();if(active)setError(e.name==='TimeoutError'?'Loading your dashboard took too long. Please retry.':e.message);});};load();const stop=watchMusicPublication(load);return()=>{active=false;stop();};},[refresh]);
  return {catalog,admin,error,refresh};
 }

@@ -115,3 +115,21 @@ test('creator audience audio has one owner and reconnect never replays prior cue
  await page.getByRole('button',{name:'Pause',exact:true}).click();const before=await starts(page);await page.getByRole('button',{name:'Preview sound here'}).click();await expect.poll(()=>starts(page)).toBeGreaterThan(before);
  await h.close();await v.close();
 });
+
+test('creator viewer backs off storage failures and reconnects without a reload',async({page})=>{
+ await fixture(page,false);let reads=0,unavailable=true;
+ await page.route('**/api/creator/view**',r=>{
+  const path=new URL(r.request().url());
+  if(path.pathname.endsWith('/exchange'))return r.fulfill({json:{}});
+  reads++;
+  return unavailable?r.fulfill({status:503,json:{error:'Storage unavailable'}}):r.fulfill({json:{snapshot:null,sequence:0,updatedAt:Date.now(),creator:defaultCreatorPreferences,best:null,attempts:0}});
+ });
+ await page.goto('/creator/obs/horizontal#view='+'a'.repeat(43));
+ await expect.poll(()=>reads).toBe(1);
+ await page.waitForTimeout(2000);expect(reads).toBe(1);
+ await expect.poll(()=>reads,{timeout:5000}).toBe(2);
+ await page.waitForTimeout(2000);expect(reads).toBe(2);
+ unavailable=false;
+ await expect.poll(()=>reads,{timeout:8000}).toBeGreaterThan(2);
+ await expect(page.locator('.creator-output')).toBeVisible();
+});
