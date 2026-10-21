@@ -219,3 +219,35 @@ only preview bindings and overwrites dashboard production settings on deployment
 The initial deployment exposed this during the health check (503); the dedicated
 production config supplies the exact origin, public Auth settings and existing
 Hyperdrive binding. It contains no database password or privileged credentials.
+
+## Production dashboard loading fix - 2026-10-20
+
+The owner's real production sign-in reached the dashboard loading screen but did
+not complete. Cloudflare's live deployment tail confirmed `/api/music` requests
+with outcome `exceededCpu`, HTTP 503, and `Worker exceeded CPU time limit`.
+Authentication requests succeeded. This was not an SMTP or redirect failure.
+
+The catalog previously fetched and serialized all 404 exercise definitions and
+score XML in one Worker invocation (12,776,056 database bytes). It now returns
+library metadata only (122,055 metadata bytes), excluding note arrays and XML in
+SQL before transfer to the Worker. Selected setlist entries load through the
+existing authenticated, publication-checked `practiceExercise` endpoint, with
+three concurrent requests at most. The complete chain is preloaded before Start
+Battle is enabled, preserving synchronous scoring and transitions. Exact stored
+notes/XML, gameplay engines, database schema and authentication are unchanged.
+Catalog requests have bounded waits and useful retry errors, including non-JSON
+infrastructure failures; score download failures also provide a retry control.
+
+Verification: all 475 unit/database/network tests (65 suites), all 25 local
+browser tests in one full run, TypeScript, changed-file ESLint and production
+Pages/Worker build passed. Browser fixtures now use the lightweight catalog and
+real score-loading flow. The new regression checks a delayed two-piece preload,
+then immediate correct scoring across Schmitt 7 to 8 with no further score fetch.
+SQL tests compare returned note data and XML with originals and retain unsigned,
+unpublished-piece and administrator access checks. Browser tests use explicit
+fixture identities; they are not proof of real production account recovery.
+
+The owner must still confirm that the patched production dashboard opens and
+shows saved progress. Earlier production deployments b8e83290 and 89529576 are
+not verified rollback targets: the former lacked bindings and the latter has the
+catalog CPU issue. Preserve the preview and original application unchanged.

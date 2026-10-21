@@ -42,11 +42,12 @@ export async function handleMusic(request:Request,pool:Pick<Pool,'query'>,userId
   const version=(await pool.query("SELECT md5(string_agg(e.number::text || ':' || e.published::text || ':' || c.published::text,',' ORDER BY e.number)) AS version FROM practice_exercises e JOIN music_collections c ON c.id=e.collection")).rows[0].version;
   const etag=`"${userId}:${version}:${admin}:${queued.join(',')}"`;
   if(request.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers:{ETag:etag}});
-  const rows=(await pool.query(`SELECT e.number,e.collection,e.title,e.definition,e.published AND c.published AS available,s.xml FROM practice_exercises e JOIN music_collections c ON c.id=e.collection LEFT JOIN music_scores s ON s.exercise_number=e.number WHERE $1::boolean OR (e.published AND c.published) OR e.number=ANY($2::bigint[]) ORDER BY e.collection,e.source_number,e.number`,[admin,queued])).rows;
+  const rows=(await pool.query(`SELECT e.number,e.collection,e.title,(e.definition::jsonb - ARRAY['right','left','polyphony','notationXml','notationUrl','sourceUrl']) AS metadata,e.published AND c.published AS available FROM practice_exercises e JOIN music_collections c ON c.id=e.collection WHERE $1::boolean OR (e.published AND c.published) OR e.number=ANY($2::bigint[]) ORDER BY e.collection,e.source_number,e.number`,[admin,queued])).rows;
   return Response.json({admin,pieces:rows.map(r=>{
    if(!admin&&!r.available)return {number:Number(r.number),collection:r.collection,title:r.title,right:[],left:[],available:false};
-   const e=JSON.parse(r.definition) as Exercise;
-   return {...e,number:Number(r.number),collection:r.collection,title:r.title,notationUrl:undefined,sourceUrl:undefined,notationXml:r.xml??e.notationXml,available:true,published:r.available};
+   // Keep the catalog small enough for the Worker CPU budget. Exact note data
+   // and XML are loaded through the existing authorized practiceExercise endpoint.
+   return {...r.metadata,number:Number(r.number),collection:r.collection,title:r.title,right:[],left:[],detailsRequired:true,available:true,published:r.available};
   })},{headers:{ETag:etag}});
  }
  throw new DomainError('Not found.',404);

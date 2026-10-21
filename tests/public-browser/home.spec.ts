@@ -20,7 +20,7 @@ async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) 
     if(r.request().url().includes('/authorize'))return r.fulfill({json:{authorized:true}});
     const etag='"fixture-catalog-'+admin+'"';
     if(r.request().headers()['if-none-match']===etag)return r.fulfill({status:304,headers:{etag}});
-    return r.fulfill({headers:{etag},json:{admin,pieces:catalog.map(e=>({...e,available:true}))}});
+    return r.fulfill({headers:{etag},json:{admin,pieces:catalog.map(e=>({...Object.fromEntries(Object.entries(e).filter(([key])=>!["right","left","polyphony","notationXml","notationUrl","sourceUrl"].includes(key))),right:[],left:[],detailsRequired:true,available:true}))}});
   });
   let settings=structuredClone(defaultGameSettings);
   let snapshot: unknown=null;
@@ -665,4 +665,39 @@ test('dashboard entry uses a neutral loading state and retries without showing a
  await expect(page.getByRole('region',{name:'Preparing your dashboard',exact:true})).toHaveCount(0);
  await expect(page.getByRole('link',{name:'Music Library',exact:true})).toHaveCount(0);
  expect(new URL(page.url()).pathname).toBe('/');expect(adminRequests).toBe(0);
+});
+
+
+test('lightweight catalog opens immediately and preloads the complete setlist before gameplay',async({page})=>{
+ await fixture(page,true);
+ await page.addInitScript(id=>localStorage.setItem(`pbb:setup:v2:${id}`,JSON.stringify({hand:'both',entries:[{number:2007,loops:1},{number:2008,loops:1}]})),id);
+ let release!:()=>void;
+ const waiting=new Promise<void>(resolve=>{release=resolve;});
+ const loads:number[]=[];
+ await page.route('**/api/platform',async route=>{
+  const c=route.request().postDataJSON();
+  if(c.action==='practiceExercise'){loads.push(c.exerciseNumber);await waiting;}
+  return route.fallback();
+ });
+ await page.goto('/');
+ await expect(page.getByRole('heading',{name:'Build your battle.',exact:true})).toBeVisible();
+ await expect.poll(()=>loads.length).toBe(2);
+ expect(loads.sort()).toEqual([2007,2008]);
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:/Continue to Battle Preview/}).click();
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeDisabled();
+ await expect(page.getByText('Preparing your selected sheet music...',{exact:true})).toBeVisible();
+ release();
+ await expect(page.locator('.sight-score svg').first()).toBeVisible();
+ await expect(page.getByRole('button',{name:'Start Battle',exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Start Battle',exact:true}).click();
+ await page.waitForTimeout(3500);
+ const before=Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'));
+ const pitches=noteGroups(catalog.find(e=>e.number===2007)!,'both').flatMap(g=>g.pitches);
+ const next=noteGroups(catalog.find(e=>e.number===2008)!,'both')[0].pitches;
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),[...pitches,...next]);
+ await expect(page.locator('.theatre-heading h2')).toContainText('Exercise 8');
+ await expect.poll(async()=>Number(await page.locator('[data-authoritative-boss-hp]').getAttribute('data-authoritative-boss-hp'))).toBe(before-pitches.length-next.length);
+ expect(loads.sort()).toEqual([2007,2008]);
+ await page.screenshot({path:'test-results/preloaded-chain-transition.png',fullPage:true});
 });

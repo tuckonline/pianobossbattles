@@ -70,6 +70,28 @@ describe('Protected publication with real SQL and separate authenticated identit
   const e=await result.json();expect(result.status).toBe(200);expect(e.notationXml).toContain('<score-partwise');expect(e.notationUrl).toBeUndefined();
   const rows=(await request(b,'/api/music')).json();expect((await rows).pieces.some((e:{collection:string})=>e.collection==='repertoire-archived')).toBe(false);
  });
+ it('returns only catalog metadata and loads exact scores through permission-checked detail requests',async()=>{
+  const response=await request(a,'/api/music');
+  const text=await response.text();
+  expect(text.length).toBeLessThan(400000);
+  const pieces=JSON.parse(text).pieces;
+  expect(pieces).toHaveLength(404);
+  for(const piece of pieces){
+   expect(piece.right).toEqual([]);expect(piece.left).toEqual([]);
+   expect(piece.notationXml).toBeUndefined();expect(piece.polyphony).toBeUndefined();
+   expect(piece.detailsRequired).toBe(true);
+  }
+  for(const number of [2001,2007,2008,4001,5021]){
+   const detail=await request(a,'/api/platform',{action:'practiceExercise',exerciseNumber:number});
+   expect(detail.status).toBe(200);
+   const actual=await detail.json();
+   const stored=(await db.query<{definition:string;xml:string}>('SELECT e.definition,s.xml FROM practice_exercises e LEFT JOIN music_scores s ON s.exercise_number=e.number WHERE e.number=$1',[number])).rows[0];
+   const original=JSON.parse(stored.definition);
+   expect(actual).toEqual({...original,notationUrl:undefined,sourceUrl:undefined,notationXml:stored.xml??original.notationXml});
+  }
+  expect((await api(new Request('http://localhost/api/platform',{method:'POST',headers:{origin:'http://localhost'},body:JSON.stringify({action:'practiceExercise',exerciseNumber:4001})}),pool)).status).toBe(401);
+  expect((await request(b,'/api/platform',{action:'practiceExercise',exerciseNumber:2002})).status).toBe(403);
+ });
  it('preserves existing progress and revokes administrator privileges without relying on cached metadata',async()=>{
   const before=(await request(b,'/api/profile')).json();
   await request(a,'/api/admin/music',{kind:'collection',id:'schmitt-op16',published:false});

@@ -1,7 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {watchMusicPublication} from './music-updates';
 import type {Exercise} from '../hosted/sight-library';
-export type CatalogExercise=Exercise&{available:boolean;published?:boolean};
+export type CatalogExercise=Exercise&{available:boolean;published?:boolean;detailsRequired?:boolean};
 export function useMusicCatalog(userId:string){
  const [catalog,setCatalog]=useState<CatalogExercise[]>(),[error,setError]=useState('');
  const [admin,setAdmin]=useState(false);
@@ -13,9 +13,9 @@ export function useMusicCatalog(userId:string){
   const load=async()=>{
   let queued:number[]=[];
   try{const saved=JSON.parse(localStorage.getItem(`pbb:setup:v2:${userId}`)??'null');queued=(saved?.entries??[]).map((e:{number:number})=>e.number).filter(Number.isInteger).slice(0,213);}catch{}
-  const r=await fetch(`/api/music?queued=${encodeURIComponent(JSON.stringify(queued))}`,{cache:'no-store',headers:version.current?{'If-None-Match':version.current}:undefined});
+  const r=await fetch(`/api/music?queued=${encodeURIComponent(JSON.stringify(queued))}`,{cache:'no-store',signal:AbortSignal.timeout(20000),headers:version.current?{'If-None-Match':version.current}:undefined});
   if(r.status===304){setError('');return;}
-  const data=await r.json();if(!r.ok)throw Error(data.error??'Could not load the music library.');
+  const data=await r.json().catch(()=>null);if(!r.ok||!data)throw Error(data?.error??'Could not load the music library. Please retry.');
   version.current=r.headers.get('etag')??'';
   setAdmin(data.admin===true);
   const testing=Number(new URLSearchParams(location.search).get('music'));
@@ -31,6 +31,6 @@ export function useMusicCatalog(userId:string){
   const task=run();pending.current=task;
   try{await task;}finally{if(pending.current===task)pending.current=null;}
  },[userId]);
- useEffect(()=>{let active=true;const load=()=>{if(active)void refresh().catch(e=>{if(active)setError(e.message);});};load();const stop=watchMusicPublication(load);return()=>{active=false;stop();};},[refresh]);
+ useEffect(()=>{let active=true;const load=()=>{if(active)void refresh().catch(e=>{if(active)setError(e.name==='TimeoutError'?'Loading your dashboard took too long. Please retry.':e.message);});};load();const stop=watchMusicPublication(load);return()=>{active=false;stop();};},[refresh]);
  return {catalog,admin,error,refresh};
 }

@@ -5,6 +5,7 @@ import {notationPresets,defaultNotationPreset,type NotationPreset} from "../src/
 import "./notation-appearance.css";
 import { supabase, syncServerSession } from "./supabase";
 import { useMusicCatalog, type CatalogExercise } from "./catalog";
+import { useQueueScores } from "./queue-scores";
 import { collectionName } from "./music-labels";
 import { MidiSetup } from "../src/components/midi/setup";
 import { SightReading, type PracticeControls } from "../hosted/sight-reading";
@@ -74,7 +75,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const [connected,setConnected]=useState(false),[theatre,setTheatre]=useState(false),[view,setView]=useState(currentView);
   const [search,setSearch]=useState(""),[category,setCategory]=useState("");
   const [queueDraft,setQueue]=useState<ChainEntry[]>(draft.queue),[hand,setHand]=useState<Hand>(draft.hand),[notice,setNotice]=useState("");
-  const queue=useMemo(()=>queueDraft.map(entry=>{const current=catalog.find(p=>p.number===entry.exercise.number&&p.available);return current?{...entry,exercise:current}:entry;}),[queueDraft,catalog]);
+  const {queue,ready:scoresReady,error:scoreError,retry:retryScores}=useQueueScores(queueDraft,catalog);
   const [history,setHistory]=useState<StoryResult[]>([]),[victories,setVictories]=useState(0),[practiced,setPracticed]=useState(0);
   const [bests,setBests]=useState<{exerciseNumber:number;accuracy:number}[]>([]);
   const [profileError,setProfileError]=useState(""),[draftError,setDraftError]=useState("");
@@ -96,7 +97,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   // Keep the currently mounted score's definition across publication refreshes.
   // Only the fresh catalog/authorization response decides what may start next.
   const scoreLibrary=useMemo(()=>[...new Map([...initialLibrary,...catalog,...queue.map(e=>e.exercise)].map(e=>[e.number,e])).values(),...(initialLibrary.length||catalog.length||queue.length?[]:[{number:0,title:'No available music',right:[],left:[]}])],[initialLibrary,catalog,queue]);
-  const timePreview=useMemo(()=>unavailable?undefined:modeTimePreview(config,queue,hand),[config,queue,hand,unavailable]);
+  const timePreview=useMemo(()=>unavailable||!scoresReady?undefined:modeTimePreview(config,queue,hand),[config,queue,hand,unavailable,scoresReady]);
   const performances=queue.reduce((sum,e)=>sum+e.loops,0);
   useEffect(()=>{const back=()=>setView(currentView());window.addEventListener("popstate",back);return()=>window.removeEventListener("popstate",back);},[]);
   useEffect(()=>{try{localStorage.setItem(`pbb:setup:v2:${user.id}`,JSON.stringify({hand,entries:queue.map(e=>({number:e.exercise.number,loops:e.loops}))}));setDraftError("");}catch{setDraftError("This browser could not save your setlist locally. Keep this tab open to retain it.");}},[hand,queue,user.id]);
@@ -117,9 +118,9 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   function move(index:number,direction:number){setQueue(q=>{const next=[...q],at=index+direction;if(at<0||at>=q.length)return q;[next[index],next[at]]=[next[at],next[index]];return next;});}
   async function logout(){setLogoutBusy(true);try{gameClient.abandon();await supabase.auth.signOut();await syncServerSession();location.reload();}catch(e){setNotice((e as Error).message);setLogoutBusy(false);}}
   const render=(c:PracticeControls)=>{
-    const missing=!midiSupported?"Web MIDI is unavailable here. Open this page in Chrome or Edge on a computer.":!connected?"Connect your MIDI piano to begin.":libraryError?libraryError:unavailable?"Remove unavailable pieces from your queue before starting.":!queue.length?"Add a piece to your battle queue.":!game.ready?"Waiting for your saved progress connection.":game.recoveryError?"Recover unsaved progress before starting.":"";
+    const missing=!midiSupported?"Web MIDI is unavailable here. Open this page in Chrome or Edge on a computer.":!connected?"Connect your MIDI piano to begin.":libraryError?libraryError:unavailable?"Remove unavailable pieces from your queue before starting.":!queue.length?"Add a piece to your battle queue.":!scoresReady?scoreError||"Preparing your selected sheet music...":!game.ready?"Waiting for your saved progress connection.":game.recoveryError?"Recover unsaved progress before starting.":"";
     const start=async()=>{
-      if(authorizing)return;setAuthorizing(true);setNotice("");
+      if(authorizing||!scoresReady)return;setAuthorizing(true);setNotice("");
       try{const r=await fetch("/api/music/authorize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:queue.map(e=>({number:e.exercise.number,loops:e.loops})),hand})});const data=await r.json();if(!r.ok)throw Error(data.error??"Music is unavailable.");c.start();if(gameClient.state.live.status==="playing"||gameClient.state.battle.countdown)setTheatre(true);}
       catch(e){setNotice((e as Error).message);void refreshLibrary().catch(()=>{});}finally{setAuthorizing(false);}
     };
@@ -134,6 +135,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
           <div className="profile-stat"><b>{victories}</b><small>Bosses defeated</small></div><div className="profile-stat"><b>{practiced}</b><small>Pieces practiced</small></div><button className="quiet" disabled={c.running||logoutBusy} onClick={()=>void logout()}>Log out</button>
         </section>
       </header>
+      {scoreError&&<p role="alert" className="error">{scoreError} <button onClick={retryScores}>Retry sheet music</button></p>}
       {notice&&<p role="alert" className="error">{notice}</p>}
       {game.error&&<p role="alert" className="error">{game.error}</p>}
       <nav className="builder-steps" aria-label="Battle setup steps" hidden={theatre}>
@@ -197,5 +199,5 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
       <BattleAudioSettings settings={settings} hidden={theatre}/>
     </div>;
   };
-  return <SightReading library={scoreLibrary} attempts={[]} practice hideHeading experience={{entries:queue,hand,canStart:connected&&queue.length>0&&!unavailable&&!libraryError&&game.ready&&!game.recoveryError,render}}/>;
+  return <SightReading library={scoreLibrary} attempts={[]} practice hideHeading experience={{entries:queue,hand,canStart:scoresReady&&connected&&queue.length>0&&!unavailable&&!libraryError&&game.ready&&!game.recoveryError,render}}/>;
 }
