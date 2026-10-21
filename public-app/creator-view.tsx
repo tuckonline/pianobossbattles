@@ -33,7 +33,7 @@ export function CreatorPresentation({data,offline,transport,cinematic,vertical}:
  const active=cinematic.phase!=='hidden';
  const layout={...shortsBattleLayout,characterScale:p.characterScale/100};
  const style={'--notation-paper':palette.paper,'--notation-ink':palette.ink,'--notation-current':palette.current,'--notation-correct':palette.correct,'--notation-incorrect':palette.incorrect,
- '--creator-arena':`${p.horizontalArenaPercent}%`,'--creator-camera':`${p.cameraPercent}fr`,'--creator-content':`${94-p.cameraPercent}fr`,'--creator-battle':`${p.arenaPercent}fr`,'--creator-score':`${94-p.cameraPercent-p.arenaPercent}fr`,'--creator-hud':p.hudScale/100} as CSSProperties;
+ '--creator-arena':`${p.horizontalArenaHeightPercent}%`,'--creator-camera':`${p.cameraPercent}fr`,'--creator-content':`${94-p.cameraPercent}fr`,'--creator-battle':`${p.arenaPercent}fr`,'--creator-score':`${94-p.cameraPercent-p.arenaPercent}fr`,'--creator-hud':p.hudScale/100} as CSSProperties;
  return <main className={`creator-output ${vertical?'creator-vertical':'creator-horizontal'}`} data-notation-preset={p.notation} data-score-transport={transport} style={style} aria-label={`${vertical?'Vertical':'Horizontal'} creator recording`}>
   <header className="creator-output-banner"><strong>{s?.title??'Piano Boss Battles'}</strong><span><svg viewBox="0 0 32 24" aria-hidden="true"><rect y="1" width="32" height="22" rx="6" fill="#c94751"/><path d="M13 7v10l9-5z" fill="white"/></svg>@PianoBossBattles</span><small>{s?`${s.hand==='both'?'Both hands':s.hand+' hand'} · Measure ${s.measure}/${s.totalMeasures}`:'Waiting for Creator Studio'}</small></header>
   <div className={`creator-output-content${vertical?' shorts-main':''}`}>

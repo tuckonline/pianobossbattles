@@ -70,6 +70,8 @@ test('one studio drives both layouts, continuous loops, independent settings and
   expect(await v.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight)).toBe(true);
   expect(await v.locator('.creator-output').evaluate(e=>{const r=e.getBoundingClientRect();return r.x===0&&r.y===0&&r.width===innerWidth&&r.height===innerHeight;})).toBe(true);
  }
+ const arena=await horizontal.locator('.creator-arena').boundingBox(),score=await horizontal.locator('.creator-score').boundingBox();
+ expect(arena!.width).toBe(1920);expect(score!.width).toBe(1920);expect(score!.y).toBeCloseTo(arena!.y+arena!.height,0);
  await page.getByRole('button',{name:'Pause',exact:true}).click();
  for(const v of [horizontal,vertical])await expect(v.getByRole('progressbar',{name:'boss HP',exact:true})).toHaveAttribute('aria-valuenow',String(state.snapshot!.game!.battle!.bossHp));
  await page.screenshot({path:'test-results/creator-studio.png',fullPage:true});

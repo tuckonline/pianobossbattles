@@ -120,3 +120,9 @@ explicit public-app/creator-preview/wrangler.jsonc configuration and branch
 feature/creator-studio-v1 in pianobossbattles-preview. This provides its exact
 APP_ORIGIN with the existing secure Hyperdrive binding. No production settings,
 DNS, SMTP, or authentication configuration changes are required.
+
+Horizontal layout refinement: arena now spans the recording width above the
+notation, with player/boss HUDs side by side. Horizontal arena height defaults
+55% of content and is adjustable 40–65%; older width preferences are ignored.
+Vertical framing and camera allocation are unchanged. Four Creator browser tests,
+five service tests, TypeScript, changed-file lint, and preview build passed.
