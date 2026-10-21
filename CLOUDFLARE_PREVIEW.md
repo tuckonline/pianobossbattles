@@ -212,3 +212,10 @@ it now returns real event-stream messages and waits for the rendered battle pane
 before the unlock gesture. The corrected audio/duplicate-source/reconnect case
 passed twice consecutively. No production audio/gameplay behavior was changed.
 All 24 browser cases therefore passed across the full run and targeted rechecks.
+
+Production deployment uses `public-app/production/wrangler.jsonc` via explicit
+Wrangler working directory. This is essential: the repository-root config contains
+only preview bindings and overwrites dashboard production settings on deployment.
+The initial deployment exposed this during the health check (503); the dedicated
+production config supplies the exact origin, public Auth settings and existing
+Hyperdrive binding. It contains no database password or privileged credentials.
