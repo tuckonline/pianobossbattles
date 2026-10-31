@@ -1,0 +1,26 @@
+.authenticated-app .classical-launch { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:16px 0; padding:18px 24px; border:1px solid #24627d; border-radius:14px; background:#09263c; }
+.authenticated-app .classical-launch p { margin:4px 0 0; color:#aec9dd; }
+.authenticated-app .classical-practice { margin:20px 0; padding:24px; }
+.classical-practice>header { display:flex; justify-content:space-between; gap:24px; align-items:center; }
+.authenticated-app .classical-practice h1 { margin:6px 0; font-size:clamp(24px,3vw,36px); }
+.classical-practice p { color:#b2cddd; }
+.classical-settings { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-top:20px; }
+.classical-settings legend { padding:12px 0; font-weight:700; }
+.classical-settings label { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.classical-settings input,.classical-settings select { width:100%; min-height:42px; }
+.classical-settings button { align-self:end; }
+.classical-note { font-size:13px; line-height:1.6; }
+.classical-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px 0; border-top:1px solid #21516b; }
+.classical-toolbar>div { margin-right:auto; }
+.classical-toolbar small { display:block; margin-top:5px; color:#b2cddd; }
+.classical-click { display:flex; align-items:center; gap:8px; }
+.classical-click input { width:auto; }
+.classical-score { min-height:200px; padding:12px; border-radius:10px; background:var(--notation-paper,#fff); color:var(--notation-ink,#102338); }
+.classical-practice:has(.classical-settings[hidden]) .classical-toolbar { position:sticky; top:0; z-index:3; background:#09263c; padding:12px; border-radius:10px; }
+.classical-results { padding:20px 0; }
+.classical-results button { margin:6px; }
+@media(max-width:700px) {
+  .classical-settings { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .classical-practice>header,.authenticated-app .classical-launch { align-items:stretch; flex-direction:column; }
+  .authenticated-app .classical-practice { padding:14px; }
+}

@@ -7,6 +7,7 @@ import { supabase, syncServerSession } from "./supabase";
 import { useMusicCatalog, type CatalogExercise } from "./catalog";
 import { useQueueScores } from "./queue-scores";
 import { BrandEmblem } from "./brand-emblem";
+import { ClassicalPractice } from "./classical-practice";
 import { collectionName } from "./music-labels";
 import { MidiSetup } from "../src/components/midi/setup";
 import { SightReading, type PracticeControls } from "../hosted/sight-reading";
@@ -80,6 +81,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
   const [bests,setBests]=useState<{exerciseNumber:number;accuracy:number}[]>([]);
   const [profileError,setProfileError]=useState(""),[draftError,setDraftError]=useState("");
   const [authorizing,setAuthorizing]=useState(false);
+  const [classical,setClassical]=useState(false);
   const [logoutBusy,setLogoutBusy]=useState(false);
   const settings=game.player.settings, config=settings.bossBattle;
   const localAudio=useMemo(()=>playerAudioConfig(config,settings.playerAudio),[config,settings.playerAudio]);
@@ -145,7 +147,9 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         <span className={`connection-light ${connected?"connected":""}`}/><div><b>{connected?"Your piano is connected":"Connect your MIDI piano"}</b><small>{connected?"Ready to play. Your piano is the controller.":"USB MIDI · Chrome or Edge · allow access when asked"}</small></div>
         {midiSupported?<MidiSetup compact onConnectionChange={setConnected}/>:<p role="status">Web MIDI is unavailable in this browser. Use desktop Chrome or Edge.</p>}
       </section>
-      <div className="setup-columns" hidden={theatre}>
+      {!theatre&&!classical&&<section className="classical-launch"><div><strong>Infinite Classical Practice</strong><p>Generate an original study for your level, key, and hands.</p></div><button disabled={c.running||authorizing||cinematic} onClick={()=>setClassical(true)}>Open Infinite Classical Practice</button></section>}
+      {classical&&<ClassicalPractice connected={connected} onClose={()=>setClassical(false)}/>}
+      <div className="setup-columns" hidden={theatre||classical}>
         <section className="setup-section challenge-panel">
           <div className="panel-title"><Icon name="swords"/><div><h1>Build your battle.</h1><p>Choose a game mode, set your difficulty, and pick your boss.</p></div></div>
           <fieldset disabled={c.running||authorizing}><legend><span className="section-number">1</span>Game mode<small>Pick how you want to play.</small></legend>
@@ -188,7 +192,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
           {theatre&&(notice?<p className="arena-message" role="alert">{notice}</p>:(c.message||!c.running)&&<p className="arena-message" role="status">{!c.running?(layoutStorageError||missing||"Preview only. Click Start Battle when you are ready."):c.message}</p>)}
         </section>
       </dialog>
-      <div className="setup-extras" hidden={theatre}>
+      <div className="setup-extras" hidden={theatre||classical}>
       <div className="progress-disclosures">
         <details className="setup-section history"><summary><Icon name="bars"/>Recent Battles</summary>{profileError&&<p role="alert">{profileError}</p>}{!history.length?<p>Your completed battles will appear here.</p>:<ul>{history.map(h=><li key={h.attemptId}><strong>{h.result.toUpperCase()}</strong><span>{h.accuracy.toFixed(1)}% accuracy · {h.bestCombo} best combo · {h.completed}/{h.total} pieces</span></li>)}</ul>}</details>
         <details className="setup-section history"><summary><Icon name="cup"/>Personal Bests</summary><p>{game.player.unlocks.length} achievements unlocked · Best note combo: {game.player.best}</p>{profileError&&<p role="alert">{profileError}</p>}{bests.length?<ul>{bests.map(b=><li key={b.exerciseNumber}><span>{catalog.find(e=>e.number===b.exerciseNumber)?.title??`Exercise ${b.exerciseNumber}`}</span><strong>{Number(b.accuracy).toFixed(1)}%</strong></li>)}</ul>:<p>Finish a piece to set your first personal best.</p>}</details>

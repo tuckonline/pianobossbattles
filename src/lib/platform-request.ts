@@ -7,13 +7,13 @@ export function configurePlatformSessionRecovery(recover?: SessionRecovery) {
   recoverSession = recover;
 }
 
-export async function platformRequest(data: unknown): Promise<Response> {
+export async function platformRequest(data: unknown, endpoint: "/api/platform" | "/api/realms" = "/api/platform"): Promise<Response> {
   const options = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   };
-  const response = await fetch("/api/platform", options);
+  const response = await fetch(endpoint, options);
   const recover = recoverSession;
   if (response.status !== 401 || !recover) return response;
   // A rejected request has not reached gameplay/SQL. Retry the exact receipt
@@ -23,5 +23,5 @@ export async function platformRequest(data: unknown): Promise<Response> {
     recovering = pending;
     void pending.finally(() => { if (recovering === pending) recovering = undefined; });
   }
-  return await recovering ? fetch("/api/platform", options) : response;
+  return await recovering ? fetch(endpoint, options) : response;
 }

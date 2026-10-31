@@ -8,6 +8,7 @@ import { DomainError } from "../src/domains/auth/permissions";
 import { PostgresBridge } from "./postgres";
 import { handleMusic, authorizeMusicCommand, readMusicExercise } from "./music-service";
 import { z } from "zod";
+import { realmCommand } from "./realm-service";
 
 types.setTypeParser(20, Number);
 types.setTypeParser(1700, Number);
@@ -67,6 +68,7 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
       ? handleScoreSignaling(request, db, user.id) : handleOverlay(request, db, user.id);
     if (url.pathname === "/api/shorts") return handleShorts(request, db, user.id);
     const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
+    if (url.pathname === "/api/realms" && request.method === "POST") return Response.json(await realmCommand(pool,user.id,await request.json()));
     if (url.pathname === "/api/profile" && request.method === "GET") return Response.json({
       actor,
       history: await service.all("SELECT challenge,result FROM battle_story_attempts WHERE user_id=? ORDER BY json_extract(result,'$.finishedAt') DESC LIMIT 12",user.id),

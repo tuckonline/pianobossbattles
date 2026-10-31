@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {catalog as authoredCatalog} from '../../public-app/server-catalog';
 const catalog=authoredCatalog.filter(e=>e.collection!=='repertoire-archived').map(e=>e.notationUrl?{...e,notationXml:readFileSync('hosted/public'+e.notationUrl,'utf8'),notationUrl:undefined}:e);
 import { noteGroups } from "../../hosted/sight-library";
+import { generateClassicalExercise } from "../../src/domains/music-generator/classical-generator";
 const id="a0000000-0000-4000-8000-000000000001";
 const user={id,email:"browser-test@example.test",email_confirmed_at:new Date().toISOString(),aud:"authenticated",role:"authenticated",user_metadata:{name:"Test Pianist"},app_metadata:{provider:"email",providers:["email"]},created_at:new Date().toISOString()};
 const token=[{alg:"HS256",typ:"JWT"},{sub:id,exp:Math.floor(Date.now()/1000)+3600,role:"authenticated"}].map(x=>Buffer.from(JSON.stringify(x)).toString("base64url")).join(".")+".fixture";
@@ -42,6 +43,8 @@ async function fixture(page:Page,signedIn=false,midiSupported=true,admin=false) 
   });
   await page.route("**/api/shorts**",r=>r.fulfill({json:[]}));
   await page.addInitScript(({session,signedIn,midiSupported})=>{
+    // These regressions exercise the explicitly retained legacy battle route.
+    if(location.pathname==="/")history.replaceState(null,"","/legacy-battles"+location.search+location.hash);
     if(signedIn)localStorage.setItem("sb-huxmltjtovpxxxupuxdg-auth-token",JSON.stringify(session));
     const input={id:"test-midi",name:"Test piano",state:"connected",connection:"open",onmidimessage:null as null|((e:{data:Uint8Array;timeStamp:number})=>void),open:async()=>{},close:async()=>{}};
     const probe=window as unknown as {midiRequests:number};probe.midiRequests=0;
@@ -148,7 +151,7 @@ test('republishing restores a saved unavailable piece without losing its loops',
 test("public logged-out page, registration, login and password reset use Supabase",async({page})=>{
   await fixture(page);
   await page.goto("/");
-  await expect(page.getByRole("heading",{name:/Turn every note/})).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Find your rhythm/})).toBeVisible();
   await expect(page.locator('.public-header .brand-mark')).toHaveAttribute('src','/branding/emblem-128.png');
   await expect.poll(()=>page.locator('.brand-mark').evaluate(e=>(e as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   expect((await page.locator('.public-header').boundingBox())?.height).toBe(86);
@@ -898,4 +901,81 @@ test('Battle Layout preference survives refresh without writing account settings
  await slider.fill('65');await select.getByRole('button',{name:'Reset',exact:true}).click();await expect(slider).toHaveValue('40');await slider.fill('57');await page.reload();
  await page.getByRole('button',{name:'Preview Battle',exact:true}).click();await expect(slider).toHaveValue('57');
  expect(settingsWrites).toBe(0);await expect(page.locator('.theatre-stage')).toHaveAttribute('data-arena-percent','57');
+});
+
+test('classical practice uses shared MIDI grading without catalog rewards and repeats the same score',async({page})=>{
+ await fixture(page,true);
+ const writes:string[]=[]; const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ page.on('request',r=>{if(r.url().includes('/api/platform')){const c=r.postDataJSON();if(['gameSync','sightAttempt','battleStorySave'].includes(c.action))writes.push(c.action);}});
+ await page.goto('/');
+ await page.getByRole('button',{name:'Open Infinite Classical Practice'}).click();
+ const panel=page.getByRole('region',{name:'Infinite Classical Practice'});
+ await panel.getByRole('button',{name:'Generate Exercise',exact:true}).click();
+ await expect(panel.locator('svg .measure').first()).toBeVisible();
+ await expect(panel.locator('svg .fing')).toHaveCount(2);
+ await expect(panel.getByLabel('Starting fingers')).toContainText('Right');
+ await expect(panel.getByLabel('Starting fingers')).toContainText('Left');
+ await expect(panel.getByRole('button',{name:'Start Practice',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await expect(panel.getByRole('button',{name:'Start Practice',exact:true})).toBeEnabled();
+ const ex=generateClassicalExercise({difficulty:1,key:'C',mode:'major',tempoBpm:50,measures:8,hands:'both',seed:1,curriculumVersion:2});
+ const notes=noteGroups(ex,'both').flatMap(g=>g.pitches);
+ const play=async(pitches:number[])=>page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),pitches);
+ await play(notes);await expect(panel.getByRole('status')).toContainText('Ready.');
+ await panel.getByLabel('Metronome',{exact:true}).check();
+ await panel.getByRole('button',{name:'Start Practice',exact:true}).click();
+ await play([1,...notes.slice(0,4)]);
+ await panel.getByRole('button',{name:'Pause',exact:true}).click();
+ await play(notes);await expect(panel.getByRole('status')).toContainText('Paused');
+ await panel.getByRole('button',{name:'Resume',exact:true}).click();
+ await play(notes.slice(4));
+ await expect(panel.getByRole('status')).toContainText('Complete');
+ await expect(panel.getByRole('status')).toContainText('1 mistakes');
+ await expect(panel.getByRole('heading',{name:`${Math.round(100*notes.length/(notes.length+1))}% note accuracy`})).toBeVisible();
+ await page.screenshot({path:'test-results/classical-complete.png',fullPage:true});
+ const score=await panel.locator('svg .note').count();
+ await panel.getByRole('button',{name:'Repeat Exercise',exact:true}).click();
+ await expect(panel.getByRole('button',{name:'Start Practice',exact:true})).toBeEnabled();
+ expect(await panel.locator('svg .note').count()).toBe(score);
+ await panel.getByRole('button',{name:'Generate Exercise',exact:true}).click();
+ await expect(panel.getByRole('button',{name:'Start Practice',exact:true})).toBeEnabled();
+ await panel.getByRole('button',{name:'New Exercise',exact:true}).click();
+ await expect(panel.getByLabel('Seed',{exact:true})).not.toHaveValue('1');
+ await panel.getByRole('button',{name:'Back to battles'}).click();
+ await expect(page.getByRole('button',{name:'Preview Battle',exact:true})).toBeVisible();
+ expect(writes).toEqual([]);expect(errors).toEqual([]);
+ expect(await page.evaluate(()=>(window as unknown as {midiRequests:number}).midiRequests)).toBe(1);
+});
+
+test('classical minor score renders 64 measures and single hand at desktop and mobile sizes',async({page})=>{
+ await fixture(page,true);await page.goto('/');
+ await page.getByRole('button',{name:'Open Infinite Classical Practice'}).click();
+ const panel=page.getByRole('region',{name:'Infinite Classical Practice'});
+ await panel.getByLabel('Difficulty',{exact:true}).selectOption('5');
+ await panel.getByLabel('Mode',{exact:true}).selectOption('minor');
+ await panel.getByLabel('Key',{exact:true}).selectOption('Eb');
+ await panel.getByLabel('Measures',{exact:true}).selectOption('64');
+ await panel.getByLabel('Hands',{exact:true}).selectOption('left');
+ await panel.getByRole('button',{name:'Generate Exercise',exact:true}).click();
+ await expect(panel.locator('svg .measure')).toHaveCount(64);
+ await expect(panel.locator('svg .fing')).toHaveCount(1);
+ await expect(panel.getByLabel('Starting fingers')).not.toContainText('Right');
+ await expect(panel.locator('svg .note').first()).toBeVisible();
+ await page.screenshot({path:'test-results/classical-minor-desktop.png',fullPage:true});
+ await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await panel.getByRole('button',{name:'Start Practice',exact:true}).click();
+ const exercise=generateClassicalExercise({difficulty:5,key:'Eb',mode:'minor',tempoBpm:80,measures:64,hands:'left',seed:1});
+ const prefix=noteGroups(exercise,'left').filter(g=>g.beat<160).flatMap(g=>g.pitches);
+ await page.evaluate(p=>(window as unknown as {playNotes:(p:number[])=>void}).playNotes(p),prefix);
+ await expect(panel.getByRole('status')).toContainText('Measure 41');
+ await expect.poll(async()=>panel.locator('.sight-active-measure').evaluate(el=>{
+   const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;
+ })).toBe(true);
+ await page.setViewportSize({width:390,height:844});
+ await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await expect.poll(async()=>panel.locator('.sight-active-measure').evaluate(el=>{
+   const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;
+ })).toBe(true);
+ await page.screenshot({path:'test-results/classical-minor-mobile.png'});
 });

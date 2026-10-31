@@ -1,15 +1,17 @@
-/* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element -- Independent Vite SPA. */
+/* eslint-disable @next/next/no-html-link-for-pages -- Independent Vite SPA. */
 import { useEffect } from "react";
 import { useAccount, AccountForm } from "./auth";
-import { bossProfiles } from "../hosted/boss-registry";
+import { ClockworkPortrait } from "./realm-cinematic";
 import { ObsOverlay } from "../hosted/obs";
 import { AdminMusic } from "./admin-music";
 import { PlayerHome } from "./player-home";
+import { RealmHome } from "./realm-home";
 import { BrandEmblem } from "./brand-emblem";
 import "./public.css";
 import "./player-home.css";
 import "./compact-dashboard.css";
-const hero="/battle/cinematics/hero-finish.png";
+
+
 export function PublicApp() {
   const account=useAccount();
   const obs=location.pathname.startsWith("/obs");
@@ -26,10 +28,10 @@ export function PublicApp() {
     <div className={`public-app ${account.session&&!account.recovery?"authenticated-app":""}`}>{(!account.session||account.recovery)&&<header className="public-header"><a href="/" className="brand"><BrandEmblem className="brand-mark"/>Piano Boss Battles</a><span className="header-caption">PLAY MUSIC. BECOME THE HERO.</span></header>}
       <main id="main">
         {!account.ready?<p role="status">Connecting your account…</p>:account.recovery?<AccountForm recovery onRecovered={account.finishRecovery}/>:
-        account.session?(location.pathname==="/admin/music"?<AdminMusic/>:<PlayerHome user={account.session.user}/>):
-        <><section className="welcome"><div><span className="eyebrow">YOUR PIANO. YOUR POWER.</span><h1>Turn every note<br/>into a <em>battle cry.</em></h1><p>Connect your piano, choose your challenge, and let the music do the fighting. Your next great performance starts here.</p><div className="welcome-fighters"><img src={hero} alt="Piano Blade, the cyan sword-wielding pianist"/><span>VS</span><img src={bossProfiles.grinwick.portrait} alt="Grinwick, the chaos gremlin"/></div></div><AccountForm/></section>
-        <div className="public-steps"><p><b>01</b> Connect your MIDI piano</p><p><b>02</b> Choose your musical challenge</p><p><b>03</b> Play. Battle. Level up.</p></div></>}
+        account.session?(location.pathname==="/admin/music"?<AdminMusic/>:location.pathname==="/legacy-battles"?<PlayerHome user={account.session.user}/>:<RealmHome key={account.session.user.id} user={account.session.user}/>):
+        <><section className="welcome"><div><span className="eyebrow">YOUR PIANO. YOUR ADVENTURE.</span><h1>Find your rhythm.<br/><em>Restore a kingdom.</em></h1><p>Read real music, master the pulse, and restore the Clockwork Kingdom. A musical adventure begins at your piano.</p><div className="welcome-fighters"><ClockworkPortrait/></div></div><AccountForm/></section>
+        <div className="public-steps"><p><b>01</b> Connect your MIDI piano</p><p><b>02</b> Choose your musical challenge</p><p><b>03</b> Play. Master. Explore.</p></div></>}
         {account.error&&<p role="alert" className="error">{account.error} <a href="/">Return to sign in</a></p>}
-      </main><footer>Original music battles. Real piano progress.</footer>
+      </main><footer>Musical mastery. Real piano progress.</footer>
     </div>}</>;
 }

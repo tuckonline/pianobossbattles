@@ -4,6 +4,7 @@ export class AudioEngine {
   private context: AudioContext | null = null;
   private nodes = new Set<OscillatorNode>();
   private interval: ReturnType<typeof setInterval> | null = null;
+  private generation = 0;
   async unlock() {
     this.context ??= new AudioContext();
     await this.context.resume();
@@ -37,7 +38,9 @@ export class AudioEngine {
     };
   }
   async play(events: MidiEvent[], rate = 1) {
+    const generation = ++this.generation;
     const ctx = await this.unlock();
+    if (generation !== this.generation) return;
     this.stop();
     const origin = ctx.currentTime + 0.05;
     pairNotes(events).forEach((n) =>
@@ -50,17 +53,19 @@ export class AudioEngine {
       ),
     );
   }
-  async metronome(bpm: number, count?: number) {
+  async metronome(bpm: number, count?: number, alignment?: { startAtMs: number; beatOffset: number }) {
+    const generation = ++this.generation;
     const ctx = await this.unlock();
+    if (generation !== this.generation) return;
     this.stop();
-    let next = ctx.currentTime + 0.05,
+    let next = ctx.currentTime + (alignment ? Math.max(0, alignment.startAtMs - performance.now()) / 1000 : 0.05),
       beat = 0;
     const schedule = () => {
       while (
         next < ctx.currentTime + 0.1 &&
         (count === undefined || beat < count)
       ) {
-        this.tone(ctx, beat % 4 === 0 ? 96 : 89, next, 0.035, 65);
+        this.tone(ctx, (beat + (alignment?.beatOffset ?? 0)) % 4 === 0 ? 96 : 89, next, 0.035, 65);
         next += 60 / bpm;
         beat++;
       }
@@ -73,6 +78,7 @@ export class AudioEngine {
     schedule();
   }
   stop() {
+    this.generation++;
     if (this.interval) clearInterval(this.interval);
     this.interval = null;
     this.nodes.forEach((n) => {

@@ -1,10 +1,13 @@
 import { polyphonicXml } from "./polyphonic-score";
+import { structuredMusicXml } from "./structured-score";
 export type Hand = "both" | "right" | "left";
 export type ScoreNote = {
   pitch: number;
   beats: number;
   tie: boolean;
   finger?: number;
+  rest?: boolean;
+  spelling?: { step: "C" | "D" | "E" | "F" | "G" | "A" | "B"; alter: number; octave: number };
 };
 export type Exercise = {
   number: number;
@@ -12,6 +15,7 @@ export type Exercise = {
   tempoBpm?: number;
   beatsPerMeasure?: number;
   measuresPerSystem?: number;
+  keySignature?: { fifths: number; mode: "major" | "minor" };
   right: ScoreNote[][];
   left: ScoreNote[][];
   polyphony?: SoundNote[];
@@ -53,6 +57,7 @@ export function soundingNotes(
       tied = false;
     for (const bar of exercise[h])
       for (const n of bar) {
+        if (n.rest) { beat += n.beats; tied = false; previous = undefined; continue; }
         if (tied && previous?.pitch === n.pitch) previous.beats += n.beats;
         else {
           previous = { pitch: n.pitch, beat, beats: n.beats, hand: h };
@@ -148,6 +153,7 @@ export function musicXml(
   finalPage = true,
 ) {
   if (exercise.polyphony) return polyphonicXml(exercise);
+  if (exercise.keySignature) return structuredMusicXml(exercise);
   const beatsPerMeasure = exercise.beatsPerMeasure ?? 4;
   const clef = (i: number) =>
     exercise.beatsPerMeasure === 2 && exercise.right[i][0].pitch < 60

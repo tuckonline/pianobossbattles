@@ -5,6 +5,7 @@ import {
   scoringSchema,
 } from "../blocks/schema";
 import { pairNotes } from "../music/model";
+import type { TimingWindow } from "./timing";
 export interface Analysis {
   overall: number;
   passed: boolean;
@@ -16,6 +17,9 @@ export interface Analysis {
   problemMeasures: number[];
   matched: number;
   version: "1";
+  matches: { expected: number; actual: number; delta: number }[];
+  pendingNotes: number[];
+  incorrectNotes: { expected: number; actual: number; delta: number }[];
 }
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 export function scorePerformance(
@@ -23,6 +27,7 @@ export function scorePerformance(
   actual: MidiEvent[],
   profile: ScoringProfile,
   tempo = profile.targetTempo,
+  timing?: { fixedOrigin: number; matchWindowMs: number; windows?: TimingWindow[]; observedUntilMs?: number },
 ): Analysis {
   scoringSchema.parse(profile);
   const reference = pairNotes(expected),
@@ -33,14 +38,43 @@ export function scorePerformance(
     early: number[] = [],
     late: number[] = [];
   const matches: { e: number; a: number; delta: number }[] = [];
-  const origin = played[0]?.onset ?? 0,
-    expectedOrigin = reference[0]?.onset ?? 0;
-  reference.forEach((e, i) => {
+  const origin = timing?.fixedOrigin ?? played[0]?.onset ?? 0,
+    expectedOrigin = timing ? 0 : reference[0]?.onset ?? 0;
+  const pending: number[] = [], incorrect: Analysis["incorrectNotes"] = [];
+  const pendingActual = new Set<number>();
+  if (timing?.windows) {
+    const windows = timing.windows, consumed = new Set<number>();
+    const due = (i:number) => (reference[i].onset-expectedOrigin)*rate;
+    const delta = (i:number,j:number) => played[j].onset-origin-due(i);
+    const inside = (i:number,j:number) => delta(i,j) >= -windows[i].early && delta(i,j) <= windows[i].late;
+    const expired = (i:number) => (timing.observedUntilMs ?? Infinity) > due(i)+windows[i].late;
+    // Consume incoming attacks chronologically. Ownership includes already-used
+    // targets: a second attack cannot slide forward into the next repeated note.
+    played.forEach((a,j)=>{
+      const owner = reference.map((_,i)=>i).filter(i=>reference[i].pitch===a.pitch&&inside(i,j))
+        .sort((a,b)=>Math.abs(delta(a,j))-Math.abs(delta(b,j))||a-b)[0];
+      if(owner===undefined||consumed.has(owner))return;
+      consumed.add(owner);used.add(j);matches.push({e:owner,a:j,delta:delta(owner,j)});
+    });
+    // Pair a wrong-pitch substitution once, after its target's late deadline.
+    // Until then it remains pending and a subsequent correct attack may win.
+    played.forEach((_,j)=>{
+      if(used.has(j))return;
+      const owner = reference.map((_,i)=>i).filter(i=>!consumed.has(i)&&reference[i].pitch!==played[j].pitch&&inside(i,j))
+        .sort((a,b)=>Math.abs(delta(a,j))-Math.abs(delta(b,j))||a-b)[0];
+      if(owner===undefined)return;
+      if(!expired(owner)){pendingActual.add(j);return;}
+      consumed.add(owner);used.add(j);incorrect.push({expected:owner,actual:j,delta:delta(owner,j)});
+    });
+    reference.forEach((_,i)=>{if(!consumed.has(i))(expired(i)?missed:pending).push(i);});
+    matches.sort((a,b)=>a.e-b.e);
+  } else reference.forEach((e, i) => {
     let best = -1,
       distance = Infinity;
     played.forEach((a, j) => {
       if (used.has(j) || a.pitch !== e.pitch) return;
       const d = Math.abs(a.onset - origin - (e.onset - expectedOrigin) * rate);
+      if (timing && d > timing.matchWindowMs) return;
       if (d < distance) {
         best = j;
         distance = d;
@@ -57,11 +91,11 @@ export function scorePerformance(
     if (delta < -profile.onsetTolerance) early.push(i);
     if (delta > profile.onsetTolerance) late.push(i);
   });
-  const extra = played.map((_, i) => i).filter((i) => !used.has(i));
+  const extra = played.map((_, i) => i).filter((i) => !used.has(i)&&!pendingActual.has(i));
   const average = (values: number[]) =>
     values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   const pitch = reference.length
-    ? (100 * matches.length) / (reference.length + extra.length)
+    ? (100 * matches.length) / Math.max(1, timing?.windows ? Math.max(reference.length-pending.length,matches.length+incorrect.length+extra.length) : reference.length + extra.length)
     : 0;
   const rhythm = average(
     matches.map((m) =>
@@ -178,5 +212,8 @@ export function scorePerformance(
     ],
     matched: matches.length,
     version: "1",
+    matches: matches.map(m => ({ expected:m.e, actual:m.a, delta:m.delta })),
+    pendingNotes: pending,
+    incorrectNotes: incorrect,
   };
 }

@@ -24,7 +24,9 @@ export function NotationViewer({
   autoFitSingleSystem = false,
   hideTitle = false,
   broadcastFit = false,
+  broadcastPageWidth = 2200,
   onDisplayedZoom,
+  onReadyChange,
   noteFeedback,
   followOptions = { enabled: true, topPercent: 0, bottomPercent: 0 },
 }: {
@@ -41,7 +43,9 @@ export function NotationViewer({
   autoFitSingleSystem?: boolean;
   hideTitle?: boolean;
   broadcastFit?: boolean;
+  broadcastPageWidth?: number;
   onDisplayedZoom?: (percent:number)=>void;
+  onReadyChange?: (ready:boolean)=>void;
   noteFeedback?: NoteFeedback[];
   followOptions?: ScoreFollowOptions;
 }) {
@@ -90,6 +94,7 @@ export function NotationViewer({
     [page, setPage] = useState(1),
     [pages, setPages] = useState(1);
   const [singleSystem,setSingleSystem]=useState(false);
+  useEffect(() => { onReadyChange?.(fresh && !!svg && !error); }, [fresh, svg, error, onReadyChange]);
   const engraving=useRef<{key:string;svg:string;single:boolean;pages:number}|null>(null);
   const enlargeSingle=autoFitSingleSystem && !displaySize && singleSystem;
   useEffect(() => {
@@ -97,7 +102,7 @@ export function NotationViewer({
     let cancelled = false;
     let destroy: (() => void) | undefined;
     const controller = new AbortController();
-    const key=JSON.stringify([url,suppliedXml,page,compact,fixedScale,scale,availableWidth,fitWidth,hideTitle,broadcastFit,consistentScale]);
+    const key=JSON.stringify([url,suppliedXml,page,compact,fixedScale,scale,availableWidth,fitWidth,hideTitle,broadcastFit,broadcastPageWidth,consistentScale]);
     const display=async(value:{svg:string;single:boolean;pages:number})=>{
       const remaining=100-(performance.now()-transition.current.started);
       if(transition.current.started&&remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));
@@ -167,7 +172,7 @@ export function NotationViewer({
           ...(suppliedXml
             ? { breaks: fixedScale ? "auto" : "encoded", adjustPageWidth: fixedScale || !compact }
             : {}),
-          ...(broadcastFit ? { scale: 38, pageWidth: 2200, pageHeight: 8000,
+          ...(broadcastFit ? { scale: 38, pageWidth: broadcastPageWidth, pageHeight: 8000,
             header: "none", footer: "none", pageMarginTop: 20, pageMarginBottom: 20,
             pageMarginLeft: 40, pageMarginRight: 40, minLastJustification: 0,
             breaks: consistentScale ? "auto" : "encoded", adjustPageWidth: false } : {}),
@@ -244,7 +249,7 @@ export function NotationViewer({
       destroy?.();
       destroy=undefined;
     };
-  }, [identity, pending, url, suppliedXml, page, compact, fixedScale, scale, availableWidth, fitWidth, hideTitle, broadcastFit, consistentScale]);
+  }, [identity, pending, url, suppliedXml, page, compact, fixedScale, scale, availableWidth, fitWidth, hideTitle, broadcastFit, broadcastPageWidth, consistentScale]);
   useLayoutEffect(()=>{
     if (!broadcastFit && (!singleSystem || !(enlargeSingle || fitWidth))) return;
     const pages=container.current?.querySelectorAll<SVGSVGElement>(':scope > svg');
