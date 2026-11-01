@@ -30,6 +30,8 @@ export type RunConfig = {
   tempo: number;
   gradingVersion?: 2;
   curriculumVersion?: 2;
+  studyVersion?: 2;
+  positionVersion?: 1;
   difficulty?: number;
 };
 export type Section = { start: number; end: number; title: string };

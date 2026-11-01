@@ -1,5 +1,8 @@
+import { PracticeHome } from "./practice-home";
+import { FingeringProvider, FingeringControl, useFingering } from "./fingering-assistance";
+import { filterFingerings } from "../src/domains/notation/fingering-assistance";
 /* eslint-disable @next/next/no-html-link-for-pages -- Public Vite application. */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { MidiSetup } from "../src/components/midi/setup";
 import { BrandEmblem } from "./brand-emblem";
@@ -8,6 +11,7 @@ import { supabase, syncServerSession } from "./supabase";
 import {
   clockworkKingdom,
   challengeById,
+  challengeAtDifficulty,
   unlocked,
 } from "../src/domains/realms/registry";
 import { realmScore, sliceStudy } from "../src/domains/realms/content";
@@ -24,8 +28,21 @@ import { NotationViewer } from "../src/components/music/notation";
 import { musicXml } from "../hosted/sight-library";
 import "./realm.css";
 import { musicalTiers } from "../src/domains/music-generator/difficulty-profiles";
+import { PracticeStudio, RoyalMusicShop, useMusicRoom } from "./music-room";
+import { PracticeGoldContext, usePracticeGold } from "./practice-gold";
+import { HandPositionGuide } from "./hand-position-guide";
+import { RealmClock, RealmTransition, useRealmAnimations } from "./realm-animation";
+import { clockRestoration, type RealmAnimation, type AnimationPreference } from "../src/domains/realms/presentation";
 
 export function RealmHome({ user }: { user: User }) {
+  return <FingeringProvider userId={user.id}><RealmContent user={user}/></FingeringProvider>;
+}
+function RealmContent({ user }: { user: User }) {
+  const animations = useRealmAnimations(user.id);
+  const markPresentationFinished = animations.finish;
+  const [presentation, setPresentation] = useState<RealmAnimation | null>(null);
+  const [pendingReveal, setPendingReveal] = useState<string | null>(null);
+  const entranceStarted = useRef(false), home = useRef<HTMLDivElement>(null), wasPresenting = useRef(false);
   const [difficulty, setDifficulty] = useState(() => {
     try {
       const saved = Number(
@@ -36,11 +53,21 @@ export function RealmHome({ user }: { user: User }) {
       return 1;
     }
   });
+  const fingering = useFingering(difficulty);
   const tier = musicalTiers[difficulty - 1];
   const storage = useRealmProgress(user.id, difficulty);
+  const room = useMusicRoom(user.id);
+  const practiceGold = usePracticeGold(user.id, room.accept);
+  const acceptEconomy = room.accept;
+  useEffect(() => { acceptEconomy(storage.economy); }, [storage.economy, acceptEconomy]);
+  const [studioPiece, setStudioPiece] = useState<string>();
+  const [starting, setStarting] = useState(false), startingRef = useRef(false);
   const saveAttempt = storage.save;
   const [connected, setConnected] = useState(false),
     [screen, setScreen] = useState<
+      | "home"
+      | "session"
+      | "progress"
       | "map"
       | "details"
       | "play"
@@ -49,7 +76,9 @@ export function RealmHome({ user }: { user: User }) {
       | "victory"
       | "defeat"
       | "free"
-    >("map");
+      | "studio"
+      | "shop"
+    >(new URLSearchParams(location.search).get("mode")==="adventure"?"map":"home");
   const [config, setConfig] = useState<RunConfig>({
     version: 1,
     challengeId: "steady-pulse",
@@ -57,6 +86,8 @@ export function RealmHome({ user }: { user: User }) {
     key: "C",
     tempo: tier.tempo,
     curriculumVersion: 2,
+    studyVersion: 2,
+    positionVersion: 1,
     difficulty,
   });
   const [run, setRun] = useState<{
@@ -69,14 +100,7 @@ export function RealmHome({ user }: { user: User }) {
   const [error, setError] = useState("");
   const originalChallenge = challengeById(config.challengeId);
   const c = useMemo(
-      () =>
-        difficulty < 3 && originalChallenge.kind === "precision"
-          ? {
-              ...originalChallenge,
-              objective:
-                "Preparation: reach 70% pitch and rhythm accuracy with an even pulse. Dotted rhythms begin at Intermediate.",
-            }
-          : originalChallenge,
+      () => challengeAtDifficulty(originalChallenge, difficulty),
       [difficulty, originalChallenge],
     ),
     realm = clockworkKingdom;
@@ -90,9 +114,41 @@ export function RealmHome({ user }: { user: User }) {
   const completed = realm.challenges.filter(
     (c) => storage.progress.challenges[c.id]?.completed,
   ).length;
+  const restored = clockRestoration(storage.progress);
+  useEffect(() => {
+    if (!storage.ready || screen !== "map" || entranceStarted.current) return;
+    entranceStarted.current = true;
+    setPresentation({ type: "realm-enter", firstVisit: !animations.metadata.seen.includes("realm:clockwork-kingdom") });
+  }, [storage.ready, screen, animations.metadata.seen]);
+  useEffect(() => {
+    if (!pendingReveal || screen !== "results" || run?.id !== pendingReveal) return;
+    const saved = storage.confirmed[pendingReveal], award = storage.awards[pendingReveal];
+    if (!saved || !award) return;
+    setPendingReveal(null);
+    setResult(saved.result);
+    setPresentation(saved.result.passed ? {
+      type: "trial-complete", trialId: run.config.challengeId, difficulty: run.config.difficulty ?? 1,
+      firstClear: saved.firstClear && !animations.metadata.seen.includes(`clear:${run.config.difficulty ?? 1}:${run.config.challengeId}`),
+      stars: saved.result.stars, goldEarned: award.amount, accuracy: saved.result.accuracy, improved: saved.improved,
+    } : { type: "trial-failed", trialId: run.config.challengeId });
+  }, [pendingReveal, screen, run, storage.confirmed, storage.awards, animations.metadata.seen]);
+  useEffect(() => {
+    if (wasPresenting.current && !presentation) {
+      const heading = home.current?.querySelector<HTMLElement>("h1");
+      heading?.setAttribute("tabindex", "-1");
+      heading?.focus({ preventScroll: true });
+    }
+    wasPresenting.current = !!presentation;
+  }, [presentation]);
+  const finishPresentation = useCallback(() => {
+    if (presentation) markPresentationFinished(presentation);
+    setPresentation(null);
+  }, [presentation, markPresentationFinished]);
   const returnMap = () => {
+    setPendingReveal(null);
     setRun(null);
     setScreen("map");
+    if (screen !== "map") setPresentation({ type: "realm-enter", firstVisit: false });
   };
   const cinematicDone = useCallback(
     () => setScreen((s) => (s === "intro" ? "details" : "results")),
@@ -106,6 +162,10 @@ export function RealmHome({ user }: { user: User }) {
     ) => {
       if (!run) return;
       setResult(next);
+      if (!run.practice && c.kind !== "boss") {
+        if (next.passed) setPendingReveal(run.id);
+        else setPresentation({ type: "trial-failed", trialId: run.config.challengeId });
+      }
       if (!run.practice)
         void saveAttempt({ id: run.id, config: run.config, events, elapsedMs });
       setScreen(
@@ -118,36 +178,40 @@ export function RealmHome({ user }: { user: User }) {
     },
     [run, c.kind, saveAttempt],
   );
-  const start = (
+  const start = async (
     practice = false,
     section?: PerformanceResult["weak"],
     hand?: "left" | "right",
+    repeatScore?: RealmScore,
   ) => {
     if (
-      !prepared.score ||
+      startingRef.current || !prepared.score ||
       !storage.ready ||
       (!practice && !unlocked(c.id, storage.progress))
     )
       return;
-    const score = section
+    const score = repeatScore ?? (section
       ? sliceStudy(
           prepared.score,
           section,
           Math.max(40, config.tempo - 15),
           hand,
         )
-      : prepared.score;
-    setRun({
-      score,
-      practice,
-      id: crypto.randomUUID(),
-      config: { ...config, gradingVersion: 2 },
-    });
-    setResult(null);
-    setScreen("play");
+      : prepared.score);
+    startingRef.current = true; setStarting(true); setError("");
+    setPendingReveal(null);
+    setPresentation(null);
+    try {
+      const id = crypto.randomUUID(), runConfig: RunConfig = { ...config, gradingVersion: 2 };
+      if (!practice) await storage.begin(id, runConfig);
+      setRun({ score, practice, id, config: runConfig });
+      setResult(null); setScreen("play");
+    } catch (e) { setError((e as Error).message); }
+    finally { startingRef.current = false; setStarting(false); }
   };
   return (
-    <div className="realm-home" data-notation-preset="studio">
+    <PracticeGoldContext.Provider value={practiceGold.record}>
+    <div ref={home} className="realm-home" data-notation-preset="studio" data-animation-preference={animations.metadata.preference}>
       <header className="realm-header">
         <a href="/" className="realm-brand">
           <BrandEmblem className="realm-emblem" />{" "}
@@ -167,11 +231,17 @@ export function RealmHome({ user }: { user: User }) {
                   : "Loading your progress…"}
           </small>
         </div>
-        <button disabled={screen === "play"} onClick={() => setScreen("free")}>
+        {screen !== "play" && screen !== "session" && <label className="realm-animation-setting">Animations
+          <select aria-label="Animation preference" value={animations.metadata.preference}
+            onChange={e => animations.setPreference(e.target.value as AnimationPreference)}>
+            <option value="balanced">Balanced</option><option value="cinematic">Cinematic</option><option value="minimal">Minimal</option>
+          </select>
+        </label>}
+        <button disabled={starting || !!presentation || (screen === "play" || screen === "session")} onClick={() => { setPendingReveal(null); setScreen("free"); }}>
           Free practice
         </button>
         <button
-          disabled={screen === "play"}
+          disabled={starting || (screen === "play" || screen === "session")}
           onClick={() =>
             void (async () => {
               try {
@@ -187,6 +257,18 @@ export function RealmHome({ user }: { user: User }) {
           Log out
         </button>
       </header>
+      {!["play", "session", "intro", "victory", "defeat", "free"].includes(screen) && !(screen === "studio" && studioPiece) && <nav className="realm-navigation" aria-label="Main destinations">
+        <button disabled={!!presentation} onClick={()=>setScreen("home")}>Home</button>
+        <button disabled={!!presentation} onClick={()=>setScreen("free")}>Infinite Practice</button>
+        <button disabled={!!presentation} onClick={()=>setScreen("progress")}>Progress</button>
+        <button disabled={starting || !!presentation} aria-current={screen === "map" || screen === "details" || screen === "results" ? "page" : undefined} onClick={returnMap}>Adventure Mode</button>
+        <button disabled={starting || !!presentation} aria-current={screen === "studio" ? "page" : undefined} onClick={() => { setPendingReveal(null); setStudioPiece(undefined); setScreen("studio"); void room.refresh(); }}>Practice Studio</button>
+        <button disabled={starting || !!presentation} aria-current={screen === "shop" ? "page" : undefined} onClick={() => { setPendingReveal(null); setScreen("shop"); void room.refresh(); }}>Royal Music Shop</button>
+        <span className="music-gold" aria-label="Gold balance">{room.economy?.gold ?? "—"} gold</span>
+        <small aria-label="Progress toward next gold">{Math.floor(((room.economy?.practiceMs ?? 0) % 72000) / 1000)} / 72 seconds toward next gold</small>
+      </nav>}
+      {(screen === "shop" || screen === "studio") && room.error && <p className="realm-alert" role="alert">{room.error} <button onClick={() => void room.refresh()}>Retry music library</button></p>}
+      {practiceGold.error && <p className="realm-alert" role="status">{practiceGold.error}</p>}
       <div
         className="realm-midi"
         hidden={
@@ -211,12 +293,19 @@ export function RealmHome({ user }: { user: User }) {
         </div>
       )}
       {(screen === "intro" || screen === "victory" || screen === "defeat") && (
-        <RealmCinematic kind={screen} onDone={cinematicDone} />
+        <RealmCinematic kind={screen} onDone={cinematicDone} minimal={animations.metadata.preference === "minimal"} />
       )}
+      {screen === "map" && !presentation && <button onClick={() => setPresentation({type:"realm-enter",firstVisit:true})}>Replay Cinematic</button>}
+      {presentation && screen !== "play" && <RealmTransition event={presentation} preference={animations.metadata.preference}
+        reduced={animations.reduced} difficulty={difficulty} restored={restored} onDone={finishPresentation}/>}
+      {(screen === "home" || screen === "session") && <PracticeHome userId={user.id} difficulty={difficulty} connected={connected} active={screen === "session"} onStart={()=>setScreen("session")} onHome={()=>setScreen("home")} accept={room.accept}/>}
+      {screen === "progress" && <section className="practice-home"><h1>Your progress</h1><p>{tier.name}: {completed} of 6 adventure challenges completed.</p><p>{storage.progress.rewards.length} adventure keepsakes earned at this difficulty.</p><button onClick={()=>setScreen("home")}>View recent practice on Home</button></section>}
       {screen === "free" && (
-        <ClassicalPractice connected={connected} onClose={returnMap} />
+        <ClassicalPractice userId={user.id} connected={connected} onClose={()=>setScreen("home")} />
       )}
-      {(screen === "map" || screen === "details") && (
+      {screen === "shop" && <RoyalMusicShop room={room} onPractice={id => { setStudioPiece(id); setScreen("studio"); }}/ >}
+      {screen === "studio" && <PracticeStudio room={room} connected={connected} selectedId={studioPiece} onOpenPiece={setStudioPiece} onClosePiece={() => setStudioPiece(undefined)} onGenerate={() => setScreen("free")}/>}
+      {!presentation && (screen === "map" || screen === "details") && (
         <section
           className="realm-difficulty"
           aria-label="Musical difficulty settings"
@@ -225,7 +314,7 @@ export function RealmHome({ user }: { user: User }) {
             Musical difficulty
             <select
               value={difficulty}
-              disabled={storage.saving}
+              disabled={starting || storage.saving}
               onChange={(e) => {
                 const next = Number(e.target.value);
                 setDifficulty(next);
@@ -233,6 +322,8 @@ export function RealmHome({ user }: { user: User }) {
                   ...config,
                   difficulty: next,
                   curriculumVersion: 2,
+                  studyVersion: 2,
+                  positionVersion: 1,
                   tempo: musicalTiers[next - 1].tempo,
                   seed: 1,
                 });
@@ -266,15 +357,10 @@ export function RealmHome({ user }: { user: User }) {
           </div>
         </section>
       )}
-      {screen === "map" && (
+      {screen === "map" && !presentation && (
         <>
           <section className="realm-hero">
-            <div className="realm-clock" aria-hidden="true">
-              <i />
-              <i />
-              <span>XII</span>
-              <b>VI</b>
-            </div>
+            <RealmClock {...restored}/>
             <div className="realm-hero-copy">
               <span className="realm-eyebrow">
                 CHAPTER I · RHYTHM & COORDINATION
@@ -299,7 +385,8 @@ export function RealmHome({ user }: { user: User }) {
             className="realm-map"
             aria-label="Clockwork Kingdom challenges"
           >
-            {realm.challenges.map((trial, i) => {
+            {realm.challenges.map((challenge, i) => {
+              const trial = challengeAtDifficulty(challenge, difficulty);
               const record = storage.progress.challenges[trial.id],
                 available =
                   storage.ready && unlocked(trial.id, storage.progress);
@@ -310,13 +397,22 @@ export function RealmHome({ user }: { user: User }) {
                   disabled={!available}
                   data-complete={record?.completed ?? false}
                   onClick={() => {
-                    setConfig(
-                      record?.lastConfig ?? {
+                    setConfig({
+                      ...(record?.lastConfig ?? {
                         ...config,
                         challengeId: trial.id,
                         seed: 1,
-                      },
-                    );
+                      }),
+                      // A new attempt uses the current lessons. Saved receipts
+                      // retain their original version for authoritative regrading.
+                      curriculumVersion: 2,
+                      studyVersion: 2,
+                      positionVersion: 1,
+                      difficulty,
+                    });
+                    setPendingReveal(null);
+                    if (trial.kind !== "boss") setPresentation({ type: "trial-enter", trialId: trial.id,
+                      firstVisit: !animations.metadata.seen.includes(`entry:${trial.id}`) });
                     setScreen(trial.kind === "boss" ? "intro" : "details");
                   }}
                 >
@@ -335,11 +431,7 @@ export function RealmHome({ user }: { user: User }) {
                     </span>
                     <h2>{trial.title}</h2>
                     <p>
-                      {trial.kind === "precision" && difficulty < 3
-                        ? "Steady pulse preparation"
-                        : trial.kind === "streak" && difficulty === 1
-                          ? "Quarter notes & continuity"
-                          : trial.subtitle}
+                      {trial.subtitle}
                     </p>
                     <span
                       className="realm-stars"
@@ -387,9 +479,9 @@ export function RealmHome({ user }: { user: User }) {
           </footer>
         </>
       )}
-      {screen === "details" && (
+      {screen === "details" && !presentation && (
         <section className="realm-details">
-          <button className="quiet" onClick={returnMap}>
+          <button className="quiet" disabled={starting} onClick={returnMap}>
             ← Return to realm
           </button>
           <span className="realm-eyebrow">
@@ -401,6 +493,7 @@ export function RealmHome({ user }: { user: User }) {
             Stars use the lower of pitch and rhythm accuracy: 70% ★ · 85% ★★ ·
             95% ★★★. Finish the entire score; mistakes never end a trial early.
           </p>
+          <details><summary>Gold rewards</summary><p>Earn 1 gold per 72 seconds of active MIDI practice (about 50 per hour), in trials, focused practice, or Practice Studio. Partial progress carries over. Mistakes still count; paused time and idle gaps of more than 10 seconds do not.</p><p>First clear: +2 gold per trial, +5 for the King, once across all difficulties. Replays earn the same practice rate without extra completion payouts.</p></details>
           <div className="realm-settings">
             <label>
               Tempo (BPM)
@@ -410,6 +503,7 @@ export function RealmHome({ user }: { user: User }) {
                 max={160}
                 step={1}
                 value={config.tempo}
+                disabled={starting}
                 onChange={(e) =>
                   setConfig({
                     ...config,
@@ -425,6 +519,7 @@ export function RealmHome({ user }: { user: User }) {
               Key
               <select
                 value={config.key}
+                disabled={starting}
                 onChange={(e) =>
                   setConfig({
                     ...config,
@@ -444,6 +539,7 @@ export function RealmHome({ user }: { user: User }) {
                 min={0}
                 max={4294967295}
                 value={config.seed}
+                disabled={starting}
                 onChange={(e) =>
                   setConfig({
                     ...config,
@@ -456,6 +552,7 @@ export function RealmHome({ user }: { user: User }) {
               />
             </label>
             <button
+              disabled={starting}
               onClick={() =>
                 setConfig({
                   ...config,
@@ -468,14 +565,14 @@ export function RealmHome({ user }: { user: User }) {
             <button
               className="primary"
               disabled={
-                !prepared.score ||
+                starting || !prepared.score ||
                 !connected ||
                 !storage.ready ||
                 !!storage.error
               }
               onClick={() => start()}
             >
-              Enter trial
+              {starting ? "Preparing trial…" : "Enter trial"}
             </button>
           </div>
           {c.kind === "coordination" && (
@@ -535,10 +632,12 @@ export function RealmHome({ user }: { user: User }) {
             </p>
           )}
           {prepared.error && <p role="alert">{prepared.error}</p>}
+          <FingeringControl difficulty={difficulty}/>
+          {prepared.score && fingering.level !== "off" && <HandPositionGuide key={JSON.stringify(config)} exercise={prepared.score.exercise}/>}
           {prepared.score && (
             <div className="realm-preview" data-broadcast-viewport="realm">
               <NotationViewer
-                xml={musicXml(prepared.score.exercise)}
+                xml={filterFingerings(musicXml(prepared.score.exercise),fingering.level)}
                 activeMeasure={0}
                 broadcastFit
                 hideTitle
@@ -556,6 +655,7 @@ export function RealmHome({ user }: { user: User }) {
         <RealmPerformance
           key={run.id}
           score={run.score}
+          fingeringLevel={fingering.level}
           challenge={c}
           connected={connected}
           practice={run.practice}
@@ -563,7 +663,7 @@ export function RealmHome({ user }: { user: User }) {
           onExit={returnMap}
         />
       )}
-      {screen === "results" && result && (
+      {screen === "results" && result && !presentation && (
         <section className="realm-results">
           <span className="realm-eyebrow">
             {run?.practice
@@ -583,11 +683,15 @@ export function RealmHome({ user }: { user: User }) {
           <p className="realm-overall">
             Overall accuracy: <strong>{result.accuracy}%</strong>
           </p>
+          {!run?.practice && <div className="realm-gold-reward" role="status">
+            {run && storage.awards[run.id] ? <><strong>Milestone gold: +{storage.awards[run.id].amount}</strong><p>Total gold: {room.economy?.gold ?? storage.economy?.gold ?? "—"}</p><p>{storage.awards[run.id].reason}</p></> : <p>{storage.error ? "Your milestone bonus will be confirmed when this attempt saves. Retry saving above." : "Confirming your milestone bonus…"}</p>}
+          </div>}
           <p>
             {run?.practice
               ? "Practice complete. Return to the full trial when you are ready."
               : result.passed
-                ? `You earned ${c.reward}.`
+                ? !run || !storage.confirmed[run.id] ? "Your completion is waiting to save."
+                  : storage.confirmed[run.id].firstClear ? `You earned ${c.reward}.` : `${c.reward} is already restored.`
                 : "The trial is complete. A few passages need another visit."}
           </p>
           <div className="realm-result-metrics">
@@ -702,6 +806,7 @@ export function RealmHome({ user }: { user: User }) {
                   : `Best: ${storage.progress.challenges[c.id]?.bestStars ?? 0} stars · ${storage.progress.challenges[c.id]?.attempts ?? 0} attempts`}
           </p>
           <div className="realm-result-actions">
+            {fingering.next && <button onClick={() => { fingering.setPreference(fingering.next!); void start(run?.practice ?? false, undefined, undefined, run?.score); }}>Try Again {fingering.next === "off" ? "Without Finger Numbers" : `with ${fingering.next === "light" ? "Light" : "Minimal"} Guidance`}</button>}
             <button className="primary" onClick={() => start()}>
               Retry full trial
             </button>
@@ -719,5 +824,6 @@ export function RealmHome({ user }: { user: User }) {
         </section>
       )}
     </div>
+    </PracticeGoldContext.Provider>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CinematicVideo } from "./cinematic-video";
 export function ClockworkPortrait({ large = false }: { large?: boolean }) {
   return (
     <svg
@@ -53,18 +54,26 @@ export function ClockworkPortrait({ large = false }: { large?: boolean }) {
 export function RealmCinematic({
   kind,
   onDone,
+  minimal = false,
 }: {
   kind: "intro" | "victory" | "defeat";
   onDone: () => void;
+  minimal?: boolean;
 }) {
   const [reduced] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   useEffect(() => {
+    if (minimal) { onDone(); return; }
     if (reduced) return;
-    const timer = setTimeout(onDone, kind === "intro" ? 8000 : 5000);
+    if (kind === "intro") return;
+    const timer = setTimeout(onDone, 5000);
     return () => clearTimeout(timer);
-  }, [kind, onDone, reduced]);
+  }, [kind, onDone, reduced, minimal]);
+  if (minimal) return null;
+  if (kind === "intro" && !reduced) return <CinematicVideo src="/cinematics/clockwork-king-intro.mp4"
+    heading="THE CLOCKWORK KING" subtitle="THE GRAND TRIAL OF TIME" eyebrow="FINAL ENCOUNTER"
+    label="Clockwork King introduction" skipLabel="Skip cinematic" zoom={1} holdEnding={false} onDone={onDone}/>;
   return (
     <section
       className={`realm-cinematic ${kind}`}

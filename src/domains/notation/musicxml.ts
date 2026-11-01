@@ -110,6 +110,11 @@ export function importMusicXml(xml: string): MusicalScore {
               hand: "UNSPECIFIED",
               voice,
             };
+            // Retain a simple authored finger number in the imported model.
+            // More elaborate markings remain untouched in the original XML.
+            const technical = array(n.find(x => x.notations)?.notations).find(x => x.technical)?.technical;
+            const fingering = Number(value(technical, "fingering"));
+            if (Number.isInteger(fingering) && fingering >= 1 && fingering <= 5) note.fingering = fingering;
             score.notes.push(note);
           }
           previous = onset;

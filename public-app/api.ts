@@ -9,6 +9,8 @@ import { PostgresBridge } from "./postgres";
 import { handleMusic, authorizeMusicCommand, readMusicExercise } from "./music-service";
 import { z } from "zod";
 import { realmCommand } from "./realm-service";
+import { lessonCommand } from "./lesson-service";
+import { musicRoomCommand } from "./music-room-service";
 
 types.setTypeParser(20, Number);
 types.setTypeParser(1700, Number);
@@ -68,6 +70,8 @@ return async function handleApi(request: Request, pool: Pool | null): Promise<Re
       ? handleScoreSignaling(request, db, user.id) : handleOverlay(request, db, user.id);
     if (url.pathname === "/api/shorts") return handleShorts(request, db, user.id);
     const actor = await service.ensureUser(user.id, user.email!, String(user.user_metadata.name ?? "Pianist").slice(0,80));
+    if (url.pathname === "/api/lessons" && request.method === "POST") return Response.json(await lessonCommand(pool,user.id,await request.json()));
+    if (url.pathname === "/api/music-room" && request.method === "POST") return Response.json(await musicRoomCommand(pool,user.id,await request.json()));
     if (url.pathname === "/api/realms" && request.method === "POST") return Response.json(await realmCommand(pool,user.id,await request.json()));
     if (url.pathname === "/api/profile" && request.method === "GET") return Response.json({
       actor,

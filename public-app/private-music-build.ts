@@ -14,7 +14,7 @@ export function privateMusicBuild():Plugin{return {
  generateBundle(_options,bundle){for(const output of Object.values(bundle))if(output.type==='chunk'){
   for(const moduleId of Object.keys(output.modules)){
    const path=moduleId.replaceAll('\\','/');
-   if(path.includes('/hosted/data/')||path.endsWith('/catalog-seed.json')||/\/hosted\/(practice|scales)-library\.ts$/.test(path))this.error(`Private music data entered the browser bundle: ${path}`);
+   if(path.includes('/hosted/data/')||path.endsWith('/catalog-seed.json')||path.endsWith('/royal-scores.json')||/\/hosted\/(practice|scales)-library\.ts$/.test(path))this.error(`Private music data entered the browser bundle: ${path}`);
   }
  }},
  configureServer(server){server.middlewares.use((req,res,next)=>{

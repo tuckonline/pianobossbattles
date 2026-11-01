@@ -1,0 +1,53 @@
+/* Scope legacy sidebar/light-theme resets to the learning workspace only. */
+.public-app .learning-workspace {
+  --ink:#e9f2f5; --muted:#b4c8d4; --surface:#102636;
+  --line:#355260; --accent:#7fe2d6; --focus:#dfbf78;
+  color-scheme:dark; max-width:1280px; padding:0 8px 28px;
+}
+.public-app .learning-workspace .learning-header {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  gap:12px 24px; padding:18px 0 14px; border-bottom:1px solid var(--line);
+}
+.public-app .learning-workspace .learning-brand h1 {
+  font:500 clamp(24px,2.4vw,32px)/1.15 Georgia,serif; letter-spacing:-.5px; margin:0 0 4px;
+}
+.public-app .learning-workspace .learning-brand p {margin:0;font-size:13px;color:var(--muted);}
+.public-app .learning-workspace .learning-header-controls {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.public-app .learning-workspace .learning-gold {color:var(--realm-gold);font-weight:700;white-space:nowrap;font-size:14px;}
+.public-app .learning-workspace .realm-nav {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 18px;padding:0;}
+.public-app .learning-workspace .realm-nav button {flex:0 0 auto;min-height:44px;padding:10px 16px;white-space:nowrap;}
+.public-app .learning-workspace .realm-nav button[aria-current=page] {background:#163d47;border-color:var(--realm-cyan);color:#c5fff2;}
+.public-app .learning-workspace .midi-compact {margin:0;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-start;gap:10px;}
+.public-app .learning-workspace .midi-connect {color:var(--ink);min-height:44px;background:#182e40;border-color:var(--line);}
+.public-app .learning-workspace .midi-details {color:var(--muted);}
+.public-app .learning-workspace .midi-details summary {min-height:44px;display:flex;align-items:center;gap:6px;}
+.public-app .learning-workspace .midi-details summary::before {content:'▸';}
+.public-app .learning-workspace .midi-details[open] summary::before {content:'▾';}
+.public-app .learning-workspace .midi-details-panel {background:#102636;color:var(--ink);border-color:var(--line);box-shadow:0 12px 32px #0006;}
+.public-app .learning-workspace .learning-resume {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:center;padding:16px 20px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;}
+.public-app .learning-workspace .learning-resume p {margin:0;color:var(--muted);font-size:14px;}
+.public-app .learning-workspace .learning-resume p:last-child {grid-column:1/-1;font-size:13px;}
+.public-app .learning-workspace .learning-resume button {min-height:44px;white-space:normal;text-align:left;}
+.public-app .learning-workspace>.practice-primary {margin:16px 0;padding:24px 28px;color:var(--ink);}
+.public-app .learning-workspace>.practice-primary h2 {font-size:clamp(24px,2.5vw,32px);margin:4px 0 12px;}
+.public-app .learning-workspace .practice-home {max-width:1100px;margin:22px auto;}
+.public-app .learning-workspace .practice-home>header {margin-bottom:16px;}
+.public-app .learning-workspace .practice-home>header h1 {font-size:clamp(28px,3vw,40px);margin:8px 0 12px;}
+.public-app .learning-workspace .lesson-curriculum article {color:var(--ink);background:var(--surface);border-color:var(--line);}
+.public-app .learning-workspace :is(button,summary):focus-visible {outline:3px solid var(--focus);outline-offset:3px;}
+@media(max-width:900px){
+ .public-app .learning-workspace .learning-header-controls {width:100%;}
+ .public-app .learning-workspace .learning-resume {grid-template-columns:minmax(0,1fr);gap:10px;}
+ .public-app .learning-workspace .learning-resume button {justify-self:start;}
+}
+@media(max-width:540px){
+ .public-app .learning-workspace {padding-inline:0;}
+ .public-app .learning-workspace .learning-header {padding-top:14px;}
+ .public-app .learning-workspace .learning-header-controls {gap:8px;}
+ .public-app .learning-workspace .midi-compact {flex:1 1 220px;}
+ .public-app .learning-workspace .midi-details-panel {position:fixed;left:16px;right:16px;top:auto;width:auto;max-height:60vh;overflow:auto;}
+ .public-app .learning-workspace .realm-nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+ .public-app .learning-workspace .realm-nav button {white-space:normal;padding:10px 8px;}
+ .public-app .learning-workspace>.practice-primary,.public-app .learning-workspace .learning-resume {padding:18px;}
+ .public-app .learning-workspace .practice-primary button {max-width:100%;}
+}

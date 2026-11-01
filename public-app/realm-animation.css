@@ -1,0 +1,108 @@
+.realm-animation-setting { display:flex; align-items:center; gap:8px; font-size:12px; color:#b6cbd0; }
+.realm-animation-setting select { width:auto; min-width:115px; }
+.realm-mechanism { width:100%; height:auto; overflow:visible; }
+.realm-mechanism .clock-activation { opacity:0; transform-origin:160px 160px; }
+.realm-mechanism .clock-glow,.realm-mechanism .clock-heart { opacity:.22; }
+.realm-mechanism .clock-sector { color:#3b4a49; transition:color .7s ease; }
+.realm-mechanism .clock-sector[data-lit="true"] { color:#e5c175; }
+.realm-mechanism .clock-gears { opacity:.17; }
+.realm-mechanism .clock-energy { opacity:.08; }
+.realm-mechanism .clock-minute,.realm-mechanism .clock-hour { transform-origin:160px 160px; opacity:.35; }
+.realm-mechanism .clock-hour { transform:rotate(125deg); }
+.realm-mechanism .clock-minute { transform:rotate(215deg); }
+.realm-mechanism:not([data-restored="0"]) .clock-heart,.realm-mechanism:not([data-restored="0"]) .clock-glow { opacity:1; }
+.realm-mechanism:is([data-restored="2"],[data-restored="3"],[data-restored="4"],[data-restored="5"]) .clock-gears { opacity:.85; }
+.realm-mechanism:is([data-restored="3"],[data-restored="4"],[data-restored="5"]) :is(.clock-hour,.clock-minute) { opacity:1; }
+.realm-mechanism:is([data-restored="3"],[data-restored="4"],[data-restored="5"]) .clock-minute { transform:rotate(0deg); }
+.realm-mechanism:is([data-restored="4"],[data-restored="5"]) .clock-energy { opacity:.8; }
+.realm-mechanism[data-restored="5"] .clock-rim { stroke:#e6c17c; stroke-width:4; }
+.realm-mechanism[data-crowned="true"] .clock-teeth { stroke:#f2d593; }
+.realm-hero .realm-mechanism { position:absolute; right:12%; top:-15%; width:460px; opacity:.6; z-index:-1; }
+.realm-transition { --art-duration:.65s; --gear-delay:.15s; --gear-duration:1s; --energy-delay:.45s; --energy-duration:.9s; --title-delay:.35s; --description-delay:.55s;
+  position:relative; isolation:isolate; overflow:hidden; min-height:min(610px,calc(100dvh - 230px)); margin:18px 0; padding:34px 40px;
+  display:flex; align-items:center; justify-content:center; gap:clamp(20px,4vw,75px); border:1px solid #426168; border-radius:18px;
+  background:radial-gradient(ellipse at 28% 50%,#19424c 0%,#0b2332 42%,#051522 85%);
+  animation:realm-scene-enter .35s ease-out both,realm-scene-exit .25s calc(var(--scene-duration) - .25s) ease-in forwards; }
+.realm-transition-art { flex:0 1 330px; width:40%; max-width:330px; }
+.realm-transition-copy { flex:0 1 480px; }
+.authenticated-app .realm-transition h1 { font-size:clamp(30px,4vw,56px); color:#f1d594; line-height:1.1; }
+.realm-transition-copy p { color:#bcd2d4; line-height:1.7; max-width:470px; }
+.realm-transition .realm-skip { position:absolute; right:16px; top:16px; z-index:2; border-color:#bda56d; background:#102c3b; }
+.realm-transition .clock-heart,.realm-transition .clock-glow { opacity:1; }
+.realm-transition .realm-transition-art { animation:realm-clock-emerge var(--art-duration) ease-out both; }
+.realm-transition .realm-eyebrow,.realm-transition h1 { animation:realm-copy-reveal .5s var(--title-delay) ease both; }
+.realm-transition-description { animation:realm-copy-reveal .5s var(--description-delay) ease both; }
+.realm-transition .clock-gear-one { transform-origin:110px 188px; }
+.realm-transition .clock-gear-two { transform-origin:203px 188px; }
+.realm-transition:not([data-event="trial-failed"]) .clock-gears { opacity:1; }
+.realm-transition:not([data-event="trial-failed"]) .clock-gear-one { animation:realm-gear-turn var(--gear-duration) var(--gear-delay) ease-out both; }
+.realm-transition:not([data-event="trial-failed"]) .clock-gear-two { animation:realm-gear-turn var(--gear-duration) var(--gear-delay) ease-out reverse both; }
+.realm-transition:not([data-event="trial-failed"]) .clock-energy { stroke-dasharray:100; animation:realm-energy var(--energy-duration) var(--energy-delay) ease-out both; }
+.realm-transition:not([data-event="trial-failed"]) .clock-minute { animation:realm-hand-wake .9s .2s ease-out both; }
+
+/* First arrival: emerge -> winding gears/hands -> energy -> title -> quiet hold. */
+.realm-transition[data-event="realm-enter"][data-full="true"] { --art-duration:1.8s; --gear-delay:.7s; --gear-duration:1.4s; --energy-delay:1.6s; --energy-duration:2.1s; --title-delay:2.8s; --description-delay:3.2s; }
+.realm-transition[data-event="realm-enter"][data-full="true"] .clock-minute { opacity:1; animation:realm-clock-align 2.4s .8s ease-in-out both; }
+.realm-transition[data-event="realm-enter"][data-full="true"] .clock-hour { opacity:1; animation:realm-hour-align 2.4s .8s ease-in-out both; }
+/* Returning gets a small winding motion and a welcome, with a full second to rest. */
+.realm-transition[data-event="realm-enter"][data-full="false"] { --art-duration:.45s; --gear-duration:.8s; --energy-delay:.25s; --energy-duration:.7s; }
+
+/* Trial card/label follows activation; musical objective holds before preparation. */
+.realm-transition[data-event="trial-enter"] { --title-delay:.7s; --description-delay:1s; }
+.realm-transition[data-event="trial-enter"] .realm-transition-copy { padding:18px; border-left:2px solid #e1c27b; background:#17374866; border-radius:8px; }
+.realm-transition:is([data-event="trial-enter"],[data-event="trial-complete"]) .clock-activation { animation:realm-activation 1.1s .55s ease-out both; }
+.realm-transition[data-event="trial-enter"][data-accent="tempo"] .clock-minute { animation:realm-clock-align 1.1s .2s ease-out both; opacity:1; }
+.realm-transition[data-event="trial-enter"][data-accent="precision"] .clock-minute { animation:realm-pendulum 1.3s .15s ease-out both; opacity:1; }
+.realm-transition[data-event="trial-enter"][data-accent="coordination"] :is(.clock-hour,.clock-minute) { animation:realm-hand-wake 1.1s .2s ease-out both; opacity:1; }
+
+/* A saved first clear reveals keepsake, stars, then gold; replays use a shorter cadence. */
+.realm-reveal-stars { color:#f1cf83; font-size:42px; letter-spacing:7px; margin:10px 0; }
+.realm-reveal-stars span { display:inline-block; animation:realm-copy-reveal .3s calc(.7s + var(--star-index) * .12s) both; }
+.realm-reveal-gold { color:#f0d18b; margin:12px 0; animation:realm-copy-reveal .4s 1.05s both; }
+.realm-reveal-gold small { display:block; margin-top:7px; color:#b6cdd0; }
+.realm-reveal-score { animation:realm-copy-reveal .35s 1.25s both; }
+.realm-transition[data-event="trial-complete"][data-full="true"] { --title-delay:1s; --description-delay:1.3s; --energy-delay:.65s; }
+.realm-transition[data-event="trial-complete"][data-full="true"] .realm-reveal-stars span { animation:realm-copy-reveal .5s calc(1.75s + var(--star-index) * .22s) both; }
+.realm-transition[data-event="trial-complete"][data-full="true"] .realm-reveal-gold { animation:realm-copy-reveal .5s 2.7s both; }
+
+/* Failure settles quietly: no reward/activation effects and no dramatic flash. */
+.realm-transition[data-event="trial-failed"] { --art-duration:.35s; --title-delay:.05s; --description-delay:.2s; background:#0b2332; }
+.realm-transition[data-event="trial-failed"] .realm-transition-art { max-width:180px; }
+.realm-transition[data-event="trial-failed"] .realm-mechanism { opacity:.5; }
+.realm-transition[data-event="trial-failed"] .clock-minute { animation:realm-hand-settle .5s ease-out both; }
+.realm-transition[data-event="trial-failed"] :is(.realm-eyebrow,h1,.realm-transition-description) { animation-duration:.25s; }
+.realm-home[data-animation-preference="minimal"] .realm-cinematic * { animation:none!important; }
+/* Keep every cinematic decorative motion outside the live player. */
+.realm-playing .clockwork-king * { animation:none!important; }
+@keyframes realm-scene-enter { from { opacity:0; } to { opacity:1; } }
+@keyframes realm-scene-exit { from { opacity:1; } to { opacity:0; } }
+@keyframes realm-clock-emerge { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
+@keyframes realm-energy { from { stroke-dashoffset:100; opacity:.1; } to { stroke-dashoffset:0; opacity:.8; } }
+@keyframes realm-activation { 0% { opacity:0; transform:scale(.88); } 35% { opacity:.65; } 100% { opacity:0; transform:scale(1.12); } }
+@keyframes realm-hand-wake { from { rotate:-24deg; } to { rotate:0deg; } }
+@keyframes realm-hand-settle { from { rotate:8deg; } to { rotate:0deg; } }
+@keyframes realm-clock-align { from { transform:rotate(-230deg); } to { transform:rotate(0); } }
+@keyframes realm-hour-align { from { transform:rotate(-90deg); } to { transform:rotate(125deg); } }
+@keyframes realm-gear-turn { from { transform:rotate(-70deg); } to { transform:rotate(0); } }
+@keyframes realm-pendulum { 0% { transform:rotate(-35deg); } 45% { transform:rotate(25deg); } 75% { transform:rotate(-10deg); } 100% { transform:rotate(0); } }
+@keyframes realm-copy-reveal { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:750px) {
+  .realm-transition { flex-direction:column; padding:54px 24px 25px; gap:12px; min-height:480px; text-align:center; }
+  .realm-transition-art { flex:none; width:190px; }
+  .realm-transition-copy { flex:none; }
+  .realm-transition-copy p { margin:10px auto; }
+  .realm-hero .realm-mechanism { right:-80px; opacity:.35; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .realm-transition,.realm-transition *,.realm-mechanism * { animation:none!important; transition:none!important; }
+}
+.realm-video { position:fixed; inset:0; z-index:1000; background:#020b13; display:grid; place-items:center; }
+.realm-video[data-fading="true"] { opacity:0; transition:opacity .65s ease-in-out; }
+.realm-video-frame { width:min(100vw,177.777778dvh); aspect-ratio:16/9; overflow:hidden; }
+.realm-video video { display:block; width:100%; height:100%; object-fit:contain; transform:scale(1.15); transform-origin:center; }
+.realm-video-skip { position:absolute; top:24px; right:24px; z-index:2; background:#061725cc; color:#ead29b; }
+.realm-video-title { position:absolute; bottom:5%; left:0; right:0; padding:40px 20px 20px; text-align:center; color:#ead29b; background:linear-gradient(transparent,#020b13dd); text-shadow:0 2px 12px #000; animation:realm-copy-reveal .8s both; }
+.realm-video-title span { letter-spacing:.3em; color:#82e2e5; }
+.realm-video-title h1 { font-family:Georgia,serif; font-size:clamp(25px,4vw,54px); }
+.realm-video-title p { font-style:italic; }
+@media(prefers-reduced-motion:reduce) { .realm-video-title { animation:none; } }

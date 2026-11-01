@@ -7,7 +7,7 @@ export function configurePlatformSessionRecovery(recover?: SessionRecovery) {
   recoverSession = recover;
 }
 
-export async function platformRequest(data: unknown, endpoint: "/api/platform" | "/api/realms" = "/api/platform"): Promise<Response> {
+export async function platformRequest(data: unknown, endpoint: "/api/platform" | "/api/realms" | "/api/music-room" | "/api/lessons" = "/api/platform"): Promise<Response> {
   const options = {
     method: "POST",
     headers: { "Content-Type": "application/json" },

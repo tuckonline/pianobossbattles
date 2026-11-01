@@ -1,7 +1,10 @@
+import { validateMotifUses } from "./motif-development";
+import { learningStep } from "./learning-steps";
 import { soundingNotes, noteGroups } from "../../../hosted/sight-library";
 import { difficultyProfiles, noviceProfile } from "./difficulty-profiles";
 import { mod, tonality } from "./music-theory";
 import type { ClassicalExercise } from "./types";
+import { noviceHandPositions, validatePositionFingering } from "./hand-positions";
 export function validateExercise(ex: ClassicalExercise) {
   const { settings: s, harmony } = ex.generated;
   const key = tonality(s.key, s.mode);
@@ -31,12 +34,24 @@ export function validateExercise(ex: ClassicalExercise) {
   }
   const melodyHand = s.hands === "left" ? "left" : "right";
   const melody = soundingNotes(ex, melodyHand);
-  const novice=s.curriculumVersion===2&&s.difficulty===1;
+  const step=learningStep(s);
+  const novice=!!step || s.curriculumVersion===2&&s.difficulty===1;
   const leap = novice?noviceProfile.leap:difficultyProfiles[s.difficulty - 1].leap;
   if(novice){
-    const base=key.note(0,s.hands==="left"?2:4).pitch,top=key.note(4,s.hands==="left"?2:4).pitch;
-    if(melody.some(n=>n.pitch<base||n.pitch>top||n.beats<1)||ex[melodyHand].flat().some(n=>n.tie))fail("Novice melody exceeds five-finger rhythm/position limits");
-    if(s.hands==="both"&&ex.left.some(bar=>bar.length!==1||bar[0].beats!==4))fail("Novice accompaniment must be one sustained note per bar");
+    if (s.positionVersion === 1) {
+      const expected = noviceHandPositions(s.key, s.mode, s.hands);
+      if (ex.generatedFingering !== "fixed-position") fail("Novice exercises require fixed-position fingering.");
+      for (const hand of ["right", "left"] as const) {
+        const actual = ex.handPositions?.[hand], required = expected[hand];
+        if (required && (!actual || actual.name !== required.name || actual.anchorPitch !== required.anchorPitch ||
+            Object.entries(required.fingerPitches).some(([f, p]) => actual.fingerPitches[+f as 1|2|3|4|5] !== p)))
+          fail("Hand position does not match the selected key.");
+      }
+    }
+    const octave=s.hands==="left"?(s.positionVersion===1?3:2):4;
+    const base=key.note(0,octave).pitch,top=key.note(step?.span ?? 4,octave).pitch;
+    if(melody.some(n=>n.pitch<base||n.pitch>top||n.beats<(step?.id === "beginner-3-v1" ? .5 : 1))||ex[melodyHand].flat().some(n=>n.tie))fail("Novice melody exceeds five-finger rhythm/position limits");
+    if(s.hands==="both"&&ex.left.some(bar=>bar.length>(step?.bassAttacks ?? 1)||bar.some(n=>n.beats < (step?.bassAttacks === 2 ? 2 : 4))))fail("Novice accompaniment must be one sustained note per bar");
   }
   for (let i = 1; i < melody.length; i++) if (Math.abs(melody[i].pitch - melody[i - 1].pitch) > leap) fail("Melody exceeds level interval limit");
   for (const [bar, h] of harmony.entries()) {
@@ -72,4 +87,6 @@ export function validateExercise(ex: ClassicalExercise) {
   const groups = noteGroups(ex, s.hands);
   if (!groups.length || groups.some(g => new Set(g.pitches).size !== g.pitches.length)) fail("Ambiguous MIDI unison");
   if (soundingNotes(ex).some(n => n.beat + n.beats > ex.durationBeats!)) fail("Note exceeds exercise");
+  validatePositionFingering(ex);
+  if(ex.generated.development)validateMotifUses(ex.generated.development);
 }

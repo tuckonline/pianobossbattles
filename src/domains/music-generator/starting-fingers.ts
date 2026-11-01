@@ -35,6 +35,9 @@ export function startingFinger(measures: ScoreNote[][], hand: Exclude<Hand, "bot
 export function markStartingFingers(right: ScoreNote[][], left: ScoreNote[][]) {
   for (const [hand, measures] of [["right", right], ["left", left]] as const) {
     const first = measures.flat().find(note => !note.rest);
-    if (first) first.finger = startingFinger(measures, hand);
+    if (first && first.finger === undefined) {
+      first.finger = startingFinger(measures, hand);
+      if (first.finger !== undefined) first.fingeringSource = "generated";
+    }
   }
 }

@@ -1,4 +1,4 @@
-import type { Realm, RealmProgress } from "./types";
+import type { Challenge, Realm, RealmProgress } from "./types";
 export const clockworkKingdom: Realm = {
   id: "clockwork-kingdom",
   title: "The Clockwork Kingdom",
@@ -92,6 +92,19 @@ export const clockworkKingdom: Realm = {
   ],
 };
 export const realms = [clockworkKingdom];
+export function challengeAtDifficulty(challenge: Challenge, difficulty: number): Challenge {
+  if (challenge.kind === "tempo" && difficulty === 1)
+    return { ...challenge, subtitle: "Half notes & a steady beat" };
+  if (challenge.kind === "streak" && difficulty === 1)
+    return { ...challenge, subtitle: "Quarter notes & continuity" };
+  if (challenge.kind === "precision" && difficulty < 3)
+    return {
+      ...challenge,
+      subtitle: "Quarter & half-note counting",
+      objective: "Reach 70% pitch and rhythm accuracy while counting mixed quarter and half notes. Dotted rhythms begin at Intermediate.",
+    };
+  return challenge;
+}
 export function challengeById(id: string) {
   const challenge = realms
     .flatMap((r) => r.challenges)

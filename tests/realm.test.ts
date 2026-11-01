@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { createHash } from "node:crypto";
 import {
   clockworkKingdom,
   emptyProgress,
@@ -11,6 +12,7 @@ import { importMusicXml } from "../src/domains/notation/musicxml";
 import { musicXml, soundingNotes } from "../hosted/sight-library";
 import type { RunConfig,RealmScore } from "../src/domains/realms/types";
 import { clockworkTiming } from "../src/domains/scoring/timing";
+import { musicalTiers } from "../src/domains/music-generator/difficulty-profiles";
 const config = (id: string): RunConfig => ({
   version: 1,
   challengeId: id,
@@ -19,6 +21,46 @@ const config = (id: string): RunConfig => ({
   seed: 1,
 });
 describe("Clockwork mastery", () => {
+  it("gives Trials 1–3 distinct rhythmic lessons within each musical tier", () => {
+    for (const [i, tier] of musicalTiers.entries()) {
+      for (const [key, seed] of [["C", 1], ["G", 42], ["F", 0xffffffff]] as const) {
+        const scores = clockworkKingdom.challenges.slice(0, 3).map((c) =>
+          realmScore({ ...config(c.id), key, seed, tempo: tier.tempo, difficulty: i + 1,
+            curriculumVersion: 2, studyVersion: 2, positionVersion: 1, gradingVersion: 2 }),
+        );
+        // Compare actual onset/duration patterns, not titles or seed labels.
+        const rhythms = scores.map((s) => JSON.stringify(soundingNotes(s.exercise).map(n => [n.beat, n.beats])));
+        expect(new Set(rhythms).size).toBe(3);
+        for (const [trial, score] of scores.entries()) {
+          expect(score.exercise.tempoBpm).toBe(tier.tempo);
+          expect(summarize(score, referenceEvents(score), clockworkKingdom.challenges[trial], Infinity, 2))
+            .toMatchObject({ pitch: 100, rhythm: 100, passed: true });
+          if (i === 0) {
+            const notes = soundingNotes(score.exercise);
+            expect(notes.every(n => n.hand === "right" && [1, 2, 4].includes(n.beats))).toBe(true);
+            expect(Math.max(...notes.map(n => n.pitch)) - Math.min(...notes.map(n => n.pitch))).toBeLessThanOrEqual(7);
+            expect(notes.slice(1).every((n, j) => Math.abs(n.pitch - notes[j].pitch) <= 4)).toBe(true);
+          }
+        }
+        expect(scores[0].exercise.right[0].map(n => n.beats)).toEqual(i === 0 ? [2, 2] : [1, 1, 1, 1]);
+        if (i === 0) expect(scores[1].exercise.right[0].map(n => n.beats)).toEqual([1, 1, 1, 1]);
+        if (i >= 2) expect(scores[2].exercise.right.flat().some(n => n.beats === 1.5 || n.beats === .75)).toBe(true);
+      }
+    }
+  });
+  it("reconstructs old trial receipts unchanged and leaves the other encounters alone", () => {
+    for (const c of clockworkKingdom.challenges) {
+      const run: RunConfig = { ...config(c.id), tempo: 50, difficulty: 1, curriculumVersion: 2 };
+      const old = realmScore(run);
+      if (["tempo", "streak", "precision"].includes(c.kind)) {
+        // Captured before the lesson fix: all three really had identical music.
+        expect(createHash("sha256").update(JSON.stringify(soundingNotes(old.exercise))).digest("hex"))
+          .toBe("1e74f63e7afc6aa7cc8addfca31adf13ac005fb6090e36931954aa6193d98997");
+        const updated = { ...run, studyVersion: 2 as const };
+        expect(realmScore(updated)).toEqual(realmScore(updated));
+      } else expect(realmScore({ ...run, studyVersion: 2 })).toEqual(old);
+    }
+  });
   it("retains exact rhythm and pitch windows at 40, 80, 120 and 160 BPM",()=>{
     expect([40,80,120,160].map(clockworkTiming)).toEqual([
       {rhythmToleranceMs:150,matchWindowMs:300},{rhythmToleranceMs:150,matchWindowMs:300},

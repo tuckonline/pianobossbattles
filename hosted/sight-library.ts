@@ -1,11 +1,20 @@
 import { polyphonicXml } from "./polyphonic-score";
 import { structuredMusicXml } from "./structured-score";
 export type Hand = "both" | "right" | "left";
+export type Finger = 1 | 2 | 3 | 4 | 5;
+export type HandPosition = {
+  hand: "right" | "left";
+  name: string;
+  anchorPitch: number;
+  fingerPitches: Record<Finger, number>;
+  hint?: string;
+};
 export type ScoreNote = {
   pitch: number;
   beats: number;
   tie: boolean;
   finger?: number;
+  fingeringSource?: "authored" | "generated";
   rest?: boolean;
   spelling?: { step: "C" | "D" | "E" | "F" | "G" | "A" | "B"; alter: number; octave: number };
 };
@@ -16,6 +25,8 @@ export type Exercise = {
   beatsPerMeasure?: number;
   measuresPerSystem?: number;
   keySignature?: { fifths: number; mode: "major" | "minor" };
+  handPositions?: Partial<Record<"right" | "left", HandPosition>>;
+  generatedFingering?: "fixed-position" | "omitted";
   right: ScoreNote[][];
   left: ScoreNote[][];
   polyphony?: SoundNote[];

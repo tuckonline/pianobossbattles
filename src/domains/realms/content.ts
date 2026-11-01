@@ -1,6 +1,8 @@
 import type { Exercise } from "../../../hosted/sight-library";
 import { generateClassicalExercise } from "../music-generator/classical-generator";
 import { markStartingFingers } from "../music-generator/starting-fingers";
+import type { GeneratorSettings } from "../music-generator/types";
+import { assignPositionFingers } from "../music-generator/hand-positions";
 import { challengeById } from "./registry";
 import type { RealmScore, RunConfig, Section } from "./types";
 function study(
@@ -9,6 +11,7 @@ function study(
   measures: number,
   hands: "right" | "both",
   varied: boolean,
+  rhythmFocus?: GeneratorSettings["rhythmFocus"],
 ): Exercise {
   // Select reproducibly from the existing composer, requiring the actual written
   // vocabulary for the lesson instead of trusting a difficulty label.
@@ -22,6 +25,8 @@ function study(
       hands,
       seed: (config.seed + n) >>> 0,
       ...(config.curriculumVersion === 2 ? { curriculumVersion: 2 } : {}),
+      ...(rhythmFocus ? { rhythmFocus } : {}),
+      ...(config.positionVersion === 1 ? { positionVersion: 1 } : {}),
     });
     if (
       !varied ||
@@ -40,6 +45,11 @@ export function realmScore(config: RunConfig): RealmScore {
     (!Number.isInteger(tier) || tier! < 1 || tier! > 5)
   )
     throw Error("Choose a musical difficulty from 1 to 5.");
+  if (config.studyVersion === 2 && config.curriculumVersion !== 2)
+    throw Error("Trial studies require a musical difficulty.");
+  const rhythmFocus = config.studyVersion === 2
+    ? c.kind === "tempo" ? "pulse" : c.kind === "streak" ? "continuity" : c.kind === "precision" ? "precision" : undefined
+    : undefined;
   let exercise: Exercise;
   const phases: Section[] = [];
   if (c.kind === "boss") {
@@ -71,6 +81,7 @@ export function realmScore(config: RunConfig): RealmScore {
       right: studies.flatMap((e) => e.right),
       left: studies.flatMap((e) => e.left),
       durationBeats: 128,
+      ...(config.positionVersion === 1 && tier !== 1 ? { handPositions: undefined, generatedFingering: "omitted" as const } : {}),
     };
   } else
     exercise = study(
@@ -78,7 +89,8 @@ export function realmScore(config: RunConfig): RealmScore {
       tier ?? c.level,
       c.measures,
       c.hands,
-      (tier ?? c.level) >= 3,
+      (tier ?? c.level) >= 3 && (!rhythmFocus || rhythmFocus === "precision"),
+      rhythmFocus,
     );
   exercise = { ...exercise, title: c.title };
   const phrases = Array.from({ length: c.measures / 4 }, (_, i) => ({
@@ -110,13 +122,12 @@ export function sliceStudy(
   if (hand === "left") exercise.right = exercise.right.map(rest);
   if (hand === "right") exercise.left = exercise.left.map(rest);
   for (const h of ["right", "left"] as const) {
-    exercise[h].flat().forEach((n) => {
-      delete n.finger;
-    });
     const last = exercise[h].at(-1)?.at(-1);
     if (last) last.tie = false;
+    if (exercise.generatedFingering === "fixed-position" && exercise.handPositions?.[h])
+      assignPositionFingers(exercise[h], exercise.handPositions[h]!);
   }
-  markStartingFingers(exercise.right, exercise.left);
+  if (!exercise.generatedFingering) markStartingFingers(exercise.right, exercise.left);
   return {
     exercise,
     phrases: [

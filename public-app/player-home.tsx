@@ -1,3 +1,4 @@
+import { FingeringProvider } from "./fingering-assistance";
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element -- Independent Vite SPA. */
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -60,7 +61,8 @@ function readDraft(userId:string,catalog:CatalogExercise[]):{hand:Hand;queue:Cha
     return {hand:raw.hand,queue:raw.entries.flatMap(e=>{const exercise=catalog.find(x=>x.number===e.number);return exercise&&(!exercise.singleHand||exercise.singleHand===raw.hand)&&(!exercise.bothHandsOnly||raw.hand==="both")?[{exercise,loops:Math.max(1,Math.min(100,Math.round(Number(e.loops)||1)))}]:[];})};
   }catch{return fallback;}
 }
-export function PlayerHome({user}:{user:User}) {
+export function PlayerHome({user}:{user:User}) { return <FingeringProvider key={user.id} userId={user.id}><PlayerContent user={user}/></FingeringProvider>; }
+function PlayerContent({user}:{user:User}) {
   const {catalog,admin,error,refresh}=useMusicCatalog(user.id);
   if(!catalog)return <section className="player-loading" aria-label="Preparing your dashboard" aria-busy={!error}><div className="player-brand"><PianoMark/><span>Piano Boss Battles<small>PRACTICE MUSIC. DEFEAT BOSSES.</small></span></div><p role={error?"alert":"status"}>{error||"Preparing your dashboard…"}</p>{error&&<button onClick={()=>void refresh().catch(()=>{})}>Retry</button>}</section>;
   return <LoadedPlayerHome user={user} catalog={catalog} admin={admin} libraryError={error} refreshLibrary={refresh}/>;
@@ -148,7 +150,7 @@ function LoadedPlayerHome({user,catalog,admin,libraryError,refreshLibrary}:{user
         {midiSupported?<MidiSetup compact onConnectionChange={setConnected}/>:<p role="status">Web MIDI is unavailable in this browser. Use desktop Chrome or Edge.</p>}
       </section>
       {!theatre&&!classical&&<section className="classical-launch"><div><strong>Infinite Classical Practice</strong><p>Generate an original study for your level, key, and hands.</p></div><button disabled={c.running||authorizing||cinematic} onClick={()=>setClassical(true)}>Open Infinite Classical Practice</button></section>}
-      {classical&&<ClassicalPractice connected={connected} onClose={()=>setClassical(false)}/>}
+      {classical&&<ClassicalPractice userId={user.id} connected={connected} onClose={()=>setClassical(false)}/>}
       <div className="setup-columns" hidden={theatre||classical}>
         <section className="setup-section challenge-panel">
           <div className="panel-title"><Icon name="swords"/><div><h1>Build your battle.</h1><p>Choose a game mode, set your difficulty, and pick your boss.</p></div></div>

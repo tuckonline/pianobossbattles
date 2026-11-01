@@ -1,0 +1,4 @@
+.hand-position-guide { margin:14px 0; padding:14px 18px; border:1px solid #24627d; border-radius:12px; background:#09263c; color:#d9edf8; }
+.hand-position-guide summary { cursor:pointer; font-weight:700; }
+.hand-position-guide p { margin:8px 0; line-height:1.5; }
+.hand-position-guide small { color:#b2cddd; }

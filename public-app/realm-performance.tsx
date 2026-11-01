@@ -1,3 +1,4 @@
+import { filterFingerings, type FingeringLevel } from "../src/domains/notation/fingering-assistance";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   NotationViewer,
@@ -15,15 +16,21 @@ import type {
   RealmScore,
 } from "../src/domains/realms/types";
 import { ClockworkPortrait } from "./realm-cinematic";
+import { usePracticeActivity } from "./practice-gold";
+import { HandPositionGuide } from "./hand-position-guide";
 export function RealmPerformance({
   score,
+  fingeringLevel,
   challenge,
   connected,
   practice,
   onFinish,
   onExit,
+  lessonMode=false,
 }: {
+  lessonMode?:boolean;
   score: RealmScore;
+  fingeringLevel: FingeringLevel;
   challenge: Challenge;
   connected: boolean;
   practice: boolean;
@@ -38,6 +45,7 @@ export function RealmPerformance({
       "ready" | "counting" | "playing" | "paused"
     >("ready"),
     [ready, setReady] = useState(false);
+  usePracticeActivity(state === "playing" && connected);
   const [elapsed, setElapsed] = useState(-1),
     [events, setEvents] = useState<MidiEvent[]>([]),
     [metronome, setMetronome] = useState(true),
@@ -63,8 +71,8 @@ export function RealmPerformance({
   // Freeze line breaks for this attempt; resizing only refits the existing SVG.
   const [narrow] = useState(() => window.innerWidth < 1000);
   const xml = useMemo(
-    () => musicXml({ ...score.exercise, measuresPerSystem: narrow ? 2 : 4 }),
-    [score, narrow],
+    () => filterFingerings(musicXml({ ...score.exercise, measuresPerSystem: narrow ? 2 : 4 }), fingeringLevel),
+    [score, narrow, fingeringLevel],
   );
   const result = useMemo(
     () => summarize(score, events, challenge, elapsed, 2),
@@ -227,6 +235,7 @@ export function RealmPerformance({
             : `Rhythm ${result.rhythm}% · Pitch ${result.pitch}%`;
   return (
     <section className="realm-playing" aria-label="Musical performance">
+      {state === "ready" && fingeringLevel !== "off" && <HandPositionGuide exercise={score.exercise}/>}
       <header className="realm-playing-header">
         <div>
           {challenge.kind === "boss" && (
@@ -239,7 +248,7 @@ export function RealmPerformance({
           )}
           <h1>{practice ? score.exercise.title : challenge.title}</h1>
           <p>
-            {practice
+            {lessonMode ? challenge.objective : practice
               ? "Practice this passage. Stars and unlocks are awarded in the full trial."
               : challenge.objective}
           </p>
@@ -261,7 +270,7 @@ export function RealmPerformance({
             <button onClick={pause}>Pause</button>
           )}
           <button onClick={restart}>Restart</button>
-          <button onClick={onExit}>Return to realm</button>
+          <button onClick={onExit}>{lessonMode?"Back to lesson":"Return to realm"}</button>
         </div>
       </header>
       <div className="realm-hud">

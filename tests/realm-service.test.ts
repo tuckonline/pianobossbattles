@@ -30,19 +30,28 @@ afterAll(() => db.close());
 it("persists progression independently by difficulty and retains untiered records",async()=>{
  const before=(await realmCommand(pool,a,{action:"state",expectedUserId:a})).progress;
  const attempt=(difficulty:number)=>{
-   const config:RunConfig={version:1,challengeId:"steady-pulse",seed:1,key:"C",tempo:difficulty===1?50:130,difficulty,curriculumVersion:2,gradingVersion:2};
+   const config:RunConfig={version:1,challengeId:"steady-pulse",seed:1,key:"C",tempo:difficulty===1?50:130,difficulty,curriculumVersion:2,studyVersion:2,positionVersion:1,gradingVersion:2};
    const score=realmScore(config);
    return {id:crypto.randomUUID(),config,events:referenceEvents(score),elapsedMs:performanceEnd(score)};
  };
  const novice=attempt(1);
- await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:novice});
- await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:novice});
- expect((await realmCommand(pool,a,{action:"state",expectedUserId:a,difficulty:1})).progress.challenges["steady-pulse"]).toMatchObject({completed:true,attempts:1});
+ expect((await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:novice})).completion).toEqual({firstClear:true,improved:false});
+ expect((await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:novice})).completion).toEqual({firstClear:true,improved:false});
+ expect((await realmCommand(pool,a,{action:"state",expectedUserId:a,difficulty:1})).progress.challenges["steady-pulse"]).toMatchObject({completed:true,attempts:1,bestAccuracy:100,lastConfig:{studyVersion:2}});
  expect((await realmCommand(pool,a,{action:"state",expectedUserId:a,difficulty:5})).progress.challenges).toEqual({});
  await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:attempt(5)});
  expect((await realmCommand(pool,a,{action:"state",expectedUserId:a,difficulty:5})).progress.challenges["steady-pulse"].attempts).toBe(1);
  expect((await realmCommand(pool,a,{action:"state",expectedUserId:a,difficulty:1})).progress.challenges["steady-pulse"].attempts).toBe(1);
  expect((await realmCommand(pool,a,{action:"state",expectedUserId:a})).progress).toEqual(before);
+ // A queued receipt from before distinct lessons still grades against its old music.
+ const oldConfig = { ...novice.config }; delete oldConfig.studyVersion; delete oldConfig.positionVersion;
+ const oldScore = realmScore(oldConfig);
+ const oldSaved = await realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:{
+   id:crypto.randomUUID(),config:oldConfig,events:referenceEvents(oldScore),elapsedMs:performanceEnd(oldScore),
+ }});
+ expect(oldSaved.result).toMatchObject({pitch:100,rhythm:100});
+ expect(oldSaved.completion).toEqual({firstClear:false,improved:false});
+ expect(oldSaved.progress.challenges["steady-pulse"]).toMatchObject({attempts:2,bestStars:3});
  await expect(realmCommand(pool,a,{action:"finish",expectedUserId:a,receipt:{...attempt(1),config:{...attempt(1).config,difficulty:6}}})).rejects.toThrow();
 });
 function receipt(challengeId: string) {

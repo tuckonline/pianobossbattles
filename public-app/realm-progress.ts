@@ -4,9 +4,16 @@ import { emptyProgress } from "../src/domains/realms/registry";
 import type {
   AttemptReceipt,
   RealmProgress,
+  RunConfig,
+  PerformanceResult,
 } from "../src/domains/realms/types";
+import { type EconomySnapshot, type GoldAward } from "../src/domains/economy/rewards";
 export function useRealmProgress(userId: string, difficulty?: number) {
   const [progress, setProgress] = useState<RealmProgress>(emptyProgress);
+  const [economy, setEconomy] = useState<EconomySnapshot>();
+  const [awards, setAwards] = useState<Record<string, GoldAward>>({});
+  const [confirmed, setConfirmed] = useState<Record<string, { result: PerformanceResult; firstClear: boolean; improved: boolean }>>({});
+  const acceptEconomy = useCallback((next?: EconomySnapshot) => { if (next) setEconomy(old => !old || next.revision >= old.revision ? next : old); }, []);
   const [ready, setReady] = useState(false),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
@@ -30,7 +37,7 @@ export function useRealmProgress(userId: string, difficulty?: number) {
       const body = await response.json();
       if (!response.ok)
         throw Error(body.error ?? "Your realm progress could not be saved.");
-      return body as { progress: RealmProgress };
+      return body as { progress: RealmProgress; economy?: EconomySnapshot; award?: GoldAward; result?: PerformanceResult; completion?: { firstClear: boolean; improved: boolean } };
     },
     [userId, difficulty],
   );
@@ -44,6 +51,11 @@ export function useRealmProgress(userId: string, difficulty?: number) {
         while (pending.current.length) {
           const receipt = pending.current[0];
           const result = await request("finish", receipt);
+          acceptEconomy(result.economy);
+          if (result.award) setAwards(old => ({ ...old, [receipt.id]: result.award! }));
+          if (result.result) setConfirmed(old => ({ ...old, [receipt.id]: {
+            result: result.result!, firstClear: result.completion?.firstClear ?? false, improved: result.completion?.improved ?? false,
+          } }));
           pending.current = pending.current.filter((r) => r.id !== receipt.id);
           localStorage.setItem(key, JSON.stringify(pending.current));
           if ((receipt.config.difficulty ?? 0) === latestScope.current) {
@@ -62,10 +74,11 @@ export function useRealmProgress(userId: string, difficulty?: number) {
     })();
     flight.current = task;
     return task;
-  }, [key, request]);
+  }, [key, request, acceptEconomy]);
   const reload = useCallback(async () => {
     try {
       const result = await request("state");
+      acceptEconomy(result.economy);
       if (scope !== latestScope.current) return;
       setProgress(result.progress);
       setLoadedScope(scope);
@@ -75,7 +88,7 @@ export function useRealmProgress(userId: string, difficulty?: number) {
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [flush, request, scope]);
+  }, [flush, request, scope, acceptEconomy]);
   useEffect(() => {
     try {
       pending.current = JSON.parse(localStorage.getItem(key) ?? "[]");
@@ -106,7 +119,12 @@ export function useRealmProgress(userId: string, difficulty?: number) {
     },
     [flush, key],
   );
+  const begin = useCallback(async (attemptId: string, config: RunConfig) => {
+    const response = await platformRequest({ action: "begin", expectedUserId: userId, attemptId, config }, "/api/realms");
+    if (!response.ok) { const body = await response.json(); throw Error(body.error ?? "Could not start your trial. Please retry."); }
+  }, [userId]);
   return {
+    economy, awards, confirmed, begin,
     progress: loadedScope === scope ? progress : emptyProgress(),
     ready: ready && loadedScope === scope,
     error,

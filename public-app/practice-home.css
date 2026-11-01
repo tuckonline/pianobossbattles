@@ -1,0 +1,25 @@
+.practice-home { max-width:1100px; margin:36px auto; }
+.practice-home>header { max-width:700px; margin-bottom:28px; }
+.practice-primary { padding:clamp(24px,4vw,48px); border:1px solid #43616b; border-radius:18px; background:linear-gradient(120deg,#163945,#0b202f); margin:20px 0; }
+.practice-primary h2 { font-size:clamp(26px,3vw,42px); margin:12px 0; }
+.practice-primary button { margin:8px 10px 8px 0; }
+.practice-primary>.primary { padding:16px 30px; font-size:18px; }
+.practice-primary details { margin-top:18px; }
+.practice-primary details label { display:inline-block; margin:14px 18px 0 0; }
+.practice-primary select { display:block; margin-top:6px; }
+.practice-stages { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin:28px 0; }
+.guided-practice>header { max-width:900px; margin:20px auto; }
+.guided-practice>header h1 { font-size:clamp(20px,2vw,30px); }
+.guided-practice progress { width:100%; height:6px; }
+@media(max-width:700px){.practice-stages{grid-template-columns:1fr;gap:10px;}.practice-home{margin:20px 0;}}
+.guided-practice .classical-practice { margin-top:12px; }
+.guided-practice .classical-toolbar { position:sticky; top:0; z-index:3; background:#0b202f; border:1px solid #43616b; border-radius:12px; padding:12px; }
+.guided-practice .classical-toolbar small { display:block; }
+.guided-completion { display:flex; align-items:baseline; flex-wrap:wrap; gap:16px; border-left:3px solid #58c6af; padding:8px 16px; margin:8px 0; }
+.guided-completion h2 { font-size:18px; margin:0; }
+.guided-practice aside { max-width:850px; padding:12px 16px; border-left:2px solid #53acc0; }
+.guided-practice .classical-score { min-height:320px; }
+@media(prefers-reduced-motion:reduce){.guided-practice *{scroll-behavior:auto;}}
+.lesson-curriculum article {padding:18px 22px;border:1px solid #43616b;border-radius:12px;margin:14px 0;background:#0b202f;}
+.lesson-curriculum article h4 {font-size:21px;margin:0 0 8px;}
+.lesson-curriculum>section {margin:32px 0;padding-top:12px;border-top:1px solid #43616b;}
