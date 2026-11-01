@@ -200,7 +200,7 @@ export function ClassicalPractice({ connected, onClose, piece, pieceDifficulty, 
 
   return <section className="classical-practice setup-section" aria-label={piece ? "Studio practice" : "Infinite Classical Practice"}>
 
-    {!guided && <header><div><span className="eyebrow">{guided ? "GUIDED PRACTICE" : piece ? "PRACTICE STUDIO" : "A NEW PIECE, EVERY PRACTICE"}</span><h1>{piece?.title ?? "Infinite Classical Practice"}</h1><p>{piece ? piece.composer : "Related phrases, clear cadences, and music shaped to your level."}</p></div><button onClick={onClose}>{guided ? "End Session" : piece ? "Back to Studio" : "Back to battles"}</button></header>}
+    {!guided && <header><div><span className="eyebrow">{guided ? "GUIDED PRACTICE" : piece ? "PRACTICE STUDIO" : "A NEW PIECE, EVERY PRACTICE"}</span><h1>{piece?.title ?? "Infinite Classical Practice"}</h1><p>{piece ? piece.composer : "Related phrases, clear cadences, and music shaped to your level."}</p></div><button onClick={onClose}>{guided ? "End Session" : piece ? "Back to Studio" : "Back to practice"}</button></header>}
 
     {piece && !guided && <fieldset disabled={busy} className="classical-settings"><legend>Practice settings</legend>
 

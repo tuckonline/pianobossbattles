@@ -56,9 +56,9 @@ export function RoyalMusicShop({ room, onPractice }: { room: MusicRoomState; onP
     catch (e) { if (sequence === previewRequest.current) setError((e as Error).message); }
   };
   return <section className="music-room" aria-label="Royal Music Shop">
-    <header><span className="realm-eyebrow">THE ROYAL ARCHIVE</span><h1>Royal Music Shop</h1><p>Turn your practice into a growing collection. Every purchase is permanent.</p></header>
+    <header><span className="realm-eyebrow">YOUR MUSIC COLLECTION</span><h1>Music Shop</h1><p>Turn your practice into a growing collection. Every purchase is permanent.</p></header>
     <p className="music-gold">{room.economy?.gold ?? "—"} gold available</p>
-    <p>Active MIDI practice earns about {goldRules.goldPerHour} gold per hour in Realm Quest, Practice Studio, and generated exercises. Songs generally cost 100–500 gold (2–10 hours). Essential learning exercises stay free.</p>
+    <p>Active MIDI practice earns about {goldRules.goldPerHour} gold per hour in lessons, guided sessions, and free practice. Songs generally cost 100–500 gold (2–10 hours). Essential learning exercises stay free.</p>
     <p className="music-message" role="status">{message}</p>{error && <p role="alert">{error}</p>}
     <div className="music-grid">{room.catalog.filter(i => i.accessType === "purchasable").map(item => {
       const owned = hasMusicAccess(item, room.economy?.owned ?? [], room.userId);
@@ -91,7 +91,7 @@ export function PracticeStudio({ room, connected, selectedId, onClosePiece, onOp
     : <section className="music-room"><button onClick={onClosePiece}>Back to Studio</button><p role={error ? "alert" : "status"}>{error || "Opening your sheet music…"}</p></section>;
   const available = room.catalog.filter(i => hasMusicAccess(i, room.economy?.owned ?? [], room.userId));
   const items = available.filter(i => (filter === "all" || (filter === "owned" ? i.accessType === "purchasable" : i.category === filter)) && `${i.title} ${i.composer ?? ""}`.toLowerCase().includes(search.toLowerCase()));
-  return <section className="music-room" aria-label="Practice Studio"><header><span className="realm-eyebrow">YOUR MUSIC, YOUR PACE</span><h1>Practice Studio</h1><p>Starter music, your existing exercises, and every piece you unlock.</p></header>
+  return <section className="music-room" aria-label="Practice Studio"><header><span className="realm-eyebrow">YOUR MUSIC, YOUR PACE</span><h1>Music Library</h1><p>Starter music, your existing exercises, and every piece you unlock.</p></header>
     <div className="music-filters"><label>Find music<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Title or composer"/></label><label>Collection<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All music</option><option value="song">Songs</option><option value="exercise">Exercises</option><option value="owned">Purchased repertoire</option></select></label><button onClick={onGenerate}>Infinite Classical Practice</button></div>
     <p>{items.length} pieces available · Studio practice is self-paced and does not award official realm stars.</p>
     <div className="music-grid">{items.map(item => <article className="music-card" key={item.id}><small>{item.accessType === "purchasable" ? "Owned" : item.accessType === "starter" ? "Starter · Included" : `${collectionName(item.collection)} · Included`}</small><MusicDetails item={item}/><button className="primary" onClick={() => onOpenPiece(item.id)}>Practice {item.title}</button></article>)}</div>

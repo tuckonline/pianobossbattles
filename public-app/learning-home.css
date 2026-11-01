@@ -1,53 +1,113 @@
-/* Scope legacy sidebar/light-theme resets to the learning workspace only. */
-.public-app .learning-workspace {
-  --ink:#e9f2f5; --muted:#b4c8d4; --surface:#102636;
-  --line:#355260; --accent:#7fe2d6; --focus:#dfbf78;
-  color-scheme:dark; max-width:1280px; padding:0 8px 28px;
+/* Warm Modern Piano Studio. Scoped so Creator/legacy surfaces retain their themes. */
+.public-app.authenticated-app:has(.studio-theme),body:has(.studio-theme){background:#f7f5f0;color:#243a34;}
+.public-app .studio-theme{
+ --studio-bg:#f7f5f0;--studio-text:#243a34;--studio-muted:#5e6c65;--studio-action:#315d50;--studio-hover:#244a40;--studio-sage:#8da697;--studio-gold:#87662e;--studio-card:#fff;--studio-border:#e3e0d8;--studio-soft:#eeebe4;
+ --ink:var(--studio-text);--muted:var(--studio-muted);--surface:var(--studio-soft);--line:var(--studio-border);--accent:var(--studio-action);--focus:var(--studio-action);--realm-gold:var(--studio-gold);--realm-cyan:var(--studio-action);--cyan:var(--studio-action);--notation-paper:#fffdf7;--notation-ink:#172c26;
+ color-scheme:light;color:var(--studio-text);max-width:1280px;margin:auto;padding:0 8px 40px;font-family:Inter,system-ui,sans-serif;line-height:1.6;
 }
-.public-app .learning-workspace .learning-header {
-  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
-  gap:12px 24px; padding:18px 0 14px; border-bottom:1px solid var(--line);
+.public-app .studio-theme :is(h1,h2,h3,h4,strong){color:var(--studio-text);}
+.public-app .studio-theme h1{font:500 clamp(27px,3vw,38px)/1.18 Georgia,serif;letter-spacing:-.5px;margin:12px 0 18px;}
+.public-app .studio-theme h2{font:500 clamp(24px,2.8vw,36px)/1.2 Georgia,serif;letter-spacing:-.3px;}
+.public-app .studio-theme :is(p,small,.classical-note,.music-meta,.realm-play-status,.realm-playing-note,.realm-hud){color:var(--studio-muted);}
+.public-app .studio-theme p{line-height:1.6;}
+.public-app .studio-theme button{background:var(--studio-card);color:var(--studio-action);border:1px solid #bcc7bf;border-radius:9px;min-height:44px;padding:10px 16px;font-size:14px;font-weight:600;box-shadow:none;white-space:normal;}
+.public-app .studio-theme button:hover:not(:disabled){background:#e6eee8;border-color:var(--studio-action);}
+.public-app .studio-theme button.primary{background:var(--studio-action);border-color:var(--studio-action);color:white;padding:12px 24px;min-height:48px;}
+.public-app .studio-theme button.primary:hover:not(:disabled){background:var(--studio-hover);color:white;}
+.public-app .studio-theme :is(button,summary,a,input,select):focus-visible{outline:3px solid var(--studio-action);outline-offset:3px;}
+.public-app .studio-theme :is(input,select,textarea){background:#fff;color:var(--studio-text);border:1px solid #9ca99f;border-radius:8px;min-height:44px;max-width:100%;}
+.public-app .studio-theme input[type=checkbox]{min-height:auto;accent-color:var(--studio-action);}
+.public-app .studio-theme :is(label,legend){color:var(--studio-text);}
+.public-app .studio-theme a{color:var(--studio-action);}
+.public-app .studio-theme progress{accent-color:var(--studio-action);background:var(--studio-soft);height:7px;}
+.public-app .studio-theme progress::-webkit-progress-value{background:var(--studio-action);}
+.public-app .studio-theme .learning-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center;padding:20px 0 12px;}
+.public-app .studio-theme .learning-brand h1{font-size:clamp(22px,2vw,28px);margin:0;letter-spacing:-.5px;}
+.public-app .studio-theme .learning-brand p{margin:2px 0 0;font-size:13px;}
+.public-app .studio-theme .learning-header-controls{display:flex;align-items:center;gap:14px;}
+.public-app .studio-theme .learning-gold{color:var(--studio-gold);font-weight:700;font-size:14px;white-space:nowrap;}
+.public-app .studio-theme .studio-account{border:0;background:transparent;padding:10px;}
+.public-app .studio-theme .studio-midi{grid-column:1/-1;border-top:1px solid var(--studio-border);padding-top:4px;font-size:13px;}
+.public-app .studio-theme .studio-midi>summary{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;list-style:none;}
+.public-app .studio-theme .studio-midi>summary::-webkit-details-marker{display:none;}
+.public-app .studio-theme .studio-midi-action{margin-left:auto;font-weight:600;color:var(--studio-action);}
+.public-app .studio-theme .connection-dot{width:7px;height:7px;border:1px solid #66736d;border-radius:50%;}
+.public-app .studio-theme .connection-dot.connected{background:var(--studio-action);border-color:var(--studio-action);}
+.public-app .studio-theme .studio-midi-controls{padding:12px;background:var(--studio-card);border:1px solid var(--studio-border);border-radius:10px;}
+.public-app .studio-theme .studio-midi-controls p{font-size:12px;margin:6px 0 0;}
+.public-app .studio-theme .midi-compact{margin:0;justify-content:flex-start;flex-wrap:wrap;}
+.public-app .studio-theme .midi-details{color:var(--studio-muted);}
+.public-app .studio-theme .midi-details-panel{background:white;color:var(--studio-text);border-color:var(--studio-border);max-width:calc(100vw - 48px);}
+.public-app .studio-theme .studio-desktop-nav{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 14px;border-bottom:1px solid var(--studio-border);margin-bottom:24px;}
+.public-app .studio-theme .studio-desktop-nav button{border:0;background:transparent;}
+.public-app .studio-theme nav button[aria-current=page]{background:#e3ebe5;color:#244a40;}
+.public-app .studio-theme .studio-mobile-nav{display:none;}
+.public-app .studio-theme .studio-home{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:24px;align-items:start;}
+.public-app .studio-theme .studio-primary{grid-row:span 2;background:var(--studio-card);border:1px solid var(--studio-border);border-radius:18px;padding:clamp(24px,3vw,40px);box-shadow:0 5px 20px #243a3405;}
+.public-app .studio-theme .studio-eyebrow,.public-app .studio-theme .realm-eyebrow{font-size:11px;letter-spacing:1.5px;font-weight:700;color:var(--studio-action);}
+.public-app .studio-theme .studio-primary h2{margin:16px 0 12px;font-size:clamp(29px,3vw,42px);}
+.public-app .studio-theme .studio-meta{font-size:13px;}
+.public-app .studio-theme .studio-primary>.primary{display:block;margin:22px 0 8px;}
+.public-app .studio-theme .studio-text-button{border:0;background:transparent;padding:8px 0;font-size:13px;}
+.public-app .studio-theme .studio-progress{padding:20px 24px;border:1px solid var(--studio-border);background:var(--studio-soft);border-radius:14px;}
+.public-app .studio-theme .studio-progress p{margin:4px 0 12px;font-size:13px;}
+.public-app .studio-theme .studio-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;}
+.public-app .studio-theme .studio-quick article{padding:22px;border:1px solid var(--studio-border);border-radius:14px;background:var(--studio-card);}
+.public-app .studio-theme .studio-quick h3{margin:10px 0 6px;}
+.public-app .studio-theme .studio-quick p{font-size:14px;margin:0 0 12px;}
+.public-app .studio-theme .studio-quick svg{color:var(--studio-action);}
+.public-app .studio-theme .studio-more{max-width:650px;}
+.public-app .studio-theme .studio-more>button{display:block;width:100%;text-align:left;margin:10px 0;}
+.public-app .studio-theme .practice-home{max-width:1200px;margin:24px auto;}
+.public-app .studio-theme :is(.practice-primary,.setup-section,.music-card,.music-preview,.lesson-curriculum article){background:var(--studio-card);border:1px solid var(--studio-border);color:var(--studio-text);box-shadow:none;}
+.public-app .studio-theme .practice-primary{padding:24px;}
+.public-app .studio-theme :is(.hand-position-guide,.guided-practice aside){background:var(--studio-soft);border-color:var(--studio-border);color:var(--studio-text);}
+.public-app .studio-theme .hand-position-guide small{color:var(--studio-muted);}
+.public-app .studio-theme .classical-practice .classical-toolbar{background:var(--studio-card);border-color:var(--studio-border);gap:8px;}
+.public-app .studio-theme :is(.classical-toolbar small,.realm-hud strong){color:var(--studio-text);}
+.public-app .studio-theme .classical-settings{background:var(--studio-soft);padding:18px;border-radius:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 20px;}
+.public-app .studio-theme .classical-settings legend{padding-bottom:8px;}
+.public-app .studio-theme .classical-score{background:var(--notation-paper);color:var(--notation-ink);}
+.public-app .studio-theme .music-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));}
+.public-app .studio-theme .music-card h2{font-size:24px;}
+.public-app .studio-theme .music-price{color:var(--studio-gold);}
+.public-app .studio-theme .music-message{color:var(--studio-action);}
+.public-app .studio-theme .music-filters :is(label,input,select){min-width:0;max-width:100%;}
+.public-app .studio-theme .lesson-curriculum>section{border-top:1px solid var(--studio-border);padding-top:16px;}
+.public-app .studio-theme .lesson-curriculum>section>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-bottom:22px;}
+.public-app .studio-theme .lesson-curriculum>section>div>:is(h3,p){grid-column:1/-1;margin:0;}
+.public-app .studio-theme .lesson-curriculum article{padding:22px;margin:0;display:flex;flex-direction:column;align-items:flex-start;}
+.public-app .studio-theme .lesson-curriculum article h4{font-size:19px;line-height:1.4;}
+.public-app .studio-theme .lesson-curriculum article button{margin-top:auto;}
+.public-app .studio-theme .realm-controls,.public-app .studio-theme .realm-hud{flex-wrap:wrap;gap:10px;}
+.public-app .studio-theme .realm-playing-header{flex-wrap:wrap;}
+@media(max-width:1000px){.public-app .studio-theme .studio-home{grid-template-columns:minmax(0,1fr);gap:16px;}.public-app .studio-theme .studio-primary{grid-row:auto;}}
+@media(max-width:700px){
+ .public-app .studio-theme{padding:0 0 calc(90px + env(safe-area-inset-bottom));}
+ .public-app .studio-theme .learning-header{padding-top:12px;gap:6px 8px;}
+ .public-app .studio-theme .learning-brand h1{font-size:21px;}
+ .public-app .studio-theme .learning-brand p{font-size:12px;}
+ .public-app .studio-theme .learning-header-controls{gap:4px;}
+ .public-app .studio-theme .learning-gold{font-size:12px;}
+ .public-app .studio-theme .studio-desktop-nav{display:none;}
+ .public-app .studio-theme .studio-mobile-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--studio-border);gap:2px;}
+ .public-app .studio-theme .studio-mobile-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:56px;padding:4px 2px;border:0;background:transparent;font-size:11px;font-weight:600;}
+ .public-app .studio-theme:has(.classical-practice,.realm-playing,.guided-practice) .studio-mobile-nav{display:none;}
+ .public-app .studio-theme .studio-primary{padding:22px;}
+ .public-app .studio-theme .studio-primary h2{font-size:29px;margin:12px 0;}
+ .public-app .studio-theme .studio-primary>.primary{width:100%;}
+ .public-app .studio-theme .studio-primary .studio-text-button{display:block;margin:auto;}
+ .public-app .studio-theme .practice-home{margin:18px 0;}
+ .public-app .studio-theme .practice-primary{padding:18px;}
+ .public-app .studio-theme .classical-settings{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px;}
+ .public-app .studio-theme .classical-toolbar button{padding:10px;}
+ .public-app .studio-theme .midi-details-panel{position:fixed;left:16px;right:16px;top:auto;width:auto;max-height:60vh;overflow:auto;}
 }
-.public-app .learning-workspace .learning-brand h1 {
-  font:500 clamp(24px,2.4vw,32px)/1.15 Georgia,serif; letter-spacing:-.5px; margin:0 0 4px;
-}
-.public-app .learning-workspace .learning-brand p {margin:0;font-size:13px;color:var(--muted);}
-.public-app .learning-workspace .learning-header-controls {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.public-app .learning-workspace .learning-gold {color:var(--realm-gold);font-weight:700;white-space:nowrap;font-size:14px;}
-.public-app .learning-workspace .realm-nav {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 18px;padding:0;}
-.public-app .learning-workspace .realm-nav button {flex:0 0 auto;min-height:44px;padding:10px 16px;white-space:nowrap;}
-.public-app .learning-workspace .realm-nav button[aria-current=page] {background:#163d47;border-color:var(--realm-cyan);color:#c5fff2;}
-.public-app .learning-workspace .midi-compact {margin:0;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-start;gap:10px;}
-.public-app .learning-workspace .midi-connect {color:var(--ink);min-height:44px;background:#182e40;border-color:var(--line);}
-.public-app .learning-workspace .midi-details {color:var(--muted);}
-.public-app .learning-workspace .midi-details summary {min-height:44px;display:flex;align-items:center;gap:6px;}
-.public-app .learning-workspace .midi-details summary::before {content:'▸';}
-.public-app .learning-workspace .midi-details[open] summary::before {content:'▾';}
-.public-app .learning-workspace .midi-details-panel {background:#102636;color:var(--ink);border-color:var(--line);box-shadow:0 12px 32px #0006;}
-.public-app .learning-workspace .learning-resume {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:center;padding:16px 20px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;}
-.public-app .learning-workspace .learning-resume p {margin:0;color:var(--muted);font-size:14px;}
-.public-app .learning-workspace .learning-resume p:last-child {grid-column:1/-1;font-size:13px;}
-.public-app .learning-workspace .learning-resume button {min-height:44px;white-space:normal;text-align:left;}
-.public-app .learning-workspace>.practice-primary {margin:16px 0;padding:24px 28px;color:var(--ink);}
-.public-app .learning-workspace>.practice-primary h2 {font-size:clamp(24px,2.5vw,32px);margin:4px 0 12px;}
-.public-app .learning-workspace .practice-home {max-width:1100px;margin:22px auto;}
-.public-app .learning-workspace .practice-home>header {margin-bottom:16px;}
-.public-app .learning-workspace .practice-home>header h1 {font-size:clamp(28px,3vw,40px);margin:8px 0 12px;}
-.public-app .learning-workspace .lesson-curriculum article {color:var(--ink);background:var(--surface);border-color:var(--line);}
-.public-app .learning-workspace :is(button,summary):focus-visible {outline:3px solid var(--focus);outline-offset:3px;}
-@media(max-width:900px){
- .public-app .learning-workspace .learning-header-controls {width:100%;}
- .public-app .learning-workspace .learning-resume {grid-template-columns:minmax(0,1fr);gap:10px;}
- .public-app .learning-workspace .learning-resume button {justify-self:start;}
-}
-@media(max-width:540px){
- .public-app .learning-workspace {padding-inline:0;}
- .public-app .learning-workspace .learning-header {padding-top:14px;}
- .public-app .learning-workspace .learning-header-controls {gap:8px;}
- .public-app .learning-workspace .midi-compact {flex:1 1 220px;}
- .public-app .learning-workspace .midi-details-panel {position:fixed;left:16px;right:16px;top:auto;width:auto;max-height:60vh;overflow:auto;}
- .public-app .learning-workspace .realm-nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
- .public-app .learning-workspace .realm-nav button {white-space:normal;padding:10px 8px;}
- .public-app .learning-workspace>.practice-primary,.public-app .learning-workspace .learning-resume {padding:18px;}
- .public-app .learning-workspace .practice-primary button {max-width:100%;}
-}
+@media(prefers-reduced-motion:reduce){.public-app .studio-theme *{scroll-behavior:auto;animation:none;transition:none;}}
+/* Explicitly reset the legacy glossy primary button and MIDI text overrides. */
+.public-app.authenticated-app .studio-theme button.primary{box-shadow:none;text-shadow:none;background-image:none;}
+.public-app.authenticated-app .studio-theme button.primary:hover:not(:disabled){box-shadow:none;}
+.public-app .studio-theme .midi-compact .midi-connect{color:var(--studio-action);background:white;}
+.public-app .studio-theme progress::-webkit-progress-bar{background:#dddcd3;}
+.public-app .studio-theme progress::-moz-progress-bar{background:var(--studio-action);}
+.public-app .studio-theme .classical-click{flex-direction:row;align-items:center;margin:0;}

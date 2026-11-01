@@ -870,30 +870,44 @@ test('Lessons replace Adventure and persist a complete introductory lesson',asyn
  await fixture(page);const progress=emptyLessons();
  await page.route('**/api/lessons',async route=>{const c=route.request().postDataJSON();if(c.lessonId)progress.lastLesson=c.lessonId;if(c.action==='finish'){const lesson=curriculumLessons.find(l=>l.id===c.lessonId)!;const a=lesson.activities.find(a=>a.id===c.activityId)!;const {assessPractice}=await import('../../hosted/sight-library');const r=assessPractice(a.exercise,'right',c.pitches);expect(r.complete).toBe(true);progress.records[`${lesson.id}:${a.id}`]={accuracy:r.accuracy,correct:r.correct,attempts:1};}await route.fulfill({json:progress});});
  await page.goto('/?mode=adventure');await expect(page.getByRole('button',{name:'Adventure Mode',exact:true})).toHaveCount(0);
- for(const name of ['Home','Lessons','Infinite Practice','Music Library','Music Shop','Progress'])await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('button',{name,exact:true})).toBeVisible();
+ for(const name of ['Home','Lessons','Practice','Music Library','Music Shop','Progress'])await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('button',{name,exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Lessons',exact:true}).click();await expect(page.getByRole('heading',{name:'Level 6 — Expert'})).toBeVisible();
  for(const title of ['Reading Music with Confidence','Rhythm & Musical Patterns','Exploring the Keyboard','Becoming a Pianist'])await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Beginner Graduation',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Continue Learning',exact:true}).click();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
+ await page.getByRole('button',{name:'Continue Learning',exact:true}).click();await page.locator('.studio-midi>summary').click();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();
  for(const a of curriculumLessons[0].activities){await page.getByRole('button',{name:'Start Practice',exact:true}).click();const pitches=noteGroups(a.exercise,'right').flatMap(g=>g.pitches);await page.evaluate(pitches=>{const w=window as unknown as {sendRealm:(events:unknown[],origin:number)=>void};w.sendRealm(pitches.flatMap(pitch=>[{type:'NOTE_ON',pitch,velocity:90,channel:0,timestamp:0},{type:'NOTE_OFF',pitch,velocity:0,channel:0,timestamp:1}]),performance.now());},pitches);await expect.poll(()=>!!progress.records[`middle-c:${a.id}`]).toBe(true);await page.getByRole('button',{name:'Continue',exact:true}).click();}
  await expect(page.getByRole('heading',{name:'Lesson complete',exact:true})).toBeVisible();expect(lessonCompleted(curriculumLessons[0],progress)).toBe(true);
  await page.reload();await page.getByRole('button',{name:'Lessons',exact:true}).click();await expect(page.getByText('1/22 completed',{exact:false})).toBeVisible();await page.getByRole('button',{name:'Continue Learning',exact:true}).click();await expect(page.getByRole('heading',{name:'Understanding Finger Numbers',exact:true})).toBeVisible();
 });
-test('learning workspace stays compact and dark at laptop tablet and phone widths',async({page})=>{
- await fixture(page);await page.route('**/api/lessons',route=>route.fulfill({json:emptyLessons()}));
- for(const [width,height] of [[1366,768],[820,1180],[390,844]]){
+test('warm studio navigation and main screens fit mobile tablet and desktop',async({page})=>{
+ const lessonState=emptyLessons();await fixture(page);await page.route('**/api/music-room',route=>route.fulfill({json:{economy:{version:1,revision:1,gold:250,owned:[royalCatalog[0].id],practiceMs:720000},catalog:royalCatalog}}));await page.route('**/api/lessons',route=>route.fulfill({json:lessonState}));
+ for(const [width,height] of [[360,800],[430,932],[768,1024],[1024,768],[1366,768],[1920,1080]]){
   await page.setViewportSize({width,height});await page.goto('/');
-  const nav=page.getByRole('navigation',{name:'Primary navigation'});await expect(nav.getByRole('button')).toHaveCount(6);
-  const buttons=await nav.getByRole('button').evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width};}));
-  if(width>900)expect(new Set(buttons.map(b=>Math.round(b.y))).size).toBe(1);
-  else expect(new Set(buttons.map(b=>Math.round(b.y))).size).toBeLessThanOrEqual(3);
-  expect(buttons.every(b=>b.width<width*.65)).toBe(true);
-  const start=page.getByRole('button',{name:'Start Practice',exact:true});await expect(start).toBeVisible();expect((await start.boundingBox())!.y).toBeLessThan(height-70);
-  const colors=await page.locator('.learning-resume').evaluate(el=>({background:getComputedStyle(el).backgroundColor,text:getComputedStyle(el.querySelector('p')!).color}));
-  expect(colors.background).toBe('rgb(16, 38, 54)');expect(colors.text).toBe('rgb(180, 200, 212)');
+  const nav=page.getByRole('navigation',{name:width<=700?'Mobile navigation':'Primary navigation',exact:true});await expect(nav).toBeVisible();
+  const action=page.getByRole('button',{name:'Continue Lesson',exact:true});await expect(action).toBeVisible();expect((await action.boundingBox())!.y).toBeLessThan(height-90);
+  await expect(page.locator('.studio-primary')).toHaveCount(1);await expect(page.getByText('Today’s Practice: Finding Middle C')).toHaveCount(0);
+  const boxes=await nav.getByRole('button').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,width:r.width};}));expect(new Set(boxes.map(b=>Math.round(b.y))).size).toBe(1);
+  for(let i=1;i<boxes.length;i++)expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i-1].right-1);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.locator('.midi-details summary').click();await expect(page.locator('.midi-details-panel')).toBeVisible();const panel=(await page.locator('.midi-details-panel').boundingBox())!;expect(panel.x).toBeGreaterThanOrEqual(0);expect(panel.x+panel.width).toBeLessThanOrEqual(width);
-  await page.locator('.midi-details summary').click();
-  await page.screenshot({path:`test-results/learning-${width}.png`,fullPage:true});
+  expect(await page.locator('.studio-primary').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(255, 255, 255)');
+  const contrast=await page.locator('.studio-primary').evaluate(el=>{
+   const lum=(color:string)=>{const rgb=color.match(/[\d.]+/g)!.slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
+   const ratio=(a:string,b:string)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
+   const button=getComputedStyle(el.querySelector('button.primary')!);return [ratio(getComputedStyle(el.querySelector('p')!).color,getComputedStyle(el).backgroundColor),ratio(button.color,button.backgroundColor)];
+  });for(const ratio of contrast)expect(ratio).toBeGreaterThanOrEqual(4.5);
+
+  await page.screenshot({path:`test-results/studio-${width}.png`,fullPage:true});
  }
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ const mobile=page.getByRole('navigation',{name:'Mobile navigation'});
+ await mobile.getByRole('button',{name:'Practice',exact:true}).click();await page.getByRole('button',{name:'Open Infinite Practice',exact:true}).click();await expect(page.getByRole('button',{name:'Generate Exercise',exact:true})).toBeVisible();await expect(mobile).toBeHidden();
+ await page.getByRole('button',{name:'Back to practice',exact:true}).click();await mobile.getByRole('button',{name:'Library',exact:true}).click();await expect(page.getByRole('heading',{name:'Music Library',exact:true})).toBeVisible();
+ await mobile.getByRole('button',{name:'More',exact:true}).click();await page.getByRole('button',{name:'Music Shop →',exact:true}).click();await expect(page.getByRole('heading',{name:'Music Shop',exact:true})).toBeVisible();await expect(page.getByText('Owned',{exact:true})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/studio-shop.png',fullPage:true});
+ await mobile.getByRole('button',{name:'More',exact:true}).click();await page.getByRole('button',{name:'Settings →',exact:true}).click();await expect(page.getByLabel('Fingering Assistance',{exact:true})).toBeVisible();
+ await mobile.getByRole('button',{name:'More',exact:true}).click();await page.getByRole('button',{name:'Progress →',exact:true}).click();await expect(page.getByText('12 minutes of recorded eligible active practice')).toBeVisible();await page.screenshot({path:'test-results/studio-lessons.png',fullPage:false});
+ await mobile.getByRole('button',{name:'Home',exact:true}).click();await page.locator('.studio-midi>summary').click();await page.getByRole('button',{name:'Connect MIDI Piano'}).click();await expect(page.locator('.studio-midi>summary')).toContainText('Connected');
+ await page.getByRole('button',{name:'Continue Lesson',exact:true}).click();await expect(page.getByRole('heading',{name:'Finding Middle C',exact:true})).toBeVisible();await expect(page.locator('.classical-score svg').first()).toBeVisible();await expect(mobile).toBeHidden();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/studio-player.png',fullPage:true});
+ for(const lesson of curriculumLessons)for(const activity of lesson.activities)lessonState.records[`${lesson.id}:${activity.id}`]={accuracy:100,correct:10,attempts:1,mastered:true};
+ await page.goto('/');await expect(page.getByRole('button',{name:'Continue Lesson',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Start Practice',exact:true}).click();await expect(page.getByText('A clear next step at the piano.',{exact:true})).toBeVisible();
 });
