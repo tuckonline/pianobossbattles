@@ -33,7 +33,9 @@ export type LessonProgress={lastLesson?:string;records:Record<string,{accuracy:n
 export const emptyLessons=():LessonProgress=>({records:{}});
 export const activityPassed=(a:Activity,r:LessonProgress["records"][string]|undefined)=>!!r&&(r.mastered===true||a.rhythm===undefined&&r.correct>0&&r.accuracy>=a.accuracy);
 export const completed=(lesson:Lesson,p:LessonProgress)=>lesson.activities.every(a=>activityPassed(a,p.records[`${lesson.id}:${a.id}`]));
-export const available=(lesson:Lesson,p:LessonProgress)=>lesson.prerequisites.every(id=>completed(lessons.find(l=>l.id===id)!,p));
+// Owner-requested testing access: keep prerequisites as curriculum metadata only.
+export const openLessonAccess=true;
+export const available=(lesson:Lesson,p:LessonProgress)=>openLessonAccess||lesson.prerequisites.every(id=>completed(lessons.find(l=>l.id===id)!,p));
 export const nextLesson=(p:LessonProgress)=>lessons.find(l=>!completed(l,p))??lessons[lessons.length-1];
 
 export const curriculum={id:"piano-foundations-v1",levels:levels.map((level,i)=>({...level,id:`level-${i+1}`,units:level.units.map((title,j)=>({id:`level-${i+1}-unit-${j+1}`,title,lessonIds:lessons.filter(l=>(l.level??1)===i+1&&(l.unit??0)===j).map(l=>l.id),implemented:i===0&&j===0||i===1}))}))};

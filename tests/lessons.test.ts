@@ -13,7 +13,7 @@ const db=new PGlite();const pool={connect:async()=>({query:db.query.bind(db),rel
 afterAll(()=>db.close());
 it('provides valid Foundations and Beginner lessons with pitch-specific criteria',()=>{
  expect(levels).toHaveLength(6);expect(lessons).toHaveLength(22);
- expect(available(lessons[0],emptyLessons())).toBe(true);expect(available(lessons[1],emptyLessons())).toBe(false);
+ expect(available(lessons[0],emptyLessons())).toBe(true);expect(available(lessons[1],emptyLessons())).toBe(true);
  for(const lesson of lessons)for(const a of lesson.activities){validatePositionFingering(a.exercise);expect(musicXml(a.exercise)).toContain('score-partwise');for(const bar of a.exercise.right)expect(bar.reduce((s,n)=>s+n.beats,0)).toBe(4);const pitches=noteGroups(a.exercise,a.exercise.singleHand??'both').flatMap(g=>g.pitches);expect(assessPractice(a.exercise,a.exercise.singleHand??'both',pitches)).toMatchObject({complete:true,accuracy:100});}
  expect(new Set(lessons[0].activities.flatMap(a=>a.exercise.right.flat().map(n=>n.pitch)))).toEqual(new Set([60]));
  expect(new Set(lessons[2].activities.flatMap(a=>a.exercise.right.flat().map(n=>n.pitch)))).toEqual(new Set([60,62,64]));
@@ -21,7 +21,7 @@ it('provides valid Foundations and Beginner lessons with pitch-specific criteria
 it('persists all lessons, prerequisites and idempotent evidence without awarding gold',async()=>{
  await db.exec('CREATE TABLE game_events(user_id text,id text,session_id text,sequence int,event text,PRIMARY KEY(user_id,id));');
  const command=(body:Record<string,unknown>)=>lessonCommand(pool,'learner',{expectedUserId:'learner',...body});
- await expect(command({action:'visit',lessonId:lessons[1].id})).rejects.toThrow('prerequisite');
+ expect((await command({action:'visit',lessonId:lessons[1].id})).lastLesson).toBe(lessons[1].id);
  for(const lesson of lessons){await command({action:'visit',lessonId:lesson.id});for(const a of lesson.activities){const body={action:'finish',lessonId:lesson.id,activityId:a.id,attemptId:crypto.randomUUID(),pitches:noteGroups(a.exercise,a.exercise.singleHand??'both').flatMap(g=>g.pitches),...(a.rhythm!==undefined?{events:referenceEvents(lessonScore(a.exercise)),elapsedMs:performanceEnd(lessonScore(a.exercise)),tempo:a.exercise.tempoBpm}: {})};await command(body);const state=await command(body);expect(state.records[`${lesson.id}:${a.id}`].attempts).toBe(1);}expect(completed(lesson,await command({action:'state'}))).toBe(true);}
  const state=await command({action:'state'});expect(state.lastLesson).toBe('beginner-graduation-v1');expect(Object.keys(state.records)).toHaveLength(82);
  expect((await db.query("SELECT * FROM game_events WHERE session_id='economy:v1'")).rows).toHaveLength(0);
